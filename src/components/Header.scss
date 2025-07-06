@@ -1,0 +1,33 @@
+.app-header {
+    margin-bottom: 2rem;
+    .navbar {
+        border-radius: 0 0 0.5rem 0.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+        .app-logo {
+            font-weight: bold;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+            color: #fff;
+            margin-right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .app-nav {
+            .nav-item {
+                margin-right: 1rem;
+                .nav-link {
+                    color: #e3e3e3;
+                    font-size: 1.1rem;
+                    font-weight: 500;
+                    transition: color 0.2s;
+                    &.active,
+                    &:hover {
+                        color: #fff;
+                        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+                    }
+                }
+            }
+        }
+    }
+}

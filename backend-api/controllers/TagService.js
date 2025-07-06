@@ -112,9 +112,8 @@ class TagService extends BaseService {
     }
 
     async getStoriesByTag(tagId) {
-        const tag = await this.findById(tagId, {
-            include: [{ model: Story, as: 'stories' }]
-        });
+        const tag = await this.findById(tagId, [{ model: Story, as: 'stories' }]);
+        if (!tag) throw new Error('Tag not found.');
         return tag.stories;
     }
 

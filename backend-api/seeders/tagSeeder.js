@@ -72,7 +72,7 @@ const tagData = [{
     },
     {
         title: 'Isekai',
-        thumb_url: '/images/tags/isekai.png',
+        thumb_url: '/images/tags/isekai-2.jpeg',
         short_description: 'Transported to another world'
     },
     {

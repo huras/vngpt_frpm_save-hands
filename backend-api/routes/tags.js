@@ -153,8 +153,8 @@ router.get('/:id/stories', async(req, res) => {
         const stories = await tagService.getStoriesByTag(req.params.id);
         res.json(stories);
     } catch (error) {
-        console.error('Error fetching stories for tag:', error);
-        if (error.message.includes('not found')) {
+        console.error('Error fetching stories for tag:', error.stack || error);
+        if (error.message && error.message.includes('not found')) {
             res.status(404).json({ error: 'Tag not found.' });
         } else {
             res.status(500).json({ error: 'An error occurred while fetching stories for tag.' });

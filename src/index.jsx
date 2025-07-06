@@ -1,35 +1,28 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import UserStories from "./pages/stories/UserStories";
 import StoryView from "./pages/stories/StoryView";
 import StoryForm from "./pages/stories/StoryForm";
+import Header from "./components/Header";
+import TagList from "./pages/tags/TagList";
+import TagView from "./pages/tags/TagView";
+import TagEdit from "./pages/tags/TagEdit";
 
 const App = () => {
   return (
     <Router>
-      <header>
-        <nav>
-          <ul>
-            <li>
-              <Link to="/">Home</Link>
-            </li>
-            <li>
-              <Link to="/stories">Stories</Link>
-            </li>
-            <li>
-              <a href="http://localhost:3056/full-recalculate_score-rating" target="_blank" rel="noopener noreferrer">Recalculate Score Rating</a>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <Header />
       <Routes>
         <Route path="/" element={<UserStories />} />
         <Route path="/stories" element={<UserStories />} />
         <Route path="/stories/new" element={<StoryForm />} />
         <Route path="/stories/:id" element={<StoryView />} />
         <Route path="/stories/:id/edit" element={<StoryForm />} />
+        <Route path="/tags" element={<TagList />} />
+        <Route path="/tags/:id" element={<TagView />} />
+        <Route path="/tags/:id/edit" element={<TagEdit />} />
       </Routes>
     </Router>
   );

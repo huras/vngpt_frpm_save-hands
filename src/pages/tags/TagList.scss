@@ -1,0 +1,29 @@
+.tag-list-page {
+    padding-top: 2rem;
+    .tag-card {
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: box-shadow 0.2s, transform 0.2s;
+        &:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.13);
+            transform: translateY(-2px) scale(1.02);
+        }
+        .tag-thumb-img {
+            object-fit: cover;
+            height: 140px;
+            border-radius: 0.75rem 0.75rem 0 0;
+            background: #f8f9fa;
+        }
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .card-text {
+            min-height: 2.5em;
+        }
+        .btn {
+            min-width: 60px;
+        }
+    }
+}
