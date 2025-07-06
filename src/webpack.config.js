@@ -2,7 +2,7 @@ const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
-    devtool: 'source-map',  // generate source map
+    devtool: 'source-map', // generate source map
     entry: {
         'inquest_job_app': './index.jsx'
     },
@@ -15,11 +15,15 @@ module.exports = {
     },
     target: 'web',
     module: {
-        rules: [
-            {
+        rules: [{
                 test: /\.css$/i,
                 use: ["style-loader", "css-loader"],
             },
+            {
+                test: /\.scss$/i,
+                use: ["style-loader", "css-loader", "sass-loader"],
+            },
+
             {
                 test: /\.m?js$/,
                 exclude: /node_modules/,
@@ -42,15 +46,13 @@ module.exports = {
             },
             {
                 test: /\.svg$/,
-                use: [
-                  {
+                use: [{
                     loader: 'file-loader',
                     options: {
-                      name: '[name].[hash].[ext]',
-                      outputPath: 'img'
+                        name: '[name].[hash].[ext]',
+                        outputPath: 'img'
                     }
-                  }
-                ]
+                }]
             }
         ]
     },

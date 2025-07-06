@@ -1,11 +1,9 @@
-const GalleryService = require("./controllers/GalleryService");
 const db = require("./models");
 const Scraper = require("./scraper");
-const {sequelize, Gallery, GalleryCategory, Model,  Picture} = db;
 
 class MyTest {
     constructor() {
-        
+
     }
 
     static async doTest() {

@@ -1,0 +1,150 @@
+.story-view-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    .story-view-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e9ecef;
+        .story-navigation {
+            .btn-outline-secondary {
+                color: #6c757d;
+                border-color: #6c757d;
+                &:hover {
+                    background-color: #6c757d;
+                    border-color: #6c757d;
+                }
+            }
+        }
+        .story-actions {
+            display: flex;
+            gap: 10px;
+        }
+    }
+    .story-content {
+        .story-header {
+            margin-bottom: 30px;
+            .story-title {
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: #2c3e50;
+                margin-bottom: 15px;
+                line-height: 1.2;
+            }
+            .story-meta {
+                .story-dates {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    font-size: 0.9rem;
+                    color: #6c757d;
+                    .story-created,
+                    .story-updated {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        i {
+                            font-size: 0.8rem;
+                        }
+                    }
+                }
+            }
+        }
+        .story-body {
+            .story-brainstorm {
+                h3 {
+                    color: #2c3e50;
+                    font-weight: 600;
+                    margin-bottom: 15px;
+                    font-size: 1.3rem;
+                }
+                .brainstorm-content {
+                    background-color: #f8f9fa;
+                    border: 1px solid #e9ecef;
+                    border-radius: 8px;
+                    padding: 20px;
+                    p {
+                        margin-bottom: 15px;
+                        line-height: 1.6;
+                        color: #495057;
+                        font-size: 1rem;
+                        &:last-child {
+                            margin-bottom: 0;
+                        }
+                    }
+                }
+            }
+            .no-brainstorm {
+                text-align: center;
+                padding: 40px 20px;
+                background-color: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                p {
+                    color: #6c757d;
+                    font-style: italic;
+                    margin: 0;
+                }
+            }
+        }
+    }
+    .story-footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+        .story-actions-bottom {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+    }
+    .loading-spinner {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+    .error-message {
+        text-align: center;
+        padding: 60px 20px;
+        h2 {
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+        p {
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .story-view-container {
+        padding: 15px;
+        .story-view-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: stretch;
+            .story-actions {
+                justify-content: center;
+            }
+        }
+        .story-content {
+            .story-header {
+                .story-title {
+                    font-size: 2rem;
+                }
+            }
+        }
+        .story-footer {
+            .story-actions-bottom {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    }
+}

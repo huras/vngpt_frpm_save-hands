@@ -7,31 +7,28 @@ const axios = require('axios');
 
 const { Op } = require('sequelize');
 
-const modelRoutes = require('./routes/models');
-
 const app = express();
 const port = 3056; // You can change this port as needed
 
 const routes = require('./routes');
 
 const db = require("./models");
-const {sequelize, Gallery, GalleryCategory, Model,  Picture} = db;
 
 // Middleware to parse JSON requests
 app.use(express.json());
 
-(async () => {
-  const database = db.sequelize;
+(async() => {
+    const database = db.sequelize;
 
-  try {
-    const resultado = await database.sync({
-      // force: false, // Set to true to drop and recreate tables
-      // alter: true, // Set to true to update the schema without dropping tables
-    });
-    console.log(resultado);
-  } catch (error) {
-    console.log(error);
-  }
+    try {
+        const resultado = await database.sync({
+            // force: true, // Set to true to drop and recreate tables
+            // alter: true, // Set to true to update the schema without dropping tables
+        });
+        console.log(resultado);
+    } catch (error) {
+        console.log(error);
+    }
 })();
 
 // Use cors middleware to allow requests from all origins (you can configure it more securely)
@@ -42,20 +39,20 @@ app.use(cors());
 
 
 // Use routes
-app.use(modelRoutes);
+app.use('/', routes);
 
 //------------------------ End Models Routes
 
 
 // Start the Express server
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-  const workers = 1;
-  for (let i = 0; i < workers; i++) {
-    // setTimeout(() => {
-      // startBackgroundWorker(); // Start the background worker
-    // }, i * 3000);
-  }
+    console.log(`Server running on http://localhost:${port}`);
+    const workers = 1;
+    for (let i = 0; i < workers; i++) {
+        // setTimeout(() => {
+        // startBackgroundWorker(); // Start the background worker
+        // }, i * 3000);
+    }
 });
 
 // const auto_scrapper = require('./node_cron'); // Import the job

@@ -2,15 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Hunt } from "./pages/Hunt";
-import { Gallery } from "./pages/Gallery";
-import GalPage from "./pages/Gal/GalPage";
-import VisitedGalsGallery from "./pages/VisitedGalsGallery";
-import UnvisitedGalsGallery from "./pages/UnvisitedGalsGallery";
-import ModelsList from "./pages/Models/ModelsList";
-import { ScrapeByURL } from "./pages/Navbar/ScrapeByURL";
-import ModelPage from "./pages/Models/ModelPage";
-import { HuntQuickButton } from "./pages/HuntComponents/HuntQuickButton";
+import UserStories from "./pages/stories/UserStories";
+import StoryView from "./pages/stories/StoryView";
+import StoryForm from "./pages/stories/StoryForm";
 
 const App = () => {
   return (
@@ -33,6 +27,9 @@ const App = () => {
       <Routes>
         <Route path="/" element={<UserStories />} />
         <Route path="/stories" element={<UserStories />} />
+        <Route path="/stories/new" element={<StoryForm />} />
+        <Route path="/stories/:id" element={<StoryView />} />
+        <Route path="/stories/:id/edit" element={<StoryForm />} />
       </Routes>
     </Router>
   );
