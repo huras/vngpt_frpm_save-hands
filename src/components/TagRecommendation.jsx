@@ -10,12 +10,15 @@ const TagRecommendation = ({
   title = 'AI Recommendations',
   maxRecommendations = 6,
   showBaseTags = true,
-  className = ''
+  className = '',
+  selectedTags = [],
+  reasoning = null
 }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [aiInsights, setAiInsights] = useState(null);
+  const [aiReasoning, setAiReasoning] = useState(null);
 
   // Normalize baseTags to always be an array
   const normalizedBaseTags = Array.isArray(baseTags) ? baseTags : [baseTags];
@@ -26,6 +29,7 @@ const TagRecommendation = ({
     } else {
       setRecommendations([]);
       setAiInsights(null);
+      setAiReasoning(null);
     }
   }, [normalizedBaseTags]);
 
@@ -39,6 +43,7 @@ const TagRecommendation = ({
       
       setRecommendations(response.data.recommendations || []);
       setAiInsights(response.data.aiInsights || null);
+      setAiReasoning(response.data.reasoning || null);
     } catch (error) {
       console.error('Error fetching AI recommendations:', error);
       setError('Failed to load AI recommendations');
@@ -50,6 +55,7 @@ const TagRecommendation = ({
           maxRecommendations
         );
         setRecommendations(fallbackResponse);
+        setAiReasoning('Fallback recommendations based on category and keyword matching');
       } catch (fallbackError) {
         console.error('Fallback recommendations also failed:', fallbackError);
       }
@@ -74,6 +80,9 @@ const TagRecommendation = ({
       return `Based on ${tagNames.join(', ')}, and ${lastTag}`;
     }
   };
+
+  // Helper to check if a recommendation is already selected
+  const isRecommendationSelected = (tag) => selectedTags.some(selected => selected.id === tag.id);
 
   if (normalizedBaseTags.length === 0) {
     return null;
@@ -152,50 +161,78 @@ const TagRecommendation = ({
             <p>No AI recommendations found</p>
           </div>
         ) : (
-          <div className="recommendations-grid">
-            {recommendations.map(recommendation => (
-              <div
-                key={recommendation.id}
-                className={`recommendation-card ${disabled ? 'disabled' : ''}`}
-                onClick={() => handleTagClick(recommendation)}
-              >
-                <div className="recommendation-image">
-                  {recommendation.thumb_url ? (
-                    <img 
-                      src={BACKEND_CONFIG.getImageUrl(recommendation.thumb_url)} 
-                      alt={recommendation.title} 
-                      className="rec-thumb"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.parentElement.classList.add('no-image');
-                      }}
-                    />
-                  ) : (
-                    <div className="rec-no-image">
-                      <span>{recommendation.title.charAt(0).toUpperCase()}</span>
-                    </div>
-                  )}
-                  {recommendation.confidence && (
-                    <div className="confidence-badge">
-                      <span>{Math.round(recommendation.confidence * 100)}%</span>
-                    </div>
-                  )}
+          <>
+            <div className="recommendations-grid">
+              {recommendations.map(recommendation => (
+                <div
+                  key={recommendation.id}
+                  className={`recommendation-card${isRecommendationSelected(recommendation) ? ' selected' : ''}${disabled ? ' disabled' : ''}`}
+                  onClick={() => handleTagClick(recommendation)}
+                >
+                  <div className="recommendation-image">
+                    {recommendation.thumb_url ? (
+                      <img 
+                        src={BACKEND_CONFIG.getImageUrl(recommendation.thumb_url)} 
+                        alt={recommendation.title} 
+                        className="rec-thumb"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.classList.add('no-image');
+                        }}
+                      />
+                    ) : (
+                      <div className="rec-no-image">
+                        <span>{recommendation.title.charAt(0).toUpperCase()}</span>
+                      </div>
+                    )}
+                    {recommendation.confidence && (
+                      <div className="confidence-badge">
+                        <span>{Math.round(recommendation.confidence * 100)}%</span>
+                      </div>
+                    )}
+                    {recommendation.isFallback && (
+                      <span className="fallback-badge" title="Fallback (not AI)">Fallback</span>
+                    )}
+                    {/* Reasoning badge */}
+                    {aiReasoning && (
+                      <span className="reasoning-badge" title={
+                        typeof aiReasoning === 'object' && aiReasoning[recommendation.title] 
+                          ? aiReasoning[recommendation.title] 
+                          : (typeof aiReasoning === 'string' ? aiReasoning : 'AI recommendation')
+                      }>
+                        <i className="fas fa-info-circle"></i>
+                      </span>
+                    )}
+                  </div>
+                  <div className="recommendation-content">
+                    <h5 className="rec-title">{recommendation.title}</h5>
+                    {recommendation.short_description && (
+                      <p className="rec-description">{recommendation.short_description}</p>
+                    )}
+                    {aiReasoning && (
+                      <p className="rec-reason">
+                        <i className="fas fa-info-circle"></i>
+                        {typeof aiReasoning === 'object' && aiReasoning[recommendation.title] 
+                          ? aiReasoning[recommendation.title] 
+                          : (typeof aiReasoning === 'string' ? aiReasoning : 'AI recommendation')}
+                      </p>
+                    )}
+                    {recommendation.reason && (
+                      <p className="rec-reason">
+                        <i className="fas fa-info-circle"></i>
+                        {recommendation.reason}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="recommendation-content">
-                  <h5 className="rec-title">{recommendation.title}</h5>
-                  {recommendation.short_description && (
-                    <p className="rec-description">{recommendation.short_description}</p>
-                  )}
-                  {recommendation.reason && (
-                    <p className="rec-reason">
-                      <i className="fas fa-info-circle"></i>
-                      {recommendation.reason}
-                    </p>
-                  )}
-                </div>
+              ))}
+            </div>
+            {recommendations.length > 0 && recommendations.every(r => r.isFallback) && (
+              <div className="fallback-info">
+                <i className="fas fa-info-circle"></i> These are fallback recommendations (not AI-powered).
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 

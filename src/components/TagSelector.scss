@@ -243,6 +243,7 @@
                         -webkit-line-clamp: 2;
                         -webkit-box-orient: vertical;
                         overflow: hidden;
+                        height: -webkit-fill-available;
                     }
                 }
                 // Size classes
@@ -270,10 +271,10 @@
                     }
                 }
                 &.size-3 {
-                    width: 200px;
-                    height: 280px;
+                    width: 240px;
+                    height: 420px;
                     .card-image {
-                        height: 200px;
+                        height: 260px;
                     }
                 }
                 &.size-4 {

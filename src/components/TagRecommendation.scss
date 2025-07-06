@@ -189,6 +189,10 @@
                         border-color: transparent;
                     }
                 }
+                &.selected {
+                    border-color: #e50914;
+                    box-shadow: 0 0 20px rgba(229, 9, 20, 0.15);
+                }
                 .recommendation-image {
                     width: 100%;
                     height: 140px;
@@ -222,6 +226,26 @@
                         font-weight: 600;
                         backdrop-filter: blur(4px);
                     }
+                    .reasoning-badge {
+                        position: absolute;
+                        top: 8px;
+                        left: 8px;
+                        background: #00d4ff;
+                        color: white;
+                        padding: 4px 8px;
+                        border-radius: 12px;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                        z-index: 2;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                        cursor: pointer;
+                        i {
+                            font-size: 1rem;
+                        }
+                    }
                 }
                 .recommendation-content {
                     padding: 16px;
@@ -243,16 +267,16 @@
                         overflow: hidden;
                     }
                     .rec-reason {
-                        font-size: 0.8rem;
-                        color: #00d4ff;
-                        margin: 0;
-                        display: flex;
-                        align-items: flex-start;
-                        gap: 6px;
-                        line-height: 1.3;
+                        font-size: 0.85rem;
+                        color: #666;
+                        margin-top: 8px;
+                        padding: 8px;
+                        background: rgba(0, 212, 255, 0.1);
+                        border-radius: 6px;
+                        border-left: 3px solid #00d4ff;
                         i {
-                            margin-top: 2px;
-                            flex-shrink: 0;
+                            color: #00d4ff;
+                            margin-right: 6px;
                         }
                     }
                 }

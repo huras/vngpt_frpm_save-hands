@@ -143,7 +143,8 @@ Format as valid JSON only.`;
                      ))
                 )
                 .sort((a, b) => a.title.localeCompare(b.title))
-                .slice(0, limit);
+                .slice(0, limit)
+                .map(tag => ({ ...tag.toJSON(), isFallback: true })); // Mark as fallback
 
             return {
                 recommendations,
@@ -153,7 +154,7 @@ Format as valid JSON only.`;
         } catch (error) {
             console.error('Error in fallback recommendations:', error);
             return {
-                recommendations: this.getPopularTags(allTags, limit),
+                recommendations: this.getPopularTags(allTags, limit).map(tag => ({ ...tag.toJSON(), isFallback: true })),
                 reasoning: 'Popular tags as fallback',
                 compatibility_score: 5
             };
