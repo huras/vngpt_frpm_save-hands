@@ -1,0 +1,143 @@
+.whatsapp-icon{
+    max-height: 32px;
+}
+
+
+// Search form
+
+.search-form-logos{
+    img{
+        max-width: 200px;
+        @media (max-width: 767px) {
+            max-width: 120px;
+        }
+    }
+
+    .bradesco-logo-wrapper{
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;        
+    }
+
+    margin-top: 16px;
+    margin-bottom: 64px;
+}
+
+.search_form-wrapper{
+    // display: flex;
+    // align-items: center;
+    // justify-content: center;
+    padding: 16px;
+
+    .fake-logo{
+        max-width: 37.25%!important;
+        visibility: hidden;
+    }
+
+    .phone-search_form{
+        // flex: 1;
+        // padding: 32px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        flex-direction: column;
+        height: 100%;
+
+        *{
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            padding-left: 32px;
+        }
+    }
+
+    .deep-search_form{
+        // flex: 1;
+        // padding: 32px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        flex-direction: column;
+        height: 100%;
+
+        *{
+            width: 100%;
+        }
+
+
+        @media (min-width: 768px) {
+            padding-right: 32px;
+        }
+    }
+
+    .report-preventivo-logo{
+        max-width: 50%;
+    }
+}
+
+.search-form, .login-page{
+    .inquest-button{
+        border-radius: 30px!important;
+        background-color: rgb(0,145,226);
+        height: 48px;
+    }
+    .inquest-input{
+        border-color: black;
+        border-width: 2px;
+        height: 58px;
+    }
+}
+
+.border-left-card{
+    @media (max-width: 767px) {
+        margin-top: 64px!important;
+        padding-top: 64px!important;
+        border-top: 1px solid rgb(195,195,195);
+    }
+    @media (min-width: 768px) {
+        border-left: 1px solid rgb(195,195,195);
+    }
+}
+
+// init login page
+.login-page{
+    .logo-bradesco{
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 64px!important;
+        
+    }
+    .form-wrapper{
+    }
+
+    .inquest-logo{
+        width: 100%;
+    }
+
+    .remember-me-div{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.inquest-link{
+    text-decoration: none!important;
+    color: rgb(0,145,226);
+    font-weight: bold;
+}
+
+.report{
+    .logos{
+        img{
+            max-height: 60px!important;
+
+            @media (max-width: 767px) {
+                max-height: 50px!important;
+            }
+        }
+    }
+}

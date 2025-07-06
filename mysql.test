@@ -1,0 +1,65 @@
+All must have paginated GET endpoints
+
+star table
+    name
+    url
+    thumb
+
+pic table
+    url
+    parent_gallery
+    stars
+
+
+gallery table
+    stars
+    url
+    thumb_url
+    parent_gallery
+    is_liked
+    classifications:
+        just_hot - bi-fire
+        is_kinky - bi-arrow-through-heart
+        is_art - bi-image
+        is_stared - bi-star-fill
+        character - bi-person-badge-fill
+        level
+            villager
+            adventurer
+            noble
+            princess
+            queen
+            goddess
+    is_visited
+
+tag table
+    name
+    url
+
+category table
+    name
+    url
+
+channel table
+    name
+    url
+
+galleries_stars table
+    star_id
+    gallery_id
+
+pic_star
+    pic_id
+    gallery_id
+
+gallery_tag
+    gallery_id
+    tag_id
+
+channel_gallery
+    gallery_id
+    channel_id
+
+category_gallery
+    gallery_id
+    category_id
