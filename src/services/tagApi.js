@@ -38,5 +38,16 @@ export const tagApi = {
         removeTagFromStory: (storyId, tagId) => api.delete(`/stories/${storyId}/tags/${tagId}`),
 
         // Get stories for a specific tag
-        getStoriesByTag: (id) => api.get(`/tags/${id}/stories`).then(res => res.data)
+        getStoriesByTag: (id) => api.get(`/tags/${id}/stories`).then(res => res.data),
+
+        // Get tag recommendations based on a tag
+        getTagRecommendations: (tagId, limit = 5) => api.get(`/tags/${tagId}/recommendations`, { 
+            params: { limit } 
+        }).then(res => res.data),
+
+        // Get AI-powered recommendations based on multiple tags
+        getAIRecommendations: (tagIds, limit = 6) => api.post('/tags/ai-recommendations', {
+            tagIds,
+            limit
+        }).then(res => res.data)
 };

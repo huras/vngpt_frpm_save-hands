@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { tagApi } from '../services/tagApi';
 import { BACKEND_CONFIG } from '../config/backend';
+import TagRecommendation from './TagRecommendation';
 import './TagSelector.scss';
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -13,7 +14,8 @@ const TagSelector = ({
   onTagsChange, 
   disabled = false,
   title = 'Select your favorite genres:',
-  size = 3 // 1-5 for different card sizes
+  size = 3, // 1-5 for different card sizes
+  showAIRecommendations = true
 }) => {
   const [availableTags, setAvailableTags] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -47,10 +49,44 @@ const TagSelector = ({
     }
   };
 
-  const handleRemoveTag = (tagToRemove) => {
+  const handleRemoveTag = async (tagToRemove) => {
     if (disabled) return;
+    
+    // Show confirmation dialog
+    const confirmed = await showRemoveConfirmation(tagToRemove.title);
+    if (!confirmed) return;
+    
     const newTags = selectedTags.filter(tag => tag.id !== tagToRemove.id);
     onTagsChange(newTags);
+  };
+
+  const showRemoveConfirmation = (tagTitle) => {
+    return new Promise((resolve) => {
+      // Check if SweetAlert is available
+      if (typeof window !== 'undefined' && window.Swal) {
+        window.Swal.fire({
+          title: 'Remove Genre?',
+          text: `Are you sure you want to remove "${tagTitle}" from your selection?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#e50914',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Yes, remove it!',
+          cancelButtonText: 'Cancel',
+          reverseButtons: true
+        }).then((result) => {
+          resolve(result.isConfirmed);
+        });
+      } else {
+        // Fallback to browser confirm if SweetAlert is not available
+        const confirmed = window.confirm(`Are you sure you want to remove "${tagTitle}" from your selection?`);
+        resolve(confirmed);
+      }
+    });
+  };
+
+  const handleRecommendationSelect = (tag) => {
+    handleTagToggle(tag);
   };
 
   const filteredTags = availableTags.filter(tag => 
@@ -128,11 +164,11 @@ const TagSelector = ({
             modules={[Navigation]}
             navigation
             spaceBetween={16}
-            slidesPerView={3}
+            slidesPerView={4}
             breakpoints={{
-              1200: { slidesPerView: 3 },
-              900: { slidesPerView: 2 },
-              600: { slidesPerView: 1.2 },
+              1200: { slidesPerView: 4 },
+              900: { slidesPerView: 3 },
+              600: { slidesPerView: 2.5 },
               0: { slidesPerView: 1 }
             }}
             className="carousel"
@@ -177,6 +213,19 @@ const TagSelector = ({
           </Swiper>
         )}
       </div>
+
+      {/* AI Recommendations */}
+      {showAIRecommendations && selectedTags.length > 0 && (
+        <TagRecommendation
+          baseTags={selectedTags}
+          onTagSelect={handleRecommendationSelect}
+          disabled={disabled}
+          title="AI-Powered Recommendations"
+          maxRecommendations={6}
+          showBaseTags={false}
+          className="ai-recommendations-section"
+        />
+      )}
     </div>
   );
 };

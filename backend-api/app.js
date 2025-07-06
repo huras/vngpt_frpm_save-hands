@@ -1,4 +1,5 @@
 // app.js
+require('dotenv').config();
 const express = require('express');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
@@ -9,7 +10,7 @@ const path = require('path');
 const { Op } = require('sequelize');
 
 const app = express();
-const port = 3056; // You can change this port as needed
+const port = process.env.PORT || 3056; // Use environment variable or default to 3056
 
 const routes = require('./routes');
 

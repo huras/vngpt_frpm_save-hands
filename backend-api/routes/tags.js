@@ -162,4 +162,37 @@ router.get('/:id/stories', async(req, res) => {
     }
 });
 
+// GET /tags/:id/recommendations - Get tag recommendations based on a tag
+router.get('/:id/recommendations', async(req, res) => {
+    try {
+        const { limit = 5 } = req.query;
+        const recommendations = await tagService.getTagRecommendations(req.params.id, parseInt(limit));
+        res.json(recommendations);
+    } catch (error) {
+        console.error('Error fetching tag recommendations:', error);
+        if (error.message && error.message.includes('not found')) {
+            res.status(404).json({ error: 'Tag not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while fetching tag recommendations.' });
+        }
+    }
+});
+
+// POST /tags/ai-recommendations - Get AI-powered recommendations based on multiple tags
+router.post('/ai-recommendations', async(req, res) => {
+    try {
+        const { tagIds, limit = 6 } = req.body;
+
+        if (!tagIds || !Array.isArray(tagIds) || tagIds.length === 0) {
+            return res.status(400).json({ error: 'tagIds array is required and must not be empty.' });
+        }
+
+        const result = await tagService.getAIRecommendations(tagIds, parseInt(limit));
+        res.json(result);
+    } catch (error) {
+        console.error('Error fetching AI recommendations:', error);
+        res.status(500).json({ error: 'An error occurred while fetching AI recommendations.' });
+    }
+});
+
 module.exports = router;
