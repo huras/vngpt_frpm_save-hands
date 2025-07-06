@@ -36,5 +36,11 @@ export const storyApi = {
     
     const queryString = queryParams.toString();
     return api.get(`/stories/search/${encodeURIComponent(searchTerm)}${queryString ? `?${queryString}` : ''}`);
-  }
+  },
+
+  // Add tag to a story
+  addTagToStory: (storyId, tagId) => api.post(`/stories/${storyId}/tags/${tagId}`),
+
+  // Remove tag from a story
+  removeTagFromStory: (storyId, tagId) => api.delete(`/stories/${storyId}/tags/${tagId}`)
 };

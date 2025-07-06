@@ -14,6 +14,7 @@ const StoryForm = () => {
     brainstorm: ''
   });
   const [selectedTags, setSelectedTags] = useState([]);
+  const [originalTags, setOriginalTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
   const [error, setError] = useState(null);
@@ -36,6 +37,7 @@ const StoryForm = () => {
         brainstorm: story.brainstorm || ''
       });
       setSelectedTags(story.tags || []);
+      setOriginalTags(story.tags || []);
     } catch (err) {
       setError('Failed to load story. Please try again.');
       console.error('Error fetching story:', err);
@@ -84,17 +86,35 @@ const StoryForm = () => {
       setLoading(true);
       setError(null);
       
-              const storyData = {
-          title: formData.title.trim(),
-          brainstorm: formData.brainstorm.trim()
-        };
+      const storyData = {
+        title: formData.title.trim(),
+        brainstorm: formData.brainstorm.trim()
+      };
 
-                if (isEditing) {
-          await storyApi.updateStory(id, storyData);
-        } else {
-          await storyApi.createStory(storyData);
-        }
+      let storyId = id;
+      if (isEditing) {
+        await storyApi.updateStory(id, storyData);
+      } else {
+        const res = await storyApi.createStory(storyData);
+        storyId = res.data.id;
+      }
       
+      // IDs das tags selecionadas e originais
+      const selectedTagIds = selectedTags.map(t => t.id);
+      const originalTagIds = originalTags.map(t => t.id);
+      // Tags a adicionar
+      const tagsToAdd = selectedTagIds.filter(id => !originalTagIds.includes(id));
+      // Tags a remover
+      const tagsToRemove = originalTagIds.filter(id => !selectedTagIds.includes(id));
+      // Adiciona tags
+      for (const tagId of tagsToAdd) {
+        await storyApi.addTagToStory(storyId, tagId);
+      }
+      // Remove tags
+      for (const tagId of tagsToRemove) {
+        await storyApi.removeTagFromStory(storyId, tagId);
+      }
+
       navigate('/stories');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save story. Please try again.');

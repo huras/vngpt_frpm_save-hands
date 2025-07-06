@@ -128,17 +128,11 @@ const TagSelector = ({
             modules={[Navigation]}
             navigation
             spaceBetween={16}
-            slidesPerView={
-              size === 1 ? 6 :
-              size === 2 ? 4 :
-              size === 3 ? 3 :
-              size === 4 ? 2.2 :
-              1.5
-            }
+            slidesPerView={3}
             breakpoints={{
-              1200: { slidesPerView: size === 1 ? 8 : size === 2 ? 6 : size === 3 ? 5 : size === 4 ? 3 : 2 },
-              900: { slidesPerView: size === 1 ? 6 : size === 2 ? 4 : size === 3 ? 3 : size === 4 ? 2.2 : 1.5 },
-              600: { slidesPerView: size === 1 ? 4 : size === 2 ? 3 : size === 3 ? 2 : 1.2 },
+              1200: { slidesPerView: 3 },
+              900: { slidesPerView: 2 },
+              600: { slidesPerView: 1.2 },
               0: { slidesPerView: 1 }
             }}
             className="carousel"
