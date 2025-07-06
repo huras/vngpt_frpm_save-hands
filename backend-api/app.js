@@ -4,6 +4,7 @@ const puppeteer = require('puppeteer');
 const cors = require('cors');
 const fs = require('fs');
 const axios = require('axios');
+const path = require('path');
 
 const { Op } = require('sequelize');
 
@@ -33,6 +34,9 @@ app.use(express.json());
 
 // Use cors middleware to allow requests from all origins (you can configure it more securely)
 app.use(cors());
+
+// Serve static files from the public directory
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
 // Use the routes from the routes folder
 // Import routes

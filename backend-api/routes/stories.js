@@ -1,5 +1,6 @@
 const express = require('express');
 const storyService = require('../controllers/StoryService');
+const tagService = require('../controllers/TagService');
 
 const router = express.Router();
 
@@ -106,6 +107,51 @@ router.get('/search/:term', async(req, res) => {
     } catch (error) {
         console.error('Error searching stories:', error);
         res.status(500).json({ error: 'An error occurred while searching stories.' });
+    }
+});
+
+// GET /stories/:id/tags - Get all tags for a story
+router.get('/:id/tags', async(req, res) => {
+    try {
+        const tags = await tagService.getTagsByStory(req.params.id);
+        res.json(tags);
+    } catch (error) {
+        console.error('Error fetching tags for story:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Story not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while fetching tags for story.' });
+        }
+    }
+});
+
+// POST /stories/:id/tags/:tagId - Add tag to story
+router.post('/:id/tags/:tagId', async(req, res) => {
+    try {
+        const tag = await tagService.addTagToStory(req.params.tagId, req.params.id);
+        res.json({ message: 'Tag added to story successfully.', tag });
+    } catch (error) {
+        console.error('Error adding tag to story:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Story or tag not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while adding tag to story.' });
+        }
+    }
+});
+
+// DELETE /stories/:id/tags/:tagId - Remove tag from story
+router.delete('/:id/tags/:tagId', async(req, res) => {
+    try {
+        await tagService.removeTagFromStory(req.params.tagId, req.params.id);
+        res.json({ message: 'Tag removed from story successfully.' });
+    } catch (error) {
+        console.error('Error removing tag from story:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Story or tag not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while removing tag from story.' });
+        }
     }
 });
 

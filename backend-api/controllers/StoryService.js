@@ -1,9 +1,11 @@
 const BaseService = require('./BaseService');
-const { Story } = require('../models');
+const { Story, Tag } = require('../models');
 
 class StoryService extends BaseService {
     constructor() {
-        super(Story, []);
+        super(Story, [
+            { model: Tag, as: 'tags' }
+        ]);
     }
 
     async findAllPaginated(filters, paginationArgs) {
@@ -46,11 +48,16 @@ class StoryService extends BaseService {
         const { Op } = require('sequelize');
 
         const searchFilters = {
-            [Op.or]: [
-                { title: {
-                        [Op.like]: `%${searchTerm}%` } },
-                { brainstorm: {
-                        [Op.like]: `%${searchTerm}%` } }
+            [Op.or]: [{
+                    title: {
+                        [Op.like]: `%${searchTerm}%`
+                    }
+                },
+                {
+                    brainstorm: {
+                        [Op.like]: `%${searchTerm}%`
+                    }
+                }
             ]
         };
 

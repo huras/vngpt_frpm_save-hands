@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
+import { BACKEND_CONFIG } from '../../config/backend';
 import './StoryView.scss';
 
 const StoryView = () => {
@@ -121,6 +122,35 @@ const StoryView = () => {
           ) : (
             <div className="no-brainstorm">
               <p className="text-muted">No brainstorm content available.</p>
+            </div>
+          )}
+
+          {/* Story Tags */}
+          {story.tags && story.tags.length > 0 && (
+            <div className="story-tags-section">
+              <h3>Tags</h3>
+              <div className="story-tags">
+                {story.tags.map(tag => (
+                  <div key={tag.id} className="story-tag">
+                    {tag.thumb_url && (
+                      <img 
+                        src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
+                        alt={tag.title} 
+                        className="tag-thumb"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <div className="tag-info">
+                      <span className="tag-title">{tag.title}</span>
+                      {tag.short_description && (
+                        <span className="tag-description">{tag.short_description}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

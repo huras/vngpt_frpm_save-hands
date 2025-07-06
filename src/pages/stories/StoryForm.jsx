@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
+import TagSelector from '../../components/TagSelector';
 import './StoryForm.scss';
 
 const StoryForm = () => {
@@ -12,6 +13,7 @@ const StoryForm = () => {
     title: '',
     brainstorm: ''
   });
+  const [selectedTags, setSelectedTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
   const [error, setError] = useState(null);
@@ -33,6 +35,7 @@ const StoryForm = () => {
         title: story.title || '',
         brainstorm: story.brainstorm || ''
       });
+      setSelectedTags(story.tags || []);
     } catch (err) {
       setError('Failed to load story. Please try again.');
       console.error('Error fetching story:', err);
@@ -81,16 +84,16 @@ const StoryForm = () => {
       setLoading(true);
       setError(null);
       
-      const storyData = {
-        title: formData.title.trim(),
-        brainstorm: formData.brainstorm.trim()
-      };
+              const storyData = {
+          title: formData.title.trim(),
+          brainstorm: formData.brainstorm.trim()
+        };
 
-      if (isEditing) {
-        await storyApi.updateStory(id, storyData);
-      } else {
-        await storyApi.createStory(storyData);
-      }
+                if (isEditing) {
+          await storyApi.updateStory(id, storyData);
+        } else {
+          await storyApi.createStory(storyData);
+        }
       
       navigate('/stories');
     } catch (err) {
@@ -170,6 +173,17 @@ const StoryForm = () => {
           />
           <small className="form-text text-muted">
             Use this space to brainstorm ideas, write notes, or develop your story content.
+          </small>
+        </div>
+
+        <div className="form-group">
+          <TagSelector
+            selectedTags={selectedTags}
+            onTagsChange={setSelectedTags}
+            disabled={loading}
+          />
+          <small className="form-text text-muted">
+            Select tags to categorize your story. Tags help organize and find stories easily.
           </small>
         </div>
 

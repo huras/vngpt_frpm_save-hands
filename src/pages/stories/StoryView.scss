@@ -89,6 +89,56 @@
                     margin: 0;
                 }
             }
+            .story-tags-section {
+                margin-top: 30px;
+                h3 {
+                    color: #2c3e50;
+                    font-weight: 600;
+                    margin-bottom: 15px;
+                    font-size: 1.3rem;
+                }
+                .story-tags {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                    .story-tag {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 8px 12px;
+                        background-color: #f8f9fa;
+                        border: 1px solid #e9ecef;
+                        border-radius: 8px;
+                        min-width: 120px;
+                        .tag-thumb {
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 50%;
+                            object-fit: cover;
+                            flex-shrink: 0;
+                        }
+                        .tag-info {
+                            flex: 1;
+                            min-width: 0;
+                            .tag-title {
+                                display: block;
+                                font-weight: 600;
+                                color: #2c3e50;
+                                font-size: 0.9rem;
+                            }
+                            .tag-description {
+                                display: block;
+                                color: #6c757d;
+                                font-size: 0.75rem;
+                                margin-top: 2px;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     .story-footer {

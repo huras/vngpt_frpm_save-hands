@@ -30,7 +30,11 @@ module.exports = (sequelize, Sequelize) => {
 
     // Associations for Story
     Story.associate = function(models) {
-        // Add associations here if needed in the future
+        // Many-to-Many relationship with Tag
+        Story.belongsToMany(models.Tag, {
+            through: 'story_tags', // Link table for the many-to-many relationship
+            as: 'tags'
+        });
     };
 
     return Story;
