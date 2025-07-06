@@ -42,8 +42,22 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 // Import routes
 
 
-// Use routes
-app.use('/', routes);
+// Use API routes with /api prefix
+app.use('/api', routes);
+
+// Serve static files from the root directory (for the React app)
+app.use(express.static(path.join(__dirname, '../')));
+
+// Catch-all handler for SPA routing - serve index.html for any non-API route
+app.get('*', (req, res) => {
+    // Don't serve index.html for API routes
+    if (req.path.startsWith('/api/') || req.path.startsWith('/images/')) {
+        return res.status(404).json({ error: 'API route not found' });
+    }
+
+    // Serve index.html for all other routes (SPA fallback)
+    res.sendFile(path.join(__dirname, '../index.html'));
+});
 
 //------------------------ End Models Routes
 
