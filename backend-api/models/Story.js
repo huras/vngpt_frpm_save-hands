@@ -16,6 +16,11 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.TEXT,
             allowNull: true
         },
+        lastReevaluatedAt: {
+            type: Sequelize.DATE,
+            allowNull: true,
+            comment: 'Timestamp of when tag suggestions were last re-evaluated'
+        },
         createdAt: {
             allowNull: false,
             type: Sequelize.DATE,

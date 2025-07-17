@@ -361,13 +361,55 @@ class IntelligentTagService {
                 });
             }
 
+            // Update the story's lastReevaluatedAt timestamp
+            await story.update({
+                lastReevaluatedAt: new Date()
+            });
+
             return { 
                 success: true, 
-                message: `Re-evaluated ${pendingSuggestions.length} suggestions` 
+                message: `Re-evaluated ${pendingSuggestions.length} suggestions`,
+                lastReevaluatedAt: story.lastReevaluatedAt
             };
         } catch (error) {
             console.error('Error re-evaluating suggestions:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Check if re-evaluation is needed based on story changes
+     */
+    async isReevaluationNeeded(storyId) {
+        try {
+            const story = await Story.findByPk(storyId);
+            
+            if (!story) {
+                return false;
+            }
+
+            // If never re-evaluated, it's needed
+            if (!story.lastReevaluatedAt) {
+                return true;
+            }
+
+            // Check if story was updated after last re-evaluation
+            const storyUpdatedAfterReevaluation = story.updatedAt > story.lastReevaluatedAt;
+            
+            // Check if any tag reasonings were added after last re-evaluation
+            const recentReasonings = await StoryTagReasoning.count({
+                where: {
+                    storyId,
+                    createdAt: {
+                        [require('sequelize').Op.gt]: story.lastReevaluatedAt
+                    }
+                }
+            });
+
+            return storyUpdatedAfterReevaluation || recentReasonings > 0;
+        } catch (error) {
+            console.error('Error checking if re-evaluation is needed:', error);
+            return false;
         }
     }
 }

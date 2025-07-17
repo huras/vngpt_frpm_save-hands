@@ -33,6 +33,10 @@ export const intelligentTagApi = {
   searchTags: (query, limit = 20) => 
     api.get(`/intelligent-tags/search?query=${encodeURIComponent(query)}&limit=${limit}`),
 
+  // Check if re-evaluation is needed
+  checkReevaluationStatus: (storyId) => 
+    api.get(`/intelligent-tags/suggestions/${storyId}/reevaluate-status`),
+
   // Re-evaluate existing suggestions
   reevaluateSuggestions: (storyId) => 
     api.post(`/intelligent-tags/suggestions/${storyId}/reevaluate`)

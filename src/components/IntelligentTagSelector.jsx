@@ -14,6 +14,10 @@ const IntelligentTagSelector = ({
   const [reasonings, setReasonings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [reevaluating, setReevaluating] = useState(false);
+  const [reevaluateStatus, setReevaluateStatus] = useState('');
+  const [reevaluationNeeded, setReevaluationNeeded] = useState(false);
+  const [checkingReevaluationStatus, setCheckingReevaluationStatus] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -25,8 +29,25 @@ const IntelligentTagSelector = ({
     if (storyId) {
       fetchSuggestions();
       fetchReasonings();
+      checkReevaluationStatus();
     }
   }, [storyId]);
+
+  const checkReevaluationStatus = async () => {
+    try {
+      setCheckingReevaluationStatus(true);
+      const response = await intelligentTagApi.checkReevaluationStatus(storyId);
+      
+      if (response.data.success) {
+        setReevaluationNeeded(response.data.isReevaluationNeeded);
+      }
+    } catch (error) {
+      console.error('Error checking re-evaluation status:', error);
+      setReevaluationNeeded(false);
+    } finally {
+      setCheckingReevaluationStatus(false);
+    }
+  };
 
   const fetchSuggestions = async () => {
     try {
@@ -78,6 +99,7 @@ const IntelligentTagSelector = ({
       if (response.data.success) {
         await fetchSuggestions();
         await fetchReasonings();
+        await checkReevaluationStatus(); // Check if re-evaluation is now needed
         onTagsChange && onTagsChange(selectedTags);
       }
     } catch (error) {
@@ -135,6 +157,7 @@ const IntelligentTagSelector = ({
         setManualTag({ tagId: '', reasoning: '', userExplanation: '' });
         setShowManualAdd(false);
         await fetchReasonings();
+        await checkReevaluationStatus(); // Refresh the status
         onTagsChange && onTagsChange(selectedTags);
       }
     } catch (error) {
@@ -144,13 +167,38 @@ const IntelligentTagSelector = ({
 
   const reevaluateSuggestions = async () => {
     try {
+      setReevaluating(true);
+      setReevaluateStatus('Re-evaluating suggestions...');
+      
       const response = await intelligentTagApi.reevaluateSuggestions(storyId);
       
       if (response.data.success) {
+        setReevaluateStatus('Suggestions updated successfully!');
         await fetchSuggestions();
+        await checkReevaluationStatus(); // Refresh the status
+        
+        // Clear status after 3 seconds
+        setTimeout(() => {
+          setReevaluateStatus('');
+        }, 3000);
+      } else {
+        setReevaluateStatus('Failed to re-evaluate suggestions');
+        
+        // Clear error status after 5 seconds
+        setTimeout(() => {
+          setReevaluateStatus('');
+        }, 5000);
       }
     } catch (error) {
       console.error('Error re-evaluating suggestions:', error);
+      setReevaluateStatus('Error: Failed to re-evaluate suggestions');
+      
+      // Clear error status after 5 seconds
+      setTimeout(() => {
+        setReevaluateStatus('');
+      }, 5000);
+    } finally {
+      setReevaluating(false);
     }
   };
 
@@ -166,13 +214,41 @@ const IntelligentTagSelector = ({
           >
             {generating ? 'Generating...' : 'Generate Suggestions'}
           </button>
-          <button 
-            className="btn btn-secondary"
-            onClick={reevaluateSuggestions}
-            disabled={disabled}
-          >
-            Re-evaluate
-          </button>
+          <div className="reevaluate-section">
+            <button 
+              className="btn btn-secondary"
+              onClick={reevaluateSuggestions}
+              disabled={disabled || reevaluating || !reevaluationNeeded || checkingReevaluationStatus}
+            >
+              {reevaluating ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i> Re-evaluating...
+                </>
+              ) : checkingReevaluationStatus ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i> Checking...
+                </>
+              ) : !reevaluationNeeded ? (
+                <>
+                  <i className="fas fa-check"></i> Up to Date
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-sync-alt"></i> Re-evaluate
+                </>
+              )}
+            </button>
+            {reevaluateStatus && (
+              <div className={`reevaluate-status ${reevaluateStatus.includes('Error') || reevaluateStatus.includes('Failed') ? 'error' : 'success'}`}>
+                {reevaluateStatus}
+              </div>
+            )}
+            {!reevaluationNeeded && !reevaluateStatus && !checkingReevaluationStatus && (
+              <div className="reevaluate-status info">
+                No changes detected since last re-evaluation
+              </div>
+            )}
+          </div>
           <button 
             className="btn btn-outline-primary"
             onClick={() => setShowManualAdd(!showManualAdd)}

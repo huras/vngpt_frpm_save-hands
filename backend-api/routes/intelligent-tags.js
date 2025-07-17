@@ -124,6 +124,22 @@ router.get('/search', async (req, res) => {
     }
 });
 
+// GET /intelligent-tags/suggestions/:storyId/reevaluate-status - Check if re-evaluation is needed
+router.get('/suggestions/:storyId/reevaluate-status', async (req, res) => {
+    try {
+        const { storyId } = req.params;
+
+        const isNeeded = await intelligentTagService.isReevaluationNeeded(storyId);
+        res.json({ 
+            success: true, 
+            isReevaluationNeeded: isNeeded 
+        });
+    } catch (error) {
+        console.error('Error checking re-evaluation status:', error);
+        res.status(500).json({ error: 'An error occurred while checking re-evaluation status.' });
+    }
+});
+
 // POST /intelligent-tags/suggestions/:storyId/reevaluate - Re-evaluate existing suggestions
 router.post('/suggestions/:storyId/reevaluate', async (req, res) => {
     try {
