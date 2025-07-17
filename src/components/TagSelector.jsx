@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { tagApi } from '../services/tagApi';
 import { BACKEND_CONFIG } from '../config/backend';
-import TagRecommendation from './TagRecommendation';
+import TagRecommendationSlot from './TagRecommendationSlot';
+import SelectedTagSlot from './SelectedTagSlot';
 import './TagSelector.scss';
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -15,7 +16,8 @@ const TagSelector = ({
   disabled = false,
   title = 'Select your favorite genres:',
   size = 3, // 1-5 for different card sizes
-  showAIRecommendations = true
+  showAIRecommendations = true,
+  storyBrainstorm = null
 }) => {
   const [availableTags, setAvailableTags] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -119,33 +121,6 @@ const TagSelector = ({
           <span className="selected-count">
             {selectedTags.length} {selectedTags.length === 1 ? 'genre' : 'genres'} selected
           </span>
-          <div className="selected-tags-pills">
-            {selectedTags.map(tag => (
-              <span key={tag.id} className="selected-pill">
-                {tag.thumb_url && (
-                  <img 
-                    src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
-                    alt={tag.title} 
-                    className="pill-thumb"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                )}
-                <span className="pill-title">{tag.title}</span>
-                {!disabled && (
-                  <button
-                    type="button"
-                    className="pill-remove"
-                    onClick={() => handleRemoveTag(tag)}
-                    title="Remove genre"
-                  >
-                    ×
-                  </button>
-                )}
-              </span>
-            ))}
-          </div>
         </div>
       )}
       {/* Netflix-style Carousel with Swiper */}
@@ -216,15 +191,50 @@ const TagSelector = ({
 
       {/* AI Recommendations */}
       {showAIRecommendations && selectedTags.length > 0 && (
-        <TagRecommendation
-          baseTags={selectedTags}
-          onTagSelect={handleRecommendationSelect}
-          disabled={disabled}
-          title="AI-Powered Recommendations"
-          maxRecommendations={6}
-          showBaseTags={false}
-          className="ai-recommendations-section"
-        />
+        <div className="ai-recommendations-section">
+          <div className="recommendations-header">
+            <h3>AI Recommendations</h3>
+            <p>Discover genres that complement your selection</p>
+          </div>
+          <div className="row">
+            {[...Array(4)].map((_, idx) => (
+              <div className="col-12 col-md-6 col-lg-3" key={idx}>
+                <TagRecommendationSlot
+                  slotId={idx}
+                  baseTags={selectedTags}
+                  onTagSelect={handleRecommendationSelect}
+                  disabled={disabled}
+                  selectedTags={selectedTags}
+                  storyBrainstorm={storyBrainstorm}
+                  onSlotEmpty={() => {}}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Selected Tags with Individual Recommendations */}
+      {selectedTags.length > 0 && (
+        <div className="selected-tags-section">
+          <div className="section-header">
+            <h3>Your Selected Genres</h3>
+            <p>Click on any genre to see personalized recommendations</p>
+          </div>
+          <div className="selected-tags-list">
+            {selectedTags.map(tag => (
+              <SelectedTagSlot
+                key={tag.id}
+                tag={tag}
+                onRemove={handleRemoveTag}
+                onTagSelect={handleRecommendationSelect}
+                disabled={disabled}
+                storyBrainstorm={storyBrainstorm}
+                selectedTags={selectedTags}
+              />
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

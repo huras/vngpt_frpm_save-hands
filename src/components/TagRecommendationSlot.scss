@@ -1,0 +1,403 @@
+.recommendation-slot {
+    background: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        border-color: rgba(0, 212, 255, 0.3);
+        .action-buttons {
+            opacity: 1;
+        }
+    }
+    &.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        &:hover {
+            transform: none;
+            border-color: transparent;
+        }
+    }
+    &.fading-out {
+        opacity: 0;
+        transform: scale(0.9);
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+    &.persisting {
+        cursor: wait;
+        position: relative;
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(40, 167, 69, 0.2);
+            border-radius: 12px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #28a745;
+            font-weight: 600;
+        }
+        &::before {
+            content: 'Creating tag...';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            z-index: 11;
+            white-space: nowrap;
+        }
+    }
+    &.loading-slot {
+        background: rgba(26, 26, 26, 0.8);
+        border: 2px dashed rgba(0, 212, 255, 0.3);
+        cursor: default;
+        &:hover {
+            transform: none;
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+        .loading-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 212, 255, 0.05));
+            position: relative;
+            overflow: hidden;
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+                animation: shimmer 2s infinite;
+            }
+            i {
+                color: #00d4ff;
+                font-size: 1.5rem;
+                z-index: 1;
+                animation: pulse 1.5s ease-in-out infinite;
+            }
+        }
+        .loading-title {
+            height: 16px;
+            background: linear-gradient(90deg, #333 25%, #444 50%, #333 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.5s infinite;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .loading-description {
+            height: 12px;
+            background: linear-gradient(90deg, #333 25%, #444 50%, #333 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.5s infinite;
+            border-radius: 4px;
+            width: 80%;
+        }
+        .loading-message {
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            i {
+                font-size: 0.8rem;
+            }
+        }
+    }
+    .recommendation-image {
+        width: 100%;
+        height: 244px;
+        position: relative;
+        overflow: hidden;
+        .rec-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .rec-no-image {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #e50914, #b20710);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+        }
+        .confidence-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 212, 255, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+        }
+        .fallback-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .virtual-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            animation: pulse-green 2s ease-in-out infinite;
+        }
+        // Action Buttons
+        .action-buttons {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            display: flex;
+            gap: 6px;
+            z-index: 3;
+            opacity: 0.3;
+            transition: opacity 0.3s ease;
+            .action-btn {
+                width: 32px;
+                height: 32px;
+                border: none;
+                border-radius: 50%;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+                transition: all 0.2s ease;
+                backdrop-filter: blur(4px);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                &:hover:not(:disabled) {
+                    background: rgba(0, 212, 255, 0.8);
+                    transform: scale(1.1);
+                    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+                }
+                &:active:not(:disabled) {
+                    transform: scale(0.95);
+                }
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+                &.loading {
+                    background: rgba(0, 212, 255, 0.6);
+                    animation: pulse 1s ease-in-out infinite;
+                }
+                &.reload-btn {
+                    &:hover:not(:disabled) {
+                        background: rgba(255, 193, 7, 0.8);
+                        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+                    }
+                    &.loading {
+                        background: rgba(255, 193, 7, 0.6);
+                    }
+                }
+                &.force-new-btn {
+                    &:hover:not(:disabled) {
+                        background: rgba(220, 53, 69, 0.8);
+                        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+                    }
+                    &.loading {
+                        background: rgba(220, 53, 69, 0.6);
+                    }
+                }
+                i {
+                    transition: transform 0.2s ease;
+                }
+                &:hover:not(:disabled) i {
+                    transform: scale(1.1);
+                }
+            }
+        }
+    }
+    .recommendation-content {
+        padding: 16px;
+        .rec-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: white;
+            line-height: 1.2;
+        }
+        .rec-description {
+            font-size: 0.85rem;
+            color: #ccc;
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .rec-reason {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #00d4ff;
+            i {
+                color: #00d4ff;
+                margin-right: 6px;
+            }
+        }
+    }
+}
+
+// Animations
+@keyframes loading-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+    }
+}
+
+@keyframes pulse-green {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+        background: #28a745;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+        background: #20c997;
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .recommendation-slot {
+        .recommendation-image {
+            height: 120px;
+            .action-buttons {
+                opacity: 1; // Always show on mobile for better UX
+                bottom: 4px;
+                right: 4px;
+                gap: 4px;
+                .action-btn {
+                    width: 28px;
+                    height: 28px;
+                    font-size: 0.7rem;
+                }
+            }
+        }
+        .recommendation-content {
+            padding: 12px;
+            .rec-title {
+                font-size: 0.95rem;
+            }
+            .rec-description {
+                font-size: 0.8rem;
+            }
+            .rec-reason {
+                font-size: 0.75rem;
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .recommendation-slot {
+        .recommendation-image {
+            height: 100px;
+            .action-buttons {
+                bottom: 3px;
+                right: 3px;
+                gap: 3px;
+                .action-btn {
+                    width: 24px;
+                    height: 24px;
+                    font-size: 0.65rem;
+                }
+            }
+        }
+        .recommendation-content {
+            padding: 10px;
+            .rec-title {
+                font-size: 0.9rem;
+            }
+            .rec-description {
+                font-size: 0.75rem;
+            }
+            .rec-reason {
+                font-size: 0.7rem;
+            }
+        }
+    }
+}

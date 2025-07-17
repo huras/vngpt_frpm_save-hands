@@ -13,9 +13,21 @@ module.exports = (sequelize, Sequelize) => {
                 notEmpty: true
             }
         },
+        media_url: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            comment: 'URL to image or video thumbnail'
+        },
+        media_type: {
+            type: Sequelize.ENUM('image', 'video'),
+            allowNull: true,
+            defaultValue: 'image',
+            comment: 'Type of media: image or video'
+        },
         thumb_url: {
             type: Sequelize.STRING,
-            allowNull: true
+            allowNull: true,
+            comment: 'Legacy field - use media_url instead'
         },
         short_description: {
             type: Sequelize.TEXT,
@@ -115,7 +127,8 @@ module.exports = (sequelize, Sequelize) => {
         return this.findAll({
             where: {
                 id: {
-                    [Sequelize.Op.ne]: tagId }
+                    [Sequelize.Op.ne]: tagId
+                }
             },
             order: [
                 ['title', 'ASC']
@@ -128,7 +141,8 @@ module.exports = (sequelize, Sequelize) => {
         const { Op } = require('sequelize');
         const keywordConditions = keywordArray.map(keyword => ({
             keywords: {
-                [Op.like]: `%${keyword}%` }
+                [Op.like]: `%${keyword}%`
+            }
         }));
 
         return this.findAll({

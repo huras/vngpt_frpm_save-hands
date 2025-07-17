@@ -1,6 +1,6 @@
 const BaseService = require('./BaseService');
 const { Tag, Story } = require('../models');
-const { getImageUrl, deleteImage } = require('../utils/imageUpload');
+const { getMediaUrl, deleteMedia, detectMediaType } = require('../utils/mediaUpload');
 const AIService = require('../services/AIService');
 
 class TagService extends BaseService {
@@ -125,7 +125,7 @@ class TagService extends BaseService {
         return tag.stories;
     }
 
-    async getTagRecommendations(tagId, limit = 5) {
+    async getTagRecommendations(tagId, limit = 8) {
         // First, verify the tag exists
         const sourceTag = await this.findById(tagId);
         if (!sourceTag) throw new Error('Tag not found.');
@@ -200,7 +200,7 @@ class TagService extends BaseService {
         return uniqueRecommendations;
     }
 
-    async getAIRecommendations(selectedTagIds, limit = 5) {
+    async getAIRecommendations(selectedTagIds, limit = 8, storyBrainstorm = null, forceNew = false, focusedMode = false, focusTagId = null) {
         try {
             // Get selected tags
             const selectedTags = await Tag.findAll({
@@ -214,17 +214,36 @@ class TagService extends BaseService {
                 ]
             });
 
+            // Get focus tag if in focused mode
+            let focusTag = null;
+            if (focusedMode && focusTagId) {
+                focusTag = selectedTags.find(tag => tag.id === focusTagId);
+                if (!focusTag) {
+                    focusTag = await Tag.findByPk(focusTagId);
+                }
+            }
+
             // Get AI recommendations
             const recommendations = await this.aiService.generateRecommendations(
                 selectedTags,
                 allTags,
-                limit
+                limit,
+                storyBrainstorm,
+                forceNew,
+                focusedMode,
+                focusTag
+            );
+
+            // Process recommendations to handle new tags
+            const processedRecommendations = await this.processAIRecommendations(
+                recommendations.recommendations,
+                allTags
             );
 
             return {
                 success: true,
                 data: {
-                    recommendations: recommendations.recommendations,
+                    recommendations: processedRecommendations,
                     reasoning: recommendations.reasoning,
                     compatibility_score: recommendations.compatibility_score
                 }
@@ -233,6 +252,141 @@ class TagService extends BaseService {
             console.error('Error getting AI recommendations:', error);
             return { success: false, error: 'Failed to get AI recommendations' };
         }
+    }
+
+    async processAIRecommendations(aiRecommendations, existingTags) {
+        const processedRecommendations = [];
+        const existingTagTitles = new Set(existingTags.map(tag => tag.title.toLowerCase()));
+
+        for (const recommendation of aiRecommendations) {
+            if (recommendation.title) {
+                const normalizedTitle = recommendation.title.toLowerCase();
+
+                // Check if tag already exists
+                const existingTag = existingTags.find(tag =>
+                    tag.title.toLowerCase() === normalizedTitle
+                );
+
+                if (existingTag) {
+                    // Tag exists, use it
+                    processedRecommendations.push({
+                        ...existingTag.toJSON(),
+                        isExisting: true,
+                        aiSuggested: true,
+                        reason: recommendation.reason || 'AI-powered recommendation based on tag compatibility'
+                    });
+                } else {
+                    // Tag doesn't exist, create a virtual tag for selection
+                    processedRecommendations.push({
+                        id: `ai_suggested_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        title: recommendation.title,
+                        short_description: recommendation.short_description || `AI-suggested tag: ${recommendation.title}`,
+                        category: recommendation.category || 'ai_suggested',
+                        keywords: recommendation.keywords || recommendation.title.toLowerCase(),
+                        media_url: null,
+                        media_type: 'image',
+                        thumb_url: null,
+                        ai_embedding: null,
+                        isExisting: false,
+                        aiSuggested: true,
+                        isVirtual: true,
+                        reason: recommendation.reason || 'AI-suggested tag based on compatibility',
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
+            }
+        }
+
+        return processedRecommendations;
+    }
+
+    async persistAISuggestedTag(virtualTagData, userId = null) {
+        try {
+            // Validate required fields
+            if (!virtualTagData.title || !virtualTagData.title.trim()) {
+                throw new Error('Tag title is required');
+            }
+
+            // Check if tag already exists (case-insensitive)
+            const existingTag = await Tag.findOne({
+                where: {
+                    title: {
+                        [require('sequelize').Op.iLike]: virtualTagData.title.trim()
+                    }
+                }
+            });
+
+            if (existingTag) {
+                return {
+                    success: true,
+                    data: existingTag,
+                    message: 'Tag already exists',
+                    isExisting: true
+                };
+            }
+
+            // Prepare tag data for creation
+            const tagData = {
+                title: virtualTagData.title.trim(),
+                short_description: virtualTagData.short_description || `AI-suggested tag: ${virtualTagData.title}`,
+                category: virtualTagData.category || 'ai_suggested',
+                keywords: virtualTagData.keywords || virtualTagData.title.toLowerCase(),
+                media_url: virtualTagData.media_url || null,
+                media_type: virtualTagData.media_type || 'image',
+                thumb_url: virtualTagData.thumb_url || null
+            };
+
+            // Create the tag
+            const newTag = await Tag.create(tagData);
+
+            // Generate AI embedding for the new tag
+            try {
+                await this.aiService.updateTagAI(newTag);
+            } catch (aiError) {
+                console.error('Error generating AI embedding for new tag:', aiError);
+                // Continue even if AI embedding fails
+            }
+
+            // Log tag creation for analytics
+            console.log(`AI-suggested tag created: ${newTag.title} (ID: ${newTag.id})`);
+
+            return {
+                success: true,
+                data: newTag,
+                message: 'AI-suggested tag created successfully',
+                isExisting: false
+            };
+
+        } catch (error) {
+            console.error('Error persisting AI-suggested tag:', error);
+            return {
+                success: false,
+                error: error.message || 'Failed to persist AI-suggested tag'
+            };
+        }
+    }
+
+    async batchPersistAISuggestedTags(virtualTagsData, userId = null) {
+        const results = [];
+        const createdTags = [];
+
+        for (const virtualTag of virtualTagsData) {
+            const result = await this.persistAISuggestedTag(virtualTag, userId);
+            results.push(result);
+
+            if (result.success && !result.isExisting) {
+                createdTags.push(result.data);
+            }
+        }
+
+        return {
+            success: true,
+            results,
+            createdTags,
+            totalProcessed: virtualTagsData.length,
+            totalCreated: createdTags.length
+        };
     }
 
     async updateTagAI(tagId) {
@@ -250,12 +404,17 @@ class TagService extends BaseService {
         }
     }
 
-    async createWithImage(tagData, imageFile) {
+    async createWithMedia(tagData, mediaFile) {
         const tag = await this.create(tagData);
 
-        if (imageFile) {
-            const imageUrl = await getImageUrl(imageFile);
-            await tag.update({ thumb_url: imageUrl });
+        if (mediaFile) {
+            const mediaUrl = getMediaUrl(mediaFile.filename);
+            const mediaType = detectMediaType(mediaFile.filename);
+            await tag.update({
+                media_url: mediaUrl,
+                media_type: mediaType,
+                thumb_url: mediaUrl // Keep for backward compatibility
+            });
         }
 
         // Update AI data for new tag
@@ -268,18 +427,21 @@ class TagService extends BaseService {
         return tag;
     }
 
-    async updateWithImage(tagId, tagData, imageFile) {
+    async updateWithMedia(tagId, tagData, mediaFile) {
         const tag = await this.findById(tagId);
         if (!tag) throw new Error('Tag not found.');
 
-        if (imageFile) {
-            // Delete old image if exists
-            if (tag.thumb_url) {
-                await deleteImage(tag.thumb_url);
+        if (mediaFile) {
+            // Delete old media if exists
+            if (tag.media_url) {
+                await deleteMedia(tag.media_url);
             }
 
-            const imageUrl = await getImageUrl(imageFile);
-            tagData.thumb_url = imageUrl;
+            const mediaUrl = getMediaUrl(mediaFile.filename);
+            const mediaType = detectMediaType(mediaFile.filename);
+            tagData.media_url = mediaUrl;
+            tagData.media_type = mediaType;
+            tagData.thumb_url = mediaUrl; // Keep for backward compatibility
         }
 
         await tag.update(tagData);
@@ -294,13 +456,13 @@ class TagService extends BaseService {
         return tag;
     }
 
-    async deleteWithImage(tagId) {
+    async deleteWithMedia(tagId) {
         const tag = await this.findById(tagId);
         if (!tag) throw new Error('Tag not found.');
 
-        // Delete image if exists
-        if (tag.thumb_url) {
-            await deleteImage(tag.thumb_url);
+        // Delete media if exists
+        if (tag.media_url) {
+            await deleteMedia(tag.media_url);
         }
 
         await tag.destroy();

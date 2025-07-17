@@ -201,6 +201,7 @@ const StoryForm = () => {
             selectedTags={selectedTags}
             onTagsChange={setSelectedTags}
             disabled={loading}
+            storyBrainstorm={formData.brainstorm}
           />
           <small className="form-text text-muted">
             Select tags to categorize your story. Tags help organize and find stories easily.

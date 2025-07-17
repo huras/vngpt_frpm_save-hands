@@ -41,13 +41,27 @@ export const tagApi = {
         getStoriesByTag: (id) => api.get(`/tags/${id}/stories`).then(res => res.data),
 
         // Get tag recommendations based on a tag
-        getTagRecommendations: (tagId, limit = 5) => api.get(`/tags/${tagId}/recommendations`, { 
+        getTagRecommendations: (tagId, limit = 4) => api.get(`/tags/${tagId}/recommendations`, { 
             params: { limit } 
         }).then(res => res.data),
 
         // Get AI-powered recommendations based on multiple tags
-        getAIRecommendations: (tagIds, limit = 6) => api.post('/tags/ai-recommendations', {
+        getAIRecommendations: (tagIds, limit = 4, storyBrainstorm = null, forceNew = false, focusedMode = false, focusTagId = null) => api.post('/tags/ai-recommendations', {
             tagIds,
-            limit
+            limit,
+            storyBrainstorm,
+            forceNew,
+            focusedMode,
+            focusTagId
+        }).then(res => res.data),
+
+        // Persist a single AI-suggested tag
+        persistAISuggestedTag: (virtualTagData) => api.post('/tags/persist-ai-suggested', {
+            virtualTagData
+        }).then(res => res.data),
+
+        // Persist multiple AI-suggested tags
+        batchPersistAISuggestedTags: (virtualTagsData) => api.post('/tags/batch-persist-ai-suggested', {
+            virtualTagsData
         }).then(res => res.data)
 };

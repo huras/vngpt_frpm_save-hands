@@ -1,7 +1,7 @@
 const express = require('express');
 const tagService = require('../controllers/TagService');
 const storyService = require('../controllers/StoryService');
-const { upload } = require('../utils/imageUpload');
+const { upload } = require('../utils/mediaUpload');
 
 const router = express.Router();
 
@@ -39,7 +39,7 @@ router.get('/:id', async(req, res) => {
 });
 
 // POST /tags - Create a new tag
-router.post('/', upload.single('image'), async(req, res) => {
+router.post('/', upload.single('media'), async(req, res) => {
     try {
         const { title, short_description } = req.body;
 
@@ -47,7 +47,7 @@ router.post('/', upload.single('image'), async(req, res) => {
             return res.status(400).json({ error: 'Title is required.' });
         }
 
-        const tag = await tagService.createWithImage({
+        const tag = await tagService.createWithMedia({
             title: title.trim(),
             short_description: short_description || null
         }, req.file);
@@ -64,7 +64,7 @@ router.post('/', upload.single('image'), async(req, res) => {
 });
 
 // PUT /tags/:id - Update a tag
-router.put('/:id', upload.single('image'), async(req, res) => {
+router.put('/:id', upload.single('media'), async(req, res) => {
     try {
         const { title, short_description } = req.body;
 
@@ -72,7 +72,7 @@ router.put('/:id', upload.single('image'), async(req, res) => {
             return res.status(400).json({ error: 'Title is required.' });
         }
 
-        const tag = await tagService.updateWithImage(req.params.id, {
+        const tag = await tagService.updateWithMedia(req.params.id, {
             title: title.trim(),
             short_description: short_description || null
         }, req.file);
@@ -93,7 +93,7 @@ router.put('/:id', upload.single('image'), async(req, res) => {
 // DELETE /tags/:id - Delete a tag
 router.delete('/:id', async(req, res) => {
     try {
-        await tagService.deleteWithImage(req.params.id);
+        await tagService.deleteWithMedia(req.params.id);
         res.json({ message: 'Tag deleted successfully.' });
     } catch (error) {
         console.error('Error deleting tag:', error);
@@ -181,17 +181,56 @@ router.get('/:id/recommendations', async(req, res) => {
 // POST /tags/ai-recommendations - Get AI-powered recommendations based on multiple tags
 router.post('/ai-recommendations', async(req, res) => {
     try {
-        const { tagIds, limit = 6 } = req.body;
+        const { tagIds, limit = 8, storyBrainstorm, forceNew = false, focusedMode = false, focusTagId = null } = req.body;
 
         if (!tagIds || !Array.isArray(tagIds) || tagIds.length === 0) {
             return res.status(400).json({ error: 'tagIds array is required and must not be empty.' });
         }
 
-        const result = await tagService.getAIRecommendations(tagIds, parseInt(limit));
+        const result = await tagService.getAIRecommendations(tagIds, parseInt(limit), storyBrainstorm, forceNew, focusedMode, focusTagId);
         res.json(result);
     } catch (error) {
         console.error('Error fetching AI recommendations:', error);
         res.status(500).json({ error: 'An error occurred while fetching AI recommendations.' });
+    }
+});
+
+// POST /tags/persist-ai-suggested - Persist a single AI-suggested tag
+router.post('/persist-ai-suggested', async(req, res) => {
+    try {
+        const { virtualTagData } = req.body;
+
+        if (!virtualTagData || !virtualTagData.title) {
+            return res.status(400).json({ error: 'virtualTagData with title is required.' });
+        }
+
+        const result = await tagService.persistAISuggestedTag(virtualTagData);
+
+        if (result.success) {
+            res.status(result.isExisting ? 200 : 201).json(result);
+        } else {
+            res.status(400).json(result);
+        }
+    } catch (error) {
+        console.error('Error persisting AI-suggested tag:', error);
+        res.status(500).json({ error: 'An error occurred while persisting AI-suggested tag.' });
+    }
+});
+
+// POST /tags/batch-persist-ai-suggested - Persist multiple AI-suggested tags
+router.post('/batch-persist-ai-suggested', async(req, res) => {
+    try {
+        const { virtualTagsData } = req.body;
+
+        if (!virtualTagsData || !Array.isArray(virtualTagsData) || virtualTagsData.length === 0) {
+            return res.status(400).json({ error: 'virtualTagsData array is required and must not be empty.' });
+        }
+
+        const result = await tagService.batchPersistAISuggestedTags(virtualTagsData);
+        res.json(result);
+    } catch (error) {
+        console.error('Error batch persisting AI-suggested tags:', error);
+        res.status(500).json({ error: 'An error occurred while batch persisting AI-suggested tags.' });
     }
 });
 

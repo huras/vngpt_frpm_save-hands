@@ -91,6 +91,47 @@
             }
         }
     }
+    // AI Recommendations Section
+    .ai-recommendations-section {
+        padding: 0 20px;
+        margin: 30px 0;
+        .recommendations-header {
+            margin-bottom: 20px;
+            h3 {
+                font-size: 1.3rem;
+                font-weight: 600;
+                margin: 0 0 8px 0;
+                color: white;
+            }
+            p {
+                font-size: 0.9rem;
+                color: #999;
+                margin: 0;
+            }
+        }
+    }
+    // Selected Tags Section
+    .selected-tags-section {
+        padding: 0 20px;
+        margin: 30px 0;
+        .section-header {
+            margin-bottom: 20px;
+            h3 {
+                font-size: 1.3rem;
+                font-weight: 600;
+                margin: 0 0 8px 0;
+                color: white;
+            }
+            p {
+                font-size: 0.9rem;
+                color: #999;
+                margin: 0;
+            }
+        }
+        .selected-tags-list {
+            // The SelectedTagSlot component handles its own styling
+        }
+    }
     .carousel-wrapper {
         position: relative;
         padding: 0 40px;
@@ -541,6 +582,20 @@
                 }
             }
         }
+        .ai-recommendations-section,
+        .selected-tags-section {
+            padding: 0 15px;
+            margin: 20px 0;
+            .recommendations-header,
+            .section-header {
+                h3 {
+                    font-size: 1.1rem;
+                }
+                p {
+                    font-size: 0.8rem;
+                }
+            }
+        }
         .carousel-wrapper {
             padding: 0 30px;
             .carousel-arrow {
@@ -647,6 +702,20 @@
 
 @media (max-width: 480px) {
     .netflix-tag-selector {
+        .ai-recommendations-section,
+        .selected-tags-section {
+            padding: 0 10px;
+            margin: 15px 0;
+            .recommendations-header,
+            .section-header {
+                h3 {
+                    font-size: 1rem;
+                }
+                p {
+                    font-size: 0.75rem;
+                }
+            }
+        }
         .carousel-wrapper {
             padding: 0 20px;
             .carousel-arrow {

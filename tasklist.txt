@@ -1,0 +1,66 @@
+Story
+	history
+		Chapters
+	Characters
+		name		
+		Arc
+	Location
+	Item
+	
+Story:
+	has many Tags: Genre(): Broad storytelling categories and their subgenres
+	has many Tags: Tone(): The emotional or atmospheric feel of the story
+	has many Tags: Themes: Central ideas or messages
+	has many Tags: Structure: Narrative frameworks or archetypes.
+	has many Chapters: chapters
+	has many Characters: characters
+	has many Locations: locations
+	has many Items: items
+
+Chapter
+	has many 
+
+Arc
+	tags
+	has many StoryEvents
+
+Character
+	name
+	has one Arc
+	has many StoryEvents
+	has many Tags: Archetypes: Classic character roles.
+	has many Tags: Personality Traits: Core characteristics.
+	has many Tags: Roles: Functions in the story or world.
+	has many Tags: DevelopmentArcs: How characters evolve.
+	
+StoryEvent
+	has many DialogEvent: dialogs : Represents characters trying to speak
+	has many Characters: characters: Represents characters on the scene.
+	has one Place
+	
+DialogEvent
+	has
+	
+Place
+	name
+	has many StoryEvents
+	has many Tags: Type: Broad location categories.
+	
+	
+----
+
+Basic:
+
+Breakdown inserted brainstorm
+Generate Characters, Places, Items and Plot based on the breakdown
+
+---
+
+Add a polymorphic resoning model
+attributes: 
+parent_id, parent_model (or any best senior way to do it)
+resoning:text
+previous_reasoning_id: (reasoning that came before this)
+
+Then add reasoning to the story/tag relationship.
+I want to store the reasoning to be added when the tag recomentation is clicked

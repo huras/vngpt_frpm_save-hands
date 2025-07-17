@@ -38,6 +38,7 @@ app.use(cors());
 
 // Serve static files from the public directory
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/media', express.static(path.join(__dirname, 'public/media')));
 
 // Use the routes from the routes folder
 // Import routes
