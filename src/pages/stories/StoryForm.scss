@@ -77,6 +77,32 @@
                 font-size: 0.875rem;
                 color: #6c757d;
             }
+            .form-check {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 8px;
+                .form-check-input {
+                    width: 18px;
+                    height: 18px;
+                    margin: 0;
+                    cursor: pointer;
+                    &:checked {
+                        background-color: #007bff;
+                        border-color: #007bff;
+                    }
+                    &:focus {
+                        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+                    }
+                }
+                .form-check-label {
+                    font-size: 1rem;
+                    font-weight: 500;
+                    color: #2c3e50;
+                    cursor: pointer;
+                    margin: 0;
+                }
+            }
         }
         .form-actions {
             display: flex;

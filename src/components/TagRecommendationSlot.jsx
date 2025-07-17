@@ -22,7 +22,6 @@ const TagRecommendationSlot = ({
   const [persisting, setPersisting] = useState(false);
   const [error, setError] = useState(null);
   const [loadingMessage, setLoadingMessage] = useState('Loading recommendation...');
-  const [retryCount, setRetryCount] = useState(0);
   const [buttonLoading, setButtonLoading] = useState({ reload: false, forceNew: false });
   const loadingTimeoutRef = useRef(null);
   const fadeTimeoutRef = useRef(null);
@@ -32,11 +31,9 @@ const TagRecommendationSlot = ({
       setLoading(true);
       setError(null);
       
-      // Update loading message based on retry count and action type
+      // Update loading message based on action type
       if (forceNew) {
         setLoadingMessage('Generating new recommendation...');
-      } else if (isRetry) {
-        setLoadingMessage(`Finding unique recommendation... (${retryCount + 1}/${maxRetries})`);
       } else {
         setLoadingMessage('Loading recommendation...');
       }
@@ -48,71 +45,64 @@ const TagRecommendationSlot = ({
       
       const tagIds = baseTags.map(tag => tag.id);
       
-      // Use the forceNew parameter to get different AI recommendations
-      const response = await tagApi.getAIRecommendations(tagIds, 1, storyBrainstorm, forceNew, focusedMode, focusTag?.id);
+      const response = await tagApi.getAIRecommendations(
+        tagIds, 
+        1, 
+        storyBrainstorm, 
+        forceNew, 
+        focusedMode, 
+        focusTag?.id
+      );
       
       if (response.data.recommendations && response.data.recommendations.length > 0) {
         const newRecommendation = response.data.recommendations[0];
         
-        // Check if this recommendation is already selected
-        const isSelected = selectedTags.some(s => s.id === newRecommendation.id);
+        // Simple check: if already selected, show empty state
+        const isAlreadySelected = selectedTags.some(tag => 
+          tag.id === newRecommendation.id || 
+          (newRecommendation.isVirtual && tag.title.toLowerCase() === newRecommendation.title.toLowerCase())
+        );
         
-        if (!isSelected) {
-          setRecommendation(newRecommendation);
-          setRetryCount(0);
-        } else if (retryCount < maxRetries - 1) {
-          // If selected, try again
-          setRetryCount(prev => prev + 1);
-          await loadRecommendation(true, forceNew);
+        if (isAlreadySelected) {
+          setRecommendation(null);
         } else {
-          // Max retries reached, mark slot as empty
-          onSlotEmpty(slotId);
+          setRecommendation(newRecommendation);
         }
       } else {
-        // No recommendations available, mark slot as empty
-        onSlotEmpty(slotId);
+        setRecommendation(null);
       }
     } catch (error) {
       console.error('Error loading recommendation for slot:', slotId, error);
       setError('Failed to load recommendation');
-      
-      if (retryCount < maxRetries - 1) {
-        setRetryCount(prev => prev + 1);
-        await loadRecommendation(true, forceNew);
-      } else {
-        // Max retries reached, mark slot as empty
-        onSlotEmpty(slotId);
-      }
+      setRecommendation(null);
     } finally {
       setLoading(false);
     }
-  }, [baseTags, storyBrainstorm, selectedTags, slotId, onSlotEmpty, retryCount, maxRetries, focusedMode, focusTag]);
+  }, [baseTags, storyBrainstorm, selectedTags, slotId, focusedMode, focusTag]);
 
   const handleReload = async (e) => {
-    e.stopPropagation(); // Prevent triggering the main click handler
+    e.stopPropagation();
     if (disabled || buttonLoading.reload || loading) return;
     
     setButtonLoading(prev => ({ ...prev, reload: true }));
     try {
-      await loadRecommendation(false, false); // Reload same recommendation
+      await loadRecommendation(false, false);
     } catch (error) {
       console.error('Error reloading recommendation:', error);
-      // Don't throw error to prevent UI breaking
     } finally {
       setButtonLoading(prev => ({ ...prev, reload: false }));
     }
   };
 
   const handleForceNew = async (e) => {
-    e.stopPropagation(); // Prevent triggering the main click handler
+    e.stopPropagation();
     if (disabled || buttonLoading.forceNew || loading) return;
     
     setButtonLoading(prev => ({ ...prev, forceNew: true }));
     try {
-      await loadRecommendation(false, true); // Force new recommendation
+      await loadRecommendation(false, true);
     } catch (error) {
       console.error('Error generating new recommendation:', error);
-      // Don't throw error to prevent UI breaking
     } finally {
       setButtonLoading(prev => ({ ...prev, forceNew: false }));
     }
@@ -136,15 +126,12 @@ const TagRecommendationSlot = ({
             isExisting: true
           };
           
-          // Call the original onTagSelect with the persisted tag
           onTagSelect && onTagSelect(persistedTag);
         } else {
           console.error('Failed to persist AI-suggested tag:', persistResult.error);
-          // Still call onTagSelect with the virtual tag if persistence fails
           onTagSelect && onTagSelect(recommendation);
         }
       } else {
-        // Regular tag, just call onTagSelect
         onTagSelect && onTagSelect(recommendation);
       }
       
@@ -155,21 +142,17 @@ const TagRecommendationSlot = ({
       fadeTimeoutRef.current = setTimeout(async () => {
         setFadingOut(false);
         setPersisting(false);
-        setRetryCount(0);
         await loadRecommendation();
-      }, 300); // Match CSS transition duration
+      }, 300);
       
     } catch (error) {
       console.error('Error handling tag selection:', error);
-      // Fallback: just call onTagSelect with the original recommendation
       onTagSelect && onTagSelect(recommendation);
       
-      // Still fade out and reload
       setFadingOut(true);
       fadeTimeoutRef.current = setTimeout(async () => {
         setFadingOut(false);
         setPersisting(false);
-        setRetryCount(0);
         await loadRecommendation();
       }, 300);
     }
@@ -189,11 +172,6 @@ const TagRecommendationSlot = ({
       }
     };
   }, [loadRecommendation]);
-
-  // If slot is empty, don't render anything
-  if (error && retryCount >= maxRetries - 1) {
-    return null;
-  }
 
   if (loading) {
     return (
@@ -216,7 +194,27 @@ const TagRecommendationSlot = ({
   }
 
   if (!recommendation) {
-    return null;
+    return (
+      <div className="recommendation-slot empty-slot">
+        <div className="recommendation-image">
+          <div className="empty-placeholder">
+            <i className="fas fa-plus"></i>
+          </div>
+        </div>
+        <div className="recommendation-content">
+          <div className="empty-title">No recommendation</div>
+          <div className="empty-message">
+            <button 
+              className="retry-btn"
+              onClick={() => loadRecommendation(false, true)}
+              disabled={loading}
+            >
+              <i className="fas fa-redo"></i> Try again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

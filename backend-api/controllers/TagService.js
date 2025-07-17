@@ -202,10 +202,13 @@ class TagService extends BaseService {
 
     async getAIRecommendations(selectedTagIds, limit = 8, storyBrainstorm = null, forceNew = false, focusedMode = false, focusTagId = null) {
         try {
-            // Get selected tags
-            const selectedTags = await Tag.findAll({
-                where: { id: selectedTagIds }
-            });
+            // Get selected tags - handle empty array case
+            let selectedTags = [];
+            if (selectedTagIds && selectedTagIds.length > 0) {
+                selectedTags = await Tag.findAll({
+                    where: { id: selectedTagIds }
+                });
+            }
 
             // Get all available tags for recommendations
             const allTags = await Tag.findAll({
@@ -231,13 +234,15 @@ class TagService extends BaseService {
                 storyBrainstorm,
                 forceNew,
                 focusedMode,
-                focusTag
+                focusTag,
+                selectedTagIds
             );
 
             // Process recommendations to handle new tags
             const processedRecommendations = await this.processAIRecommendations(
                 recommendations.recommendations,
-                allTags
+                allTags,
+                selectedTagIds
             );
 
             return {
@@ -254,20 +259,59 @@ class TagService extends BaseService {
         }
     }
 
-    async processAIRecommendations(aiRecommendations, existingTags) {
+    async getAITagSuggestions(selectedTagIds, action, changedTag = null, storyBrainstorm = null) {
+        try {
+            // Get selected tags
+            let selectedTags = [];
+            if (selectedTagIds && selectedTagIds.length > 0) {
+                selectedTags = await Tag.findAll({
+                    where: { id: selectedTagIds }
+                });
+            }
+
+            // Get all available tags
+            const allTags = await Tag.findAll({
+                order: [
+                    ['title', 'ASC']
+                ]
+            });
+
+            // Get AI suggestions based on action
+            const suggestions = await this.aiService.generateTagSuggestions(
+                selectedTags,
+                allTags,
+                action,
+                changedTag,
+                storyBrainstorm
+            );
+
+            return {
+                success: true,
+                data: suggestions
+            };
+        } catch (error) {
+            console.error('Error getting AI tag suggestions:', error);
+            return { success: false, error: 'Failed to get AI tag suggestions' };
+        }
+    }
+
+    async processAIRecommendations(aiRecommendations, existingTags, selectedTagIds = []) {
         const processedRecommendations = [];
-        const existingTagTitles = new Set(existingTags.map(tag => tag.title.toLowerCase()));
+        const selectedTagIdsSet = new Set(selectedTagIds);
 
         for (const recommendation of aiRecommendations) {
             if (recommendation.title) {
-                const normalizedTitle = recommendation.title.toLowerCase();
-
                 // Check if tag already exists
                 const existingTag = existingTags.find(tag =>
-                    tag.title.toLowerCase() === normalizedTitle
+                    tag.title.toLowerCase() === recommendation.title.toLowerCase()
                 );
 
                 if (existingTag) {
+                    // Skip if this tag is already selected by the user
+                    if (selectedTagIdsSet.has(existingTag.id)) {
+                        continue;
+                    }
+                    
                     // Tag exists, use it
                     processedRecommendations.push({
                         ...existingTag.toJSON(),

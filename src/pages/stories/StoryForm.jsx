@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
-import TagSelector from '../../components/TagSelector';
+import IntelligentTagSelector from '../../components/IntelligentTagSelector';
 import './StoryForm.scss';
 
 const StoryForm = () => {
@@ -14,7 +14,6 @@ const StoryForm = () => {
     brainstorm: ''
   });
   const [selectedTags, setSelectedTags] = useState([]);
-  const [originalTags, setOriginalTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
   const [error, setError] = useState(null);
@@ -37,7 +36,6 @@ const StoryForm = () => {
         brainstorm: story.brainstorm || ''
       });
       setSelectedTags(story.tags || []);
-      setOriginalTags(story.tags || []);
     } catch (err) {
       setError('Failed to load story. Please try again.');
       console.error('Error fetching story:', err);
@@ -98,24 +96,9 @@ const StoryForm = () => {
         const res = await storyApi.createStory(storyData);
         storyId = res.data.id;
       }
-      
-      // IDs das tags selecionadas e originais
-      const selectedTagIds = selectedTags.map(t => t.id);
-      const originalTagIds = originalTags.map(t => t.id);
-      // Tags a adicionar
-      const tagsToAdd = selectedTagIds.filter(id => !originalTagIds.includes(id));
-      // Tags a remover
-      const tagsToRemove = originalTagIds.filter(id => !selectedTagIds.includes(id));
-      // Adiciona tags
-      for (const tagId of tagsToAdd) {
-        await storyApi.addTagToStory(storyId, tagId);
-      }
-      // Remove tags
-      for (const tagId of tagsToRemove) {
-        await storyApi.removeTagFromStory(storyId, tagId);
-      }
 
-      navigate('/stories');
+      // Navigate to the story view where the intelligent tag selector will handle tag management
+      navigate(`/stories/${storyId}`);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save story. Please try again.');
       console.error('Error saving story:', err);
@@ -193,59 +176,44 @@ const StoryForm = () => {
           />
           <small className="form-text text-muted">
             Use this space to brainstorm ideas, write notes, or develop your story content.
-          </small>
-        </div>
-
-        <div className="form-group">
-          <TagSelector
-            selectedTags={selectedTags}
-            onTagsChange={setSelectedTags}
-            disabled={loading}
-            storyBrainstorm={formData.brainstorm}
-          />
-          <small className="form-text text-muted">
-            Select tags to categorize your story. Tags help organize and find stories easily.
+            This will help the AI generate better tag suggestions.
           </small>
         </div>
 
         <div className="form-actions">
           <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : (isEditing ? 'Update Story' : 'Create Story')}
+          </button>
+          <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-outline-secondary"
             onClick={handleCancel}
             disabled={loading}
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                {isEditing ? 'Updating...' : 'Creating...'}
-              </>
-            ) : (
-              <>
-                <i className={`fas fa-${isEditing ? 'save' : 'plus'} me-2`}></i>
-                {isEditing ? 'Update Story' : 'Create Story'}
-              </>
-            )}
-          </button>
         </div>
       </form>
 
-      <div className="form-tips">
-        <h4>Tips for writing great stories:</h4>
-        <ul>
-          <li>Start with a compelling title that captures the essence of your story</li>
-          <li>Use the brainstorm section to develop your ideas and plot points</li>
-          <li>Don't worry about perfection - focus on getting your ideas down</li>
-          <li>You can always come back and edit later</li>
-        </ul>
-      </div>
+      {isEditing && (
+        <div className="tag-management-section">
+          <h2>Tag Management</h2>
+          <p className="section-description">
+            Use the intelligent tag system below to manage your story's tags. 
+            The AI will learn from your choices to provide better suggestions.
+          </p>
+          <IntelligentTagSelector
+            storyId={id}
+            onTagsChange={setSelectedTags}
+            disabled={loading}
+            title="Story Tag Management"
+          />
+        </div>
+      )}
     </div>
   );
 };

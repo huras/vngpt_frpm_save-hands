@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
+import IntelligentTagSelector from '../../components/IntelligentTagSelector';
 import { BACKEND_CONFIG } from '../../config/backend';
 import './StoryView.scss';
 
@@ -10,6 +11,7 @@ const StoryView = () => {
   const [story, setStory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showTagManagement, setShowTagManagement] = useState(false);
 
   useEffect(() => {
     const fetchStory = async () => {
@@ -59,12 +61,12 @@ const StoryView = () => {
     );
   }
 
-  if (error || !story) {
+  if (error) {
     return (
       <div className="story-view-container">
         <div className="error-message">
-          <h2>Story Not Found</h2>
-          <p>{error || 'The story you are looking for does not exist.'}</p>
+          <h2>Error</h2>
+          <p>{error}</p>
           <Link to="/stories" className="btn btn-primary">
             Back to Stories
           </Link>
@@ -75,25 +77,8 @@ const StoryView = () => {
 
   return (
     <div className="story-view-container">
-      <div className="story-view-header">
-        <div className="story-navigation">
-          <Link to="/stories" className="btn btn-outline-secondary">
-            <i className="fas fa-arrow-left"></i> Back to Stories
-          </Link>
-        </div>
-        
-        <div className="story-actions">
-          <Link to={`/stories/${id}/edit`} className="btn btn-primary">
-            <i className="fas fa-edit"></i> Edit Story
-          </Link>
-          <button onClick={handleDelete} className="btn btn-danger">
-            <i className="fas fa-trash"></i> Delete Story
-          </button>
-        </div>
-      </div>
-
-      <div className="story-content">
-        <div className="story-header">
+      <div className="story-header">
+        <div className="story-title-section">
           <h1 className="story-title">{story.title}</h1>
           <div className="story-meta">
             <div className="story-dates">
@@ -108,7 +93,21 @@ const StoryView = () => {
             </div>
           </div>
         </div>
+        
+        <div className="story-actions">
+          <Link to={`/stories/${id}/edit`} className="btn btn-primary">
+            <i className="fas fa-edit"></i> Edit Story
+          </Link>
+          <button onClick={handleDelete} className="btn btn-danger">
+            <i className="fas fa-trash"></i> Delete
+          </button>
+          <Link to="/stories" className="btn btn-outline-secondary">
+            <i className="fas fa-arrow-left"></i> Back to Stories
+          </Link>
+        </div>
+      </div>
 
+      <div className="story-content">
         <div className="story-body">
           {story.brainstorm ? (
             <div className="story-brainstorm">
@@ -128,10 +127,10 @@ const StoryView = () => {
           {/* Story Tags */}
           {story.tags && story.tags.length > 0 && (
             <div className="story-tags-section">
-              <h3>Tags</h3>
+              <h3>Story Tags</h3>
               <div className="story-tags">
                 {story.tags.map(tag => (
-                  <div key={tag.id} className="story-tag">
+                  <span key={tag.id} className="story-tag">
                     {tag.thumb_url && (
                       <img 
                         src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
@@ -142,13 +141,8 @@ const StoryView = () => {
                         }}
                       />
                     )}
-                    <div className="tag-info">
-                      <span className="tag-title">{tag.title}</span>
-                      {tag.short_description && (
-                        <span className="tag-description">{tag.short_description}</span>
-                      )}
-                    </div>
-                  </div>
+                    <span className="tag-title">{tag.title}</span>
+                  </span>
                 ))}
               </div>
             </div>
@@ -156,15 +150,34 @@ const StoryView = () => {
         </div>
       </div>
 
-      <div className="story-footer">
-        <div className="story-actions-bottom">
-          <Link to={`/stories/${id}/edit`} className="btn btn-primary">
-            <i className="fas fa-edit"></i> Edit Story
-          </Link>
-          <Link to="/stories" className="btn btn-outline-secondary">
-            <i className="fas fa-list"></i> All Stories
-          </Link>
+      {/* Tag Management Section */}
+      <div className="tag-management-section">
+        <div className="section-header">
+          <h2>Tag Management</h2>
+          <button 
+            className="btn btn-outline-primary"
+            onClick={() => setShowTagManagement(!showTagManagement)}
+          >
+            {showTagManagement ? 'Hide Tag Management' : 'Show Tag Management'}
+          </button>
         </div>
+        
+        {showTagManagement && (
+          <div className="tag-management-content">
+            <p className="section-description">
+              Use the intelligent tag system below to manage your story's tags. 
+              The AI will learn from your choices to provide better suggestions.
+            </p>
+            <IntelligentTagSelector
+              storyId={id}
+              onTagsChange={(newTags) => {
+                setStory(prev => ({ ...prev, tags: newTags }));
+              }}
+              disabled={false}
+              title="Story Tag Management"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

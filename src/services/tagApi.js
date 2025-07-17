@@ -63,5 +63,8 @@ export const tagApi = {
         // Persist multiple AI-suggested tags
         batchPersistAISuggestedTags: (virtualTagsData) => api.post('/tags/batch-persist-ai-suggested', {
             virtualTagsData
-        }).then(res => res.data)
+        }).then(res => res.data),
+
+        // Get AI tag suggestions for adding/removing tags
+        getAITagSuggestions: (data) => api.post('/tags/ai-suggestions', data).then(res => res.data)
 };

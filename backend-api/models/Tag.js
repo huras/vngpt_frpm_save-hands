@@ -162,6 +162,18 @@ module.exports = (sequelize, Sequelize) => {
             through: 'story_tags', // Link table for the many-to-many relationship
             as: 'stories'
         });
+
+        // One-to-Many relationship with TagSuggestion
+        Tag.hasMany(models.TagSuggestion, {
+            foreignKey: 'tagId',
+            as: 'suggestions'
+        });
+
+        // One-to-Many relationship with StoryTagReasoning
+        Tag.hasMany(models.StoryTagReasoning, {
+            foreignKey: 'tagId',
+            as: 'reasonings'
+        });
     };
 
     return Tag;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { tagApi } from '../services/tagApi';
 import { BACKEND_CONFIG } from '../config/backend';
 import TagRecommendationSlot from './TagRecommendationSlot';
+import TagRecommendation from './TagRecommendation';
 import SelectedTagSlot from './SelectedTagSlot';
 import './TagSelector.scss';
 // Swiper imports
@@ -17,11 +18,14 @@ const TagSelector = ({
   title = 'Select your favorite genres:',
   size = 3, // 1-5 for different card sizes
   showAIRecommendations = true,
-  storyBrainstorm = null
+  storyBrainstorm = null,
+  showAllTags = false,
+  onShowAllTagsChange = null
 }) => {
   const [availableTags, setAvailableTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [useSmartRecommendations, setUseSmartRecommendations] = useState(false);
 
   useEffect(() => {
     fetchTags();
@@ -91,6 +95,10 @@ const TagSelector = ({
     handleTagToggle(tag);
   };
 
+  const handleRecommendationRemove = (tag) => {
+    handleRemoveTag(tag);
+  };
+
   const filteredTags = availableTags.filter(tag => 
     tag.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -99,10 +107,35 @@ const TagSelector = ({
     return selectedTags.some(selectedTag => selectedTag.id === tag.id);
   };
 
+  // Determine if carousel should be shown
+  const shouldShowCarousel = showAllTags || searchTerm.trim().length > 0;
+
   return (
     <div className="netflix-tag-selector">
       {/* Title */}
       <h2 className="selector-title">{title}</h2>
+      
+      {/* Browse All Tags Toggle */}
+      {!disabled && (
+        <div className="browse-toggle-container">
+          <div className="form-check">
+            <input
+              type="checkbox"
+              id="showAllTags"
+              className="form-check-input"
+              checked={showAllTags}
+              onChange={(e) => onShowAllTagsChange && onShowAllTagsChange(e.target.checked)}
+            />
+            <label htmlFor="showAllTags" className="form-check-label">
+              Browse All Tags
+            </label>
+          </div>
+          <small className="form-text text-muted">
+            Show all available tags in a carousel for manual selection.
+          </small>
+        </div>
+      )}
+
       {/* Search Bar */}
       {!disabled && (
         <div className="search-container">
@@ -115,6 +148,7 @@ const TagSelector = ({
           />
         </div>
       )}
+      
       {/* Selected Tags Summary */}
       {selectedTags.length > 0 && (
         <div className="selected-summary">
@@ -123,94 +157,130 @@ const TagSelector = ({
           </span>
         </div>
       )}
-      {/* Netflix-style Carousel with Swiper */}
-      <div className="carousel-wrapper">
-        {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Loading genres...</p>
-          </div>
-        ) : filteredTags.length === 0 ? (
-          <div className="no-results">
-            <p>{searchTerm ? 'No genres found matching your search.' : 'No genres available.'}</p>
-          </div>
-        ) : (
-          <Swiper
-            modules={[Navigation]}
-            navigation
-            spaceBetween={16}
-            slidesPerView={4}
-            breakpoints={{
-              1200: { slidesPerView: 4 },
-              900: { slidesPerView: 3 },
-              600: { slidesPerView: 2.5 },
-              0: { slidesPerView: 1 }
-            }}
-            className="carousel"
-          >
-            {filteredTags.map(tag => (
-              <SwiperSlide key={tag.id}>
-                <div
-                  className={`tag-card size-${size} ${isTagSelected(tag) ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
-                  onClick={() => handleTagToggle(tag)}
-                >
-                  <div className="card-image">
-                    {tag.thumb_url ? (
-                      <img 
-                        src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
-                        alt={tag.title} 
-                        className="tag-image"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.parentElement.classList.add('no-image');
-                        }}
-                      />
-                    ) : (
-                      <div className="no-image-placeholder">
-                        <span>{tag.title.charAt(0).toUpperCase()}</span>
-                      </div>
-                    )}
-                    {isTagSelected(tag) && (
-                      <div className="selected-overlay">
-                        <span className="checkmark">✓</span>
-                      </div>
-                    )}
+      
+      {/* Netflix-style Carousel with Swiper - Only show when toggled or search is active */}
+      {shouldShowCarousel && (
+        <div className="carousel-wrapper">
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading genres...</p>
+            </div>
+          ) : filteredTags.length === 0 ? (
+            <div className="no-results">
+              <p>{searchTerm ? 'No genres found matching your search.' : 'No genres available.'}</p>
+            </div>
+          ) : (
+            <Swiper
+              modules={[Navigation]}
+              navigation
+              spaceBetween={16}
+              slidesPerView={4}
+              breakpoints={{
+                1200: { slidesPerView: 4 },
+                900: { slidesPerView: 3 },
+                600: { slidesPerView: 2.5 },
+                0: { slidesPerView: 1 }
+              }}
+              className="carousel"
+            >
+              {filteredTags.map(tag => (
+                <SwiperSlide key={tag.id}>
+                  <div
+                    className={`tag-card size-${size} ${isTagSelected(tag) ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
+                    onClick={() => handleTagToggle(tag)}
+                  >
+                    <div className="card-image">
+                      {tag.thumb_url ? (
+                        <img 
+                          src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
+                          alt={tag.title} 
+                          className="tag-image"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.classList.add('no-image');
+                          }}
+                        />
+                      ) : (
+                        <div className="no-image-placeholder">
+                          <span>{tag.title.charAt(0).toUpperCase()}</span>
+                        </div>
+                      )}
+                      {isTagSelected(tag) && (
+                        <div className="selected-overlay">
+                          <span className="checkmark">✓</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="card-content">
+                      <h3 className="card-title">{tag.title}</h3>
+                      {tag.short_description && (
+                        <p className="card-description">{tag.short_description}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="card-content">
-                    <h3 className="card-title">{tag.title}</h3>
-                    {tag.short_description && (
-                      <p className="card-description">{tag.short_description}</p>
-                    )}
-                  </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        )}
-      </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          )}
+        </div>
+      )}
 
-      {/* AI Recommendations */}
-      {showAIRecommendations && selectedTags.length > 0 && (
+      {/* AI Recommendations - Show even without selected tags when enabled */}
+      {showAIRecommendations && (
         <div className="ai-recommendations-section">
           <div className="recommendations-header">
             <h3>AI Recommendations</h3>
-            <p>Discover genres that complement your selection</p>
-          </div>
-          <div className="row">
-            {[...Array(4)].map((_, idx) => (
-              <div className="col-12 col-md-6 col-lg-3" key={idx}>
-                <TagRecommendationSlot
-                  slotId={idx}
-                  baseTags={selectedTags}
-                  onTagSelect={handleRecommendationSelect}
-                  disabled={disabled}
-                  selectedTags={selectedTags}
-                  storyBrainstorm={storyBrainstorm}
-                  onSlotEmpty={() => {}}
+            <div className="recommendation-controls">
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  id="useSmartRecommendations"
+                  className="form-check-input"
+                  checked={useSmartRecommendations}
+                  onChange={(e) => setUseSmartRecommendations(e.target.checked)}
                 />
+                <label htmlFor="useSmartRecommendations" className="form-check-label">
+                  Smart Suggestions
+                </label>
               </div>
-            ))}
+            </div>
+            <p>
+              {useSmartRecommendations 
+                ? 'Get intelligent suggestions for adding or removing tags based on your actions'
+                : selectedTags.length > 0 
+                  ? 'Discover genres that complement your selection'
+                  : 'Get personalized genre suggestions based on your brainstorm content'
+              }
+            </p>
           </div>
+          
+          {useSmartRecommendations ? (
+            <TagRecommendation
+              selectedTags={selectedTags}
+              onTagSelect={handleRecommendationSelect}
+              onTagRemove={handleRecommendationRemove}
+              disabled={disabled}
+              storyBrainstorm={storyBrainstorm}
+              title="Smart Tag Suggestions"
+            />
+          ) : (
+            <div className="row">
+              {[...Array(4)].map((_, idx) => (
+                <div className="col-12 col-md-6 col-lg-3" key={idx}>
+                  <TagRecommendationSlot
+                    slotId={idx}
+                    baseTags={selectedTags}
+                    onTagSelect={handleRecommendationSelect}
+                    disabled={disabled}
+                    selectedTags={selectedTags}
+                    storyBrainstorm={storyBrainstorm}
+                    onSlotEmpty={() => {}}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -125,6 +125,59 @@
             }
         }
     }
+    &.empty-slot {
+        background: rgba(26, 26, 26, 0.6);
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        cursor: default;
+        &:hover {
+            transform: none;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .empty-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            i {
+                color: rgba(255, 255, 255, 0.4);
+                font-size: 2rem;
+            }
+        }
+        .empty-title {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .empty-message {
+            .retry-btn {
+                background: rgba(0, 212, 255, 0.2);
+                border: 1px solid rgba(0, 212, 255, 0.3);
+                color: #00d4ff;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 0.8rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                &:hover {
+                    background: rgba(0, 212, 255, 0.3);
+                    border-color: rgba(0, 212, 255, 0.5);
+                }
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                i {
+                    font-size: 0.7rem;
+                }
+            }
+        }
+    }
     .recommendation-image {
         width: 100%;
         height: 244px;

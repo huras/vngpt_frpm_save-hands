@@ -11,6 +11,41 @@
         padding: 0 20px;
         color: white;
     }
+    .browse-toggle-container {
+        padding: 0 20px;
+        margin-bottom: 20px;
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            .form-check-input {
+                width: 18px;
+                height: 18px;
+                margin: 0;
+                cursor: pointer;
+                &:checked {
+                    background-color: #e50914;
+                    border-color: #e50914;
+                }
+                &:focus {
+                    box-shadow: 0 0 0 0.2rem rgba(229, 9, 20, 0.25);
+                }
+            }
+            .form-check-label {
+                font-size: 1rem;
+                font-weight: 500;
+                color: white;
+                cursor: pointer;
+                margin: 0;
+            }
+        }
+        .form-text {
+            font-size: 0.85rem;
+            color: #999;
+            margin: 0;
+        }
+    }
     .search-container {
         padding: 0 20px;
         margin-bottom: 20px;
@@ -102,6 +137,34 @@
                 font-weight: 600;
                 margin: 0 0 8px 0;
                 color: white;
+            }
+            .recommendation-controls {
+                margin-bottom: 10px;
+                .form-check {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    .form-check-input {
+                        width: 18px;
+                        height: 18px;
+                        margin: 0;
+                        cursor: pointer;
+                        &:checked {
+                            background-color: #00d4ff;
+                            border-color: #00d4ff;
+                        }
+                        &:focus {
+                            box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+                        }
+                    }
+                    .form-check-label {
+                        font-size: 0.9rem;
+                        font-weight: 500;
+                        color: #00d4ff;
+                        cursor: pointer;
+                        margin: 0;
+                    }
+                }
             }
             p {
                 font-size: 0.9rem;

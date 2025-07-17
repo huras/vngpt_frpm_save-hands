@@ -183,8 +183,9 @@ router.post('/ai-recommendations', async(req, res) => {
     try {
         const { tagIds, limit = 8, storyBrainstorm, forceNew = false, focusedMode = false, focusTagId = null } = req.body;
 
-        if (!tagIds || !Array.isArray(tagIds) || tagIds.length === 0) {
-            return res.status(400).json({ error: 'tagIds array is required and must not be empty.' });
+        // Allow empty tagIds array for content-based recommendations
+        if (!tagIds || !Array.isArray(tagIds)) {
+            return res.status(400).json({ error: 'tagIds must be an array.' });
         }
 
         const result = await tagService.getAIRecommendations(tagIds, parseInt(limit), storyBrainstorm, forceNew, focusedMode, focusTagId);
@@ -192,6 +193,27 @@ router.post('/ai-recommendations', async(req, res) => {
     } catch (error) {
         console.error('Error fetching AI recommendations:', error);
         res.status(500).json({ error: 'An error occurred while fetching AI recommendations.' });
+    }
+});
+
+// POST /tags/ai-suggestions - Get AI suggestions for adding/removing tags
+router.post('/ai-suggestions', async(req, res) => {
+    try {
+        const { selectedTags, action, changedTag, storyBrainstorm } = req.body;
+
+        if (!selectedTags || !Array.isArray(selectedTags)) {
+            return res.status(400).json({ error: 'selectedTags must be an array.' });
+        }
+
+        if (!action || !['add', 'remove', 'initial', 'refresh'].includes(action)) {
+            return res.status(400).json({ error: 'action must be one of: add, remove, initial, refresh.' });
+        }
+
+        const result = await tagService.getAITagSuggestions(selectedTags, action, changedTag, storyBrainstorm);
+        res.json(result);
+    } catch (error) {
+        console.error('Error fetching AI tag suggestions:', error);
+        res.status(500).json({ error: 'An error occurred while fetching AI tag suggestions.' });
     }
 });
 
