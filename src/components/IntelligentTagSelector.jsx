@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BACKEND_CONFIG } from '../config/backend';
 import { intelligentTagApi } from '../services/intelligentTagApi';
+import TagImagePopup from './TagImagePopup';
 import './IntelligentTagSelector.scss';
 
 const IntelligentTagSelector = ({ 
@@ -23,6 +24,9 @@ const IntelligentTagSelector = ({
   const [searching, setSearching] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
   const [manualTag, setManualTag] = useState({ tagId: '', reasoning: '', userExplanation: '' });
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [rejectingSuggestion, setRejectingSuggestion] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   // Fetch initial data
   useEffect(() => {
@@ -113,10 +117,30 @@ const IntelligentTagSelector = ({
       
       if (response.data.success) {
         await fetchSuggestions();
+        setShowRejectionModal(false);
+        setRejectingSuggestion(null);
+        setRejectionReason('');
       }
     } catch (error) {
       console.error('Error rejecting suggestion:', error);
     }
+  };
+
+  const handleRejectClick = (suggestion) => {
+    setRejectingSuggestion(suggestion);
+    setShowRejectionModal(true);
+  };
+
+  const handleRejectConfirm = () => {
+    if (rejectingSuggestion) {
+      rejectSuggestion(rejectingSuggestion.id, rejectionReason);
+    }
+  };
+
+  const handleRejectCancel = () => {
+    setShowRejectionModal(false);
+    setRejectingSuggestion(null);
+    setRejectionReason('');
   };
 
   const searchTags = useCallback(async (query) => {
@@ -287,6 +311,15 @@ const IntelligentTagSelector = ({
                       <h5>{tag.title}</h5>
                       <p>{tag.short_description}</p>
                     </div>
+                    {tag.thumb_url && (
+                      <TagImagePopup tag={tag} position="left">
+                        <img 
+                          src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
+                          alt={tag.title} 
+                          className="search-result-thumb"
+                        />
+                      </TagImagePopup>
+                    )}
                     {manualTag.tagId === tag.id && <span className="selected-indicator">✓</span>}
                   </div>
                 ))}
@@ -328,11 +361,13 @@ const IntelligentTagSelector = ({
               <div key={reasoning.id} className="selected-tag-item">
                 <div className="tag-card">
                   {reasoning.tag.thumb_url && (
-                    <img 
-                      src={BACKEND_CONFIG.getImageUrl(reasoning.tag.thumb_url)} 
-                      alt={reasoning.tag.title} 
-                      className="tag-thumb"
-                    />
+                    <TagImagePopup tag={reasoning.tag} position="top">
+                      <img 
+                        src={BACKEND_CONFIG.getImageUrl(reasoning.tag.thumb_url)} 
+                        alt={reasoning.tag.title} 
+                        className="tag-thumb"
+                      />
+                    </TagImagePopup>
                   )}
                   <div className="tag-content">
                     <h5>{reasoning.tag.title}</h5>
@@ -364,11 +399,13 @@ const IntelligentTagSelector = ({
               <div key={suggestion.id} className="suggestion-item">
                 <div className="suggestion-card">
                   {suggestion.tag.thumb_url && (
-                    <img 
-                      src={BACKEND_CONFIG.getImageUrl(suggestion.tag.thumb_url)} 
-                      alt={suggestion.tag.title} 
-                      className="tag-thumb"
-                    />
+                    <TagImagePopup tag={suggestion.tag} position="top">
+                      <img 
+                        src={BACKEND_CONFIG.getImageUrl(suggestion.tag.thumb_url)} 
+                        alt={suggestion.tag.title} 
+                        className="tag-thumb"
+                      />
+                    </TagImagePopup>
                   )}
                   <div className="suggestion-content">
                     <h5>{suggestion.tag.title}</h5>
@@ -391,7 +428,7 @@ const IntelligentTagSelector = ({
                     </button>
                     <button 
                       className="btn btn-danger btn-sm"
-                      onClick={() => rejectSuggestion(suggestion.id)}
+                      onClick={() => handleRejectClick(suggestion)}
                       disabled={disabled}
                     >
                       Reject
@@ -403,6 +440,59 @@ const IntelligentTagSelector = ({
           </div>
         )}
       </div>
+
+      {/* Rejection Modal */}
+      {showRejectionModal && rejectingSuggestion && (
+        <div className="modal-overlay">
+          <div className="modal-content rejection-modal">
+            <div className="modal-header">
+              <h5 className="modal-title">Reject Suggestion</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={handleRejectCancel}
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="rejection-preview">
+                <h6>Rejecting: {rejectingSuggestion.tag.title}</h6>
+                <p className="text-muted">{rejectingSuggestion.reasoning}</p>
+              </div>
+              <div className="form-group">
+                <label htmlFor="rejectionReason">Why are you rejecting this suggestion?</label>
+                <textarea
+                  id="rejectionReason"
+                  className="form-control"
+                  rows={3}
+                  placeholder="Please provide a reason for rejecting this suggestion. This helps the AI learn and provide better suggestions in the future..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                />
+                <small className="form-text text-muted">
+                  Your feedback helps improve future suggestions for this story.
+                </small>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleRejectCancel}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleRejectConfirm}
+                disabled={!rejectionReason.trim()}
+              >
+                Reject Suggestion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

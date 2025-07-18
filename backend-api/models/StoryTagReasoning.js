@@ -28,7 +28,7 @@ module.exports = (sequelize, Sequelize) => {
         reasoning: {
             type: Sequelize.TEXT,
             allowNull: false,
-            comment: 'The reasoning behind why this tag was chosen for the story'
+            comment: 'The current reasoning behind why this tag was chosen for the story (references current AI commentary)'
         },
         source: {
             type: Sequelize.ENUM('ai_suggestion', 'manual_choice', 'user_explanation'),
@@ -56,6 +56,17 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.TEXT,
             allowNull: true,
             comment: 'JSON array of tag IDs that were present when this reasoning was created'
+        },
+        currentCommentaryId: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'AICommentaries',
+                key: 'id'
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'SET NULL',
+            comment: 'Reference to the current AI commentary for this story-tag relationship'
         },
         createdAt: {
             allowNull: false,
@@ -100,6 +111,11 @@ module.exports = (sequelize, Sequelize) => {
         StoryTagReasoning.belongsTo(models.TagSuggestion, {
             foreignKey: 'suggestionId',
             as: 'originalSuggestion'
+        });
+        
+        StoryTagReasoning.belongsTo(models.AICommentary, {
+            foreignKey: 'currentCommentaryId',
+            as: 'currentCommentary'
         });
     };
 

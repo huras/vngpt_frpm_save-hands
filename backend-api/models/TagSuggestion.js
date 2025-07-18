@@ -52,6 +52,11 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: true,
             comment: 'When the user rejected this suggestion'
         },
+        rejectionReason: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+            comment: 'Reason provided by user for rejecting this suggestion'
+        },
         suggestionType: {
             type: Sequelize.ENUM('ai_generated', 'manual_search', 'similar_story'),
             allowNull: false,

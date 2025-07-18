@@ -39,5 +39,30 @@ export const intelligentTagApi = {
 
   // Re-evaluate existing suggestions
   reevaluateSuggestions: (storyId) => 
-    api.post(`/intelligent-tags/suggestions/${storyId}/reevaluate`)
+    api.post(`/intelligent-tags/suggestions/${storyId}/reevaluate`),
+
+  // Get rejection statistics
+  getRejectionStatistics: (storyId = null) => {
+    const params = storyId ? `?storyId=${storyId}` : '';
+    return api.get(`/intelligent-tags/statistics${params}`);
+  },
+
+  // AI Commentary endpoints
+  getCommentary: (storyId, tagId) => 
+    api.get(`/intelligent-tags/commentaries/${storyId}/${tagId}`),
+
+  getCommentaryHistory: (storyId, tagId) => 
+    api.get(`/intelligent-tags/commentaries/${storyId}/${tagId}/history`),
+
+  updateCommentary: (storyId, tagId, commentary, userFeedback = null) => 
+    api.put(`/intelligent-tags/commentaries/${storyId}/${tagId}`, { commentary, userFeedback }),
+
+  getStoryCommentaries: (storyId) => 
+    api.get(`/intelligent-tags/commentaries/${storyId}`),
+
+  analyzeCommentary: (commentary) => 
+    api.post(`/intelligent-tags/commentaries/analyze`, { commentary }),
+
+  getCommentaryStats: (storyId) => 
+    api.get(`/intelligent-tags/commentaries/${storyId}/stats`)
 }; 

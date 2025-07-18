@@ -724,6 +724,9 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
                 return [];
             }
 
+            // Get rejection learning data for this story
+            const rejectionLearning = await this.getRejectionLearningData(story.id);
+            
             const prompt = `Based on this story and its current tag selections, generate ${limit} intelligent tag suggestions.
 
 Story Context:
@@ -736,15 +739,25 @@ ${storyContext.currentTags.map(tag => `- ${tag.title}: ${tag.description} (Categ
 Previous Tag Choices and Reasoning:
 ${storyContext.tagReasonings.map(reasoning => `- ${reasoning.tagTitle}: ${reasoning.reasoning} (Source: ${reasoning.source})${reasoning.userExplanation ? ` - User: ${reasoning.userExplanation}` : ''}`).join('\n')}
 
-Available Tags:
-${availableTags.map(tag => `- ${tag.title}: ${tag.short_description || ''} (Category: ${tag.category || ''}, Keywords: ${tag.keywords || ''})`).join('\n')}
+${rejectionLearning.rejections.length > 0 ? `Rejected Tags and Reasons:
+${rejectionLearning.rejections.map(rejection => `- ${rejection.tagTitle} (${rejection.tagCategory}): ${rejection.rejectionReason || 'No reason provided'}`).join('\n')}
+
+Learning from Rejections:
+- Avoid suggesting tags from these categories: ${rejectionLearning.avoidCategories.join(', ') || 'None'}
+- Common rejection reasons: ${rejectionLearning.commonReasons.join(', ') || 'None'}
+- User preferences: ${rejectionLearning.userPreferences.join(', ') || 'None'}
+
+` : ''}Available Tags:
+${availableTags.map(tag => `- ID: ${tag.id}, Title: ${tag.title}: ${tag.short_description || ''} (Category: ${tag.category || ''}, Keywords: ${tag.keywords || ''})`).join('\n')}
 
 Generate a JSON response with:
 1. "suggestions": Array of ${limit} objects with:
-   - "tagId": The ID of the suggested tag
+   - "tagId": The NUMERIC ID of the suggested tag (use the ID number from the available tags list above)
    - "reasoning": Detailed explanation of why this tag fits the story based on current context
    - "confidence": Confidence score (0-1) for this suggestion
    - "relevance": How relevant this tag is to the story direction
+
+IMPORTANT: The "tagId" must be the numeric ID from the available tags list above, NOT the tag title. For example, if you want to suggest "Fantasy", use the ID number associated with that tag.
 
 Consider:
 - The story's current direction based on existing tags
@@ -752,6 +765,9 @@ Consider:
 - How new tags would complement existing ones
 - The story's themes, genre, and content
 - User's expressed preferences through their choices
+${rejectionLearning.rejections.length > 0 ? `- Avoid suggesting tags similar to previously rejected ones
+- Focus on categories and themes the user has shown preference for
+- Consider the specific reasons given for rejections` : ''}
 
 Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
 
@@ -776,14 +792,28 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
             // Map suggestions to actual tag objects
             const suggestions = result.suggestions
                 .map(suggestion => {
-                    const tag = availableTags.find(t => t.id === suggestion.tagId);
+                    let tag = null;
+                    
+                    // First try to find by ID
+                    if (typeof suggestion.tagId === 'number') {
+                        tag = availableTags.find(t => t.id === suggestion.tagId);
+                    }
+                    
+                    // If not found by ID, try to find by title (fallback for when AI returns names instead of IDs)
+                    if (!tag && typeof suggestion.tagId === 'string') {
+                        tag = availableTags.find(t => t.title.toLowerCase() === suggestion.tagId.toLowerCase());
+                        if (tag) {
+                            console.log(`Found tag by title fallback: ${suggestion.tagId} -> ID ${tag.id}`);
+                        }
+                    }
+                    
                     if (!tag) {
-                        console.log(`Tag with ID ${suggestion.tagId} not found in available tags`);
+                        console.log(`Tag with ID/title "${suggestion.tagId}" not found in available tags`);
                         return null;
                     }
                     
                     return {
-                        tagId: suggestion.tagId,
+                        tagId: tag.id, // Always use the actual tag ID
                         tag: tag,
                         reasoning: suggestion.reasoning,
                         confidence: suggestion.confidence || 0.8,
@@ -875,6 +905,105 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
                 reasoning: originalReasoning,
                 confidence: 0.5,
                 stillRelevant: true
+            };
+        }
+    }
+
+    /**
+     * Get rejection learning data for a story to improve future suggestions
+     */
+    async getRejectionLearningData(storyId) {
+        try {
+            const { TagSuggestion, Tag } = require('../models');
+
+            // Get rejected suggestions for this story
+            const rejections = await TagSuggestion.findAll({
+                where: { 
+                    storyId,
+                    status: 'rejected'
+                },
+                include: [
+                    { model: Tag, as: 'tag' }
+                ],
+                order: [['rejectedAt', 'DESC']]
+            });
+
+            // Get accepted suggestions for comparison
+            const acceptances = await TagSuggestion.findAll({
+                where: { 
+                    storyId,
+                    status: 'accepted'
+                },
+                include: [
+                    { model: Tag, as: 'tag' }
+                ],
+                order: [['acceptedAt', 'DESC']]
+            });
+
+            // Analyze patterns
+            const rejectedCategories = {};
+            const acceptedCategories = {};
+            const rejectionReasons = {};
+            const userPreferences = [];
+
+            // Analyze rejections
+            rejections.forEach(rejection => {
+                if (rejection.tag.category) {
+                    rejectedCategories[rejection.tag.category] = 
+                        (rejectedCategories[rejection.tag.category] || 0) + 1;
+                }
+                
+                if (rejection.rejectionReason) {
+                    const reason = rejection.rejectionReason.toLowerCase();
+                    rejectionReasons[reason] = (rejectionReasons[reason] || 0) + 1;
+                }
+            });
+
+            // Analyze acceptances
+            acceptances.forEach(acceptance => {
+                if (acceptance.tag.category) {
+                    acceptedCategories[acceptance.tag.category] = 
+                        (acceptedCategories[acceptance.tag.category] || 0) + 1;
+                }
+            });
+
+            // Determine categories to avoid (rejected more than accepted)
+            const avoidCategories = Object.keys(rejectedCategories).filter(category => {
+                const rejectedCount = rejectedCategories[category] || 0;
+                const acceptedCount = acceptedCategories[category] || 0;
+                return rejectedCount > acceptedCount;
+            });
+
+            // Extract common rejection reasons
+            const commonReasons = Object.keys(rejectionReasons)
+                .sort((a, b) => rejectionReasons[b] - rejectionReasons[a])
+                .slice(0, 5);
+
+            // Determine user preferences based on acceptances
+            const preferredCategories = Object.keys(acceptedCategories)
+                .sort((a, b) => acceptedCategories[b] - acceptedCategories[a])
+                .slice(0, 3);
+
+            userPreferences.push(...preferredCategories.map(cat => `Prefers ${cat} category`));
+
+            return {
+                rejections: rejections.map(r => ({
+                    tagTitle: r.tag.title,
+                    tagCategory: r.tag.category,
+                    rejectionReason: r.rejectionReason
+                })),
+                avoidCategories,
+                commonReasons,
+                userPreferences
+            };
+
+        } catch (error) {
+            console.error('Error getting rejection learning data:', error);
+            return {
+                rejections: [],
+                avoidCategories: [],
+                commonReasons: [],
+                userPreferences: []
             };
         }
     }

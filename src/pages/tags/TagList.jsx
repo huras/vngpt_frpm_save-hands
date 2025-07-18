@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { tagApi } from '../../services/tagApi';
 import { BACKEND_CONFIG } from '../../config/backend';
+import TagImagePopup from '../../components/TagImagePopup';
 import './TagList.scss';
 
 const TagList = () => {
@@ -37,11 +38,13 @@ const TagList = () => {
             <div className="col-md-4 col-lg-3" key={tag.id}>
               <div className="card tag-card h-100">
                 {tag.thumb_url && (
-                  <img
-                    src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)}
-                    alt={tag.title}
-                    className="card-img-top tag-thumb-img"
-                  />
+                  <TagImagePopup tag={tag} position="top">
+                    <img
+                      src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)}
+                      alt={tag.title}
+                      className="card-img-top tag-thumb-img"
+                    />
+                  </TagImagePopup>
                 )}
                 <div className="card-body">
                   <h5 className="card-title">{tag.title}</h5>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { tagApi } from '../../services/tagApi';
 import { BACKEND_CONFIG } from '../../config/backend';
+import TagImagePopup from '../../components/TagImagePopup';
 
 const TagView = () => {
   const { id } = useParams();
@@ -36,11 +37,13 @@ const TagView = () => {
     <div className="container py-4">
       <div className="d-flex align-items-center mb-4">
         {tag.thumb_url && (
-          <img
-            src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)}
-            alt={tag.title}
-            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 12, marginRight: 24 }}
-          />
+          <TagImagePopup tag={tag} position="right">
+            <img
+              src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)}
+              alt={tag.title}
+              style={{ width: 150, height: 150, objectFit: 'cover', borderRadius: 12, marginRight: 24 }}
+            />
+          </TagImagePopup>
         )}
         <div>
           <h2 className="mb-1">{tag.title}</h2>

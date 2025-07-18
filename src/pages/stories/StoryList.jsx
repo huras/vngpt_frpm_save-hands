@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
 import { BACKEND_CONFIG } from '../../config/backend';
+import TagImagePopup from '../../components/TagImagePopup';
 import './StoryList.scss';
 
 const StoryList = () => {
@@ -192,14 +193,16 @@ const StoryList = () => {
                     {story.tags.map(tag => (
                       <span key={tag.id} className="story-tag">
                         {tag.thumb_url && (
-                          <img 
-                            src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
-                            alt={tag.title} 
-                            className="tag-thumb"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
-                          />
+                          <TagImagePopup tag={tag} position="top">
+                            <img 
+                              src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
+                              alt={tag.title} 
+                              className="tag-thumb"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          </TagImagePopup>
                         )}
                         <span className="tag-title">{tag.title}</span>
                       </span>
