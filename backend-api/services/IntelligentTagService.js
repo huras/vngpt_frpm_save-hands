@@ -697,6 +697,21 @@ class IntelligentTagService {
     }
 
     /**
+     * Create new AI commentary (replaces current one)
+     */
+    async createCommentary(storyId, tagId, commentary, userFeedback = null, triggerType = 'user_feedback') {
+        try {
+            return await this.commentaryService.createCommentary(storyId, tagId, commentary, {
+                userFeedback,
+                triggerType
+            });
+        } catch (error) {
+            console.error('Error creating commentary:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get all commentaries for a story
      */
     async getStoryCommentaries(storyId) {
@@ -765,6 +780,222 @@ class IntelligentTagService {
         } catch (error) {
             console.error('Error checking if re-evaluation is needed:', error);
             return false;
+        }
+    }
+
+    /**
+     * Generate AI directive for how to use a tag effectively in a story
+     */
+    async generateTagDirective(storyId, tagId, storyTitle = null, storyBrainstorm = null) {
+        try {
+            const story = await Story.findByPk(storyId, {
+                include: [
+                    { model: Tag, as: 'tags' },
+                    { 
+                        model: StoryTagReasoning, 
+                        as: 'tagReasonings',
+                        include: [{ model: Tag, as: 'tag' }]
+                    }
+                ]
+            });
+
+            if (!story) {
+                throw new Error('Story not found');
+            }
+
+            const tag = await Tag.findByPk(tagId);
+            if (!tag) {
+                throw new Error('Tag not found');
+            }
+
+            // Use provided story data or fall back to database data
+            const title = storyTitle || story.title;
+            const brainstorm = storyBrainstorm || story.brainstorm;
+
+            // Get current tag directives for context
+            const currentDirectives = story.tagReasonings.map(reasoning => ({
+                tagTitle: reasoning.tag.title,
+                directive: reasoning.reasoning
+            }));
+
+            const prompt = `Generate a comprehensive directive for how to effectively use this anime/manga tag in this story.
+
+Story Context:
+- Title: ${title}
+- Brainstorm/Content: ${brainstorm || 'No brainstorm provided'}
+
+Current Tags and Their Directives:
+${currentDirectives.map(d => `- ${d.tagTitle}: ${d.directive}`).join('\n')}
+
+Tag to Generate Directive For:
+- ${tag.title}: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})
+
+Please provide a comprehensive directive that:
+1. **General Approach**: Outlines the overall strategy for incorporating this tag into the story
+2. **Story Integration**: Explains how this tag can be woven into the narrative, characters, or world-building
+3. **Complementary Usage**: Shows how it works with the existing tags and story elements
+4. **Creative Opportunities**: Identifies specific creative possibilities this tag opens up
+5. **Avoiding Clichés**: Suggests ways to use this tag in fresh, original ways
+6. **Audience Appeal**: Explains how this tag enhances the story's appeal to its target audience
+
+Consider:
+- The story's current direction and themes
+- How this tag can enhance existing story elements
+- Creative ways to implement this tag that feel natural and engaging
+- The synergy between this tag and the current tag selection
+- Potential plot points, character development, or world-building opportunities
+
+Return only the directive text, no JSON formatting or additional text. Make it practical, creative, and inspiring.`;
+
+            const response = await this.aiService.openai.chat.completions.create({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "system", content: prompt }],
+                temperature: 0.8,
+                max_tokens: 500
+            });
+
+            return response.choices[0].message.content.trim();
+        } catch (error) {
+            console.error('Error generating tag directive:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Generate AI explanation for why a tag fits a story (legacy method)
+     */
+    async generateTagExplanation(storyId, tagId, storyTitle = null, storyBrainstorm = null) {
+        try {
+            const story = await Story.findByPk(storyId, {
+                include: [
+                    { model: Tag, as: 'tags' },
+                    { 
+                        model: StoryTagReasoning, 
+                        as: 'tagReasonings',
+                        include: [{ model: Tag, as: 'tag' }]
+                    }
+                ]
+            });
+
+            if (!story) {
+                throw new Error('Story not found');
+            }
+
+            const tag = await Tag.findByPk(tagId);
+            if (!tag) {
+                throw new Error('Tag not found');
+            }
+
+            // Use provided story data or fall back to database data
+            const title = storyTitle || story.title;
+            const brainstorm = storyBrainstorm || story.brainstorm;
+
+            const prompt = `Generate a detailed explanation for why this anime/manga tag fits this story.
+
+Story Context:
+- Title: ${title}
+- Brainstorm/Content: ${brainstorm || 'No brainstorm provided'}
+
+Current Tags:
+${story.tags.map(t => `- ${t.title}: ${t.short_description} (Category: ${t.category})`).join('\n')}
+
+Tag to Explain:
+- ${tag.title}: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})
+
+Please provide a detailed explanation that:
+1. Explains how this tag specifically relates to the story's content, themes, or style
+2. Shows how it complements or enhances the existing tag selection
+3. Provides concrete reasoning based on the story's elements
+4. Avoids generic statements like "this tag might fit your story"
+5. Is specific and insightful about the story-tag relationship
+
+Return only the explanation text, no JSON formatting or additional text.`;
+
+            const response = await this.aiService.openai.chat.completions.create({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "system", content: prompt }],
+                temperature: 0.7,
+                max_tokens: 300
+            });
+
+            return response.choices[0].message.content.trim();
+        } catch (error) {
+            console.error('Error generating tag explanation:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Rate a tag suggestion
+     */
+    async rateSuggestion(suggestionId, rating, comment = null) {
+        try {
+            const suggestion = await TagSuggestion.findByPk(suggestionId);
+            if (!suggestion) {
+                throw new Error('Suggestion not found');
+            }
+
+            // Validate rating
+            if (rating < 1 || rating > 5) {
+                throw new Error('Rating must be between 1 and 5');
+            }
+
+            // Update the suggestion with rating
+            await suggestion.update({
+                userRating: rating,
+                ratingComment: comment,
+                ratedAt: new Date()
+            });
+
+            // Learn from the rating for future suggestions
+            await this.learnFromRating(suggestion, rating, comment);
+
+            return suggestion;
+        } catch (error) {
+            console.error('Error rating suggestion:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Learn from user ratings to improve future suggestions
+     */
+    async learnFromRating(suggestion, rating, comment) {
+        try {
+            const story = await Story.findByPk(suggestion.storyId, {
+                include: [
+                    { model: Tag, as: 'tags' },
+                    { 
+                        model: StoryTagReasoning, 
+                        as: 'tagReasonings',
+                        include: [{ model: Tag, as: 'tag' }]
+                    }
+                ]
+            });
+
+            // Store learning data for future use in suggestion generation
+            const learningData = {
+                storyId: suggestion.storyId,
+                tagId: suggestion.tagId,
+                rating: rating,
+                comment: comment,
+                suggestionReasoning: suggestion.reasoning,
+                storyContext: {
+                    title: story.title,
+                    brainstorm: story.brainstorm,
+                    currentTags: story.tags.map(t => t.title),
+                    currentDirectives: story.tagReasonings.map(r => r.reasoning)
+                },
+                timestamp: new Date()
+            };
+
+            // This could be stored in a separate learning table or used to update suggestion strategies
+            console.log('Learning from rating:', learningData);
+
+            // For now, we'll use this data to improve the AI service's understanding
+            // In a more sophisticated implementation, this would feed into a learning model
+        } catch (error) {
+            console.error('Error learning from rating:', error);
         }
     }
 }

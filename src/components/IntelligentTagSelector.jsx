@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { BACKEND_CONFIG } from '../config/backend';
 import { intelligentTagApi } from '../services/intelligentTagApi';
 import TagImagePopup from './TagImagePopup';
+import ReasoningDialogTree from './ReasoningDialogTree';
+import StarRating from './StarRating';
 import './IntelligentTagSelector.scss';
 
 const IntelligentTagSelector = ({ 
@@ -23,10 +25,19 @@ const IntelligentTagSelector = ({
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
-  const [manualTag, setManualTag] = useState({ tagId: '', reasoning: '', userExplanation: '' });
+  const [manualTag, setManualTag] = useState({ tagId: '', directive: '', userExplanation: '' });
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectingSuggestion, setRejectingSuggestion] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [generatingExplanation, setGeneratingExplanation] = useState(false);
+  const [regeneratingExplanationFor, setRegeneratingExplanationFor] = useState(null);
+  const [editingReasoning, setEditingReasoning] = useState(null);
+  const [reasoningDialogOpen, setReasoningDialogOpen] = useState(false);
+  const [selectedReasoningTag, setSelectedReasoningTag] = useState(null);
+  const [ratingSuggestion, setRatingSuggestion] = useState(null);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [ratingComment, setRatingComment] = useState('');
+  const [ratingSuggestionId, setRatingSuggestionId] = useState(null);
 
   // Fetch initial data
   useEffect(() => {
@@ -111,6 +122,14 @@ const IntelligentTagSelector = ({
     }
   };
 
+  const handleAcceptClick = (suggestion) => {
+    // Show rating modal first, then accept after rating
+    setRatingSuggestion(suggestion);
+    setRatingValue(0);
+    setRatingComment('');
+    setRatingSuggestionId(suggestion.id);
+  };
+
   const rejectSuggestion = async (suggestionId, reason = null) => {
     try {
       const response = await intelligentTagApi.rejectSuggestion(suggestionId, reason);
@@ -164,8 +183,8 @@ const IntelligentTagSelector = ({
   }, []);
 
   const addTagManually = async () => {
-    if (!manualTag.tagId || !manualTag.reasoning) {
-      alert('Please provide both tag and reasoning');
+    if (!manualTag.tagId || !manualTag.directive) {
+      alert('Please provide both tag and directive');
       return;
     }
 
@@ -173,12 +192,12 @@ const IntelligentTagSelector = ({
       const response = await intelligentTagApi.addTagManually(
         storyId, 
         manualTag.tagId, 
-        manualTag.reasoning, 
+        manualTag.directive, 
         manualTag.userExplanation
       );
       
       if (response.data.success) {
-        setManualTag({ tagId: '', reasoning: '', userExplanation: '' });
+        setManualTag({ tagId: '', directive: '', userExplanation: '' });
         setShowManualAdd(false);
         await fetchReasonings();
         await checkReevaluationStatus(); // Refresh the status
@@ -187,6 +206,176 @@ const IntelligentTagSelector = ({
     } catch (error) {
       console.error('Error adding tag manually:', error);
     }
+  };
+
+  const generateDirective = async () => {
+    if (!manualTag.tagId) {
+      alert('Please select a tag first');
+      return;
+    }
+
+    try {
+      setGeneratingExplanation(true);
+      const response = await intelligentTagApi.generateDirective(
+        storyId, 
+        manualTag.tagId
+      );
+      
+      if (response.data.success) {
+        // For manual add, we just update the form state
+        // The directive will be saved when the user clicks "Add Tag"
+        setManualTag(prev => ({ 
+          ...prev, 
+          directive: response.data.data.directive 
+        }));
+      }
+    } catch (error) {
+      console.error('Error generating directive:', error);
+      alert('Failed to generate directive. Please try again.');
+    } finally {
+      setGeneratingExplanation(false);
+    }
+  };
+
+  const regenerateDirective = async (reasoningId, tagId) => {
+    try {
+      setRegeneratingExplanationFor(reasoningId);
+      const response = await intelligentTagApi.generateDirective(
+        storyId, 
+        tagId
+      );
+      
+      if (response.data.success) {
+        // Create a new commentary version with the AI-generated directive
+        const commentaryResponse = await intelligentTagApi.createCommentary(
+          storyId,
+          tagId,
+          response.data.data.directive,
+          'AI Regenerate - User requested new directive',
+          'ai_directive'
+        );
+
+        if (commentaryResponse.data.success) {
+          // Update the reasoning in the local state
+          setReasonings(prev => prev.map(reasoning => 
+            reasoning.id === reasoningId 
+              ? { ...reasoning, reasoning: response.data.data.directive }
+              : reasoning
+          ));
+          
+          // Refresh the reasonings to get the updated data
+          await fetchReasonings();
+        } else {
+          throw new Error('Failed to save new directive');
+        }
+      }
+    } catch (error) {
+      console.error('Error regenerating directive:', error);
+      alert('Failed to regenerate directive. Please try again.');
+    } finally {
+      setRegeneratingExplanationFor(null);
+    }
+  };
+
+  const updateExistingReasoning = async (reasoningId, newReasoning) => {
+    try {
+      // Find the reasoning to get the tagId
+      const reasoning = reasonings.find(r => r.id === reasoningId);
+      if (!reasoning) return;
+
+      // Update the reasoning via the API
+      const response = await intelligentTagApi.updateCommentary(
+        storyId,
+        reasoning.tagId,
+        newReasoning
+      );
+      
+      if (response.data.success) {
+        // Update the reasoning in the local state
+        setReasonings(prev => prev.map(r => 
+          r.id === reasoningId 
+            ? { ...r, reasoning: newReasoning }
+            : r
+        ));
+        setEditingReasoning(null);
+      }
+    } catch (error) {
+      console.error('Error updating reasoning:', error);
+      alert('Failed to update reasoning. Please try again.');
+    }
+  };
+
+  const openReasoningDialog = (reasoning) => {
+    setSelectedReasoningTag({
+      id: reasoning.tagId,
+      title: reasoning.tag.title
+    });
+    setReasoningDialogOpen(true);
+  };
+
+  const handleReasoningUpdate = (newReasoning) => {
+    // Update the reasoning in the local state
+    setReasonings(prev => prev.map(r => 
+      r.tagId === selectedReasoningTag.id 
+        ? { ...r, reasoning: newReasoning }
+        : r
+    ));
+  };
+
+  const handleRateSuggestion = (suggestion) => {
+    setRatingSuggestion(suggestion);
+    setRatingValue(0);
+    setRatingComment('');
+    setRatingSuggestionId(suggestion.id);
+  };
+
+  const submitRating = async () => {
+    if (ratingValue === 0) {
+      alert('Please select a rating');
+      return;
+    }
+
+    try {
+      // First, rate the suggestion
+      const ratingResponse = await intelligentTagApi.rateSuggestion(
+        ratingSuggestionId,
+        ratingValue,
+        ratingComment
+      );
+      
+      if (ratingResponse.data.success) {
+        // Then accept the suggestion
+        const acceptResponse = await intelligentTagApi.acceptSuggestion(ratingSuggestionId);
+        
+        if (acceptResponse.data.success) {
+          // Refresh data
+          await fetchSuggestions();
+          await fetchReasonings();
+          await checkReevaluationStatus();
+          onTagsChange && onTagsChange(selectedTags);
+          
+          // Close rating modal
+          setRatingSuggestion(null);
+          setRatingValue(0);
+          setRatingComment('');
+          setRatingSuggestionId(null);
+        } else {
+          throw new Error('Failed to accept suggestion after rating');
+        }
+      } else {
+        throw new Error('Failed to submit rating');
+      }
+    } catch (error) {
+      console.error('Error in rating and accepting suggestion:', error);
+      alert('Failed to process suggestion. Please try again.');
+    }
+  };
+
+  const cancelRating = () => {
+    setRatingSuggestion(null);
+    setRatingValue(0);
+    setRatingComment('');
+    setRatingSuggestionId(null);
   };
 
   const reevaluateSuggestions = async () => {
@@ -326,14 +515,35 @@ const IntelligentTagSelector = ({
               </div>
             )}
           </div>
-          <div className="reasoning-section">
-            <textarea
-              placeholder="Explain why this tag fits your story..."
-              value={manualTag.reasoning}
-              onChange={(e) => setManualTag(prev => ({ ...prev, reasoning: e.target.value }))}
-              className="form-control"
-              rows={3}
-            />
+          <div className="directive-section">
+            <div className="directive-input-group">
+              <textarea
+                placeholder="Explain how to use this tag effectively in your story..."
+                value={manualTag.directive}
+                onChange={(e) => setManualTag(prev => ({ ...prev, directive: e.target.value }))}
+                className="form-control"
+                rows={3}
+              />
+              <button
+                type="button"
+                className="btn btn-outline-primary ai-directive-btn"
+                onClick={generateDirective}
+                disabled={!manualTag.tagId || generatingExplanation || disabled}
+                title="Use AI to generate a directive for how to use this tag effectively in your story"
+              >
+                {generatingExplanation ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-magic"></i>
+                    <span>AI Directive</span>
+                  </>
+                )}
+              </button>
+            </div>
             <textarea
               placeholder="Additional explanation (optional)..."
               value={manualTag.userExplanation}
@@ -345,7 +555,7 @@ const IntelligentTagSelector = ({
           <button 
             className="btn btn-success"
             onClick={addTagManually}
-            disabled={!manualTag.tagId || !manualTag.reasoning}
+            disabled={!manualTag.tagId || !manualTag.directive}
           >
             Add Tag
           </button>
@@ -370,8 +580,91 @@ const IntelligentTagSelector = ({
                     </TagImagePopup>
                   )}
                   <div className="tag-content">
-                    <h5>{reasoning.tag.title}</h5>
-                    <p className="reasoning">{reasoning.reasoning}</p>
+                    <div className="tag-header">
+                      <h5>{reasoning.tag.title}</h5>
+                      <div className="tag-actions">
+                        <button
+                          type="button"
+                          className="btn btn-outline-primary btn-sm ai-regenerate-btn"
+                          onClick={() => regenerateDirective(reasoning.id, reasoning.tagId)}
+                          disabled={regeneratingExplanationFor === reasoning.id || disabled}
+                          title="Use AI to regenerate the directive for this tag"
+                        >
+                          {regeneratingExplanationFor === reasoning.id ? (
+                            <>
+                              <i className="fas fa-spinner fa-spin"></i>
+                              <span>Generating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-magic"></i>
+                              <span>AI Regenerate</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm edit-reasoning-btn"
+                          onClick={() => setEditingReasoning(editingReasoning === reasoning.id ? null : reasoning.id)}
+                          disabled={disabled}
+                          title="Edit the explanation for this tag"
+                        >
+                          <i className="fas fa-edit"></i>
+                          <span>{editingReasoning === reasoning.id ? 'Cancel' : 'Edit'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-outline-info btn-sm reasoning-history-btn"
+                          onClick={() => openReasoningDialog(reasoning)}
+                          disabled={disabled}
+                          title="View reasoning history and manage versions"
+                        >
+                          <i className="fas fa-history"></i>
+                          <span>History</span>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {editingReasoning === reasoning.id ? (
+                      <div className="editing-reasoning">
+                        <textarea
+                          className="form-control"
+                          value={reasoning.reasoning}
+                          onChange={(e) => {
+                            setReasonings(prev => prev.map(r => 
+                              r.id === reasoning.id 
+                                ? { ...r, reasoning: e.target.value }
+                                : r
+                            ));
+                          }}
+                          rows={3}
+                          placeholder="Edit the explanation..."
+                        />
+                        <div className="edit-actions">
+                          <button
+                            type="button"
+                            className="btn btn-success btn-sm"
+                            onClick={() => updateExistingReasoning(reasoning.id, reasoning.reasoning)}
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => {
+                              setEditingReasoning(null);
+                              // Reset to original reasoning
+                              fetchReasonings();
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="reasoning">{reasoning.reasoning}</p>
+                    )}
+                    
                     {reasoning.userExplanation && (
                       <p className="user-explanation">Your note: {reasoning.userExplanation}</p>
                     )}
@@ -421,10 +714,12 @@ const IntelligentTagSelector = ({
                   <div className="suggestion-actions">
                     <button 
                       className="btn btn-success btn-sm"
-                      onClick={() => acceptSuggestion(suggestion.id)}
+                      onClick={() => handleAcceptClick(suggestion)}
                       disabled={disabled}
+                      title="Rate and accept this suggestion"
                     >
-                      Accept
+                      <i className="fas fa-star"></i>
+                      <span>Rate & Accept</span>
                     </button>
                     <button 
                       className="btn btn-danger btn-sm"
@@ -492,6 +787,83 @@ const IntelligentTagSelector = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Rating Modal */}
+      {ratingSuggestion && (
+        <div className="modal-overlay">
+          <div className="modal-content rating-modal">
+            <div className="modal-header">
+              <h5 className="modal-title">Rate & Accept Suggestion</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={cancelRating}
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="rating-preview">
+                <h6>Accepting: {ratingSuggestion.tag.title}</h6>
+                <p className="text-muted">{ratingSuggestion.reasoning}</p>
+              </div>
+              <div className="form-group">
+                <label htmlFor="rating">How would you rate this suggestion?</label>
+                <StarRating
+                  rating={ratingValue}
+                  onRatingChange={setRatingValue}
+                  size="large"
+                  showLabels={true}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="ratingComment">Additional comments (optional)</label>
+                <textarea
+                  id="ratingComment"
+                  className="form-control"
+                  rows={3}
+                  placeholder="Share your thoughts about this suggestion..."
+                  value={ratingComment}
+                  onChange={(e) => setRatingComment(e.target.value)}
+                />
+                <small className="form-text text-muted">
+                  Your feedback helps improve future suggestions for this story.
+                </small>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={cancelRating}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-success"
+                onClick={submitRating}
+                disabled={ratingValue === 0}
+              >
+                Rate & Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reasoning Dialog Tree */}
+      {reasoningDialogOpen && selectedReasoningTag && (
+        <ReasoningDialogTree
+          storyId={storyId}
+          tagId={selectedReasoningTag.id}
+          tagTitle={selectedReasoningTag.title}
+          isOpen={reasoningDialogOpen}
+          onClose={() => {
+            setReasoningDialogOpen(false);
+            setSelectedReasoningTag(null);
+          }}
+          onReasoningUpdate={handleReasoningUpdate}
+        />
       )}
     </div>
   );

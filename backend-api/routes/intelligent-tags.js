@@ -219,6 +219,28 @@ router.put('/commentaries/:storyId/:tagId', async (req, res) => {
     }
 });
 
+// POST /intelligent-tags/commentaries/:storyId/:tagId - Create new AI commentary
+router.post('/commentaries/:storyId/:tagId', async (req, res) => {
+    try {
+        const { storyId, tagId } = req.params;
+        const { commentary, userFeedback, triggerType = 'user_feedback' } = req.body;
+
+        if (!commentary) {
+            return res.status(400).json({ error: 'commentary is required.' });
+        }
+
+        const result = await intelligentTagService.createCommentary(storyId, tagId, commentary, userFeedback, triggerType);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error('Error creating commentary:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Story or tag not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while creating commentary.' });
+        }
+    }
+});
+
 // GET /intelligent-tags/commentaries/:storyId - Get all commentaries for a story
 router.get('/commentaries/:storyId', async (req, res) => {
     try {
@@ -246,6 +268,74 @@ router.post('/commentaries/analyze', async (req, res) => {
     } catch (error) {
         console.error('Error analyzing commentary:', error);
         res.status(500).json({ error: 'An error occurred while analyzing commentary.' });
+    }
+});
+
+// POST /intelligent-tags/generate-directive - Generate AI directive for tag
+router.post('/generate-directive', async (req, res) => {
+    try {
+        const { storyId, tagId, storyTitle, storyBrainstorm } = req.body;
+
+        if (!storyId || !tagId) {
+            return res.status(400).json({ error: 'storyId and tagId are required.' });
+        }
+
+        const directive = await intelligentTagService.generateTagDirective(storyId, tagId, storyTitle, storyBrainstorm);
+        res.json({ success: true, data: { directive } });
+    } catch (error) {
+        console.error('Error generating directive:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Story or tag not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while generating directive.' });
+        }
+    }
+});
+
+// POST /intelligent-tags/generate-explanation - Generate AI explanation for tag (legacy)
+router.post('/generate-explanation', async (req, res) => {
+    try {
+        const { storyId, tagId, storyTitle, storyBrainstorm } = req.body;
+
+        if (!storyId || !tagId) {
+            return res.status(400).json({ error: 'storyId and tagId are required.' });
+        }
+
+        const explanation = await intelligentTagService.generateTagExplanation(storyId, tagId, storyTitle, storyBrainstorm);
+        res.json({ success: true, data: { explanation } });
+    } catch (error) {
+        console.error('Error generating explanation:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Story or tag not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while generating explanation.' });
+        }
+    }
+});
+
+// POST /intelligent-tags/suggestions/:suggestionId/rate - Rate a tag suggestion
+router.post('/suggestions/:suggestionId/rate', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const { rating, comment } = req.body;
+
+        if (!rating) {
+            return res.status(400).json({ error: 'rating is required.' });
+        }
+
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({ error: 'rating must be between 1 and 5.' });
+        }
+
+        const suggestion = await intelligentTagService.rateSuggestion(suggestionId, rating, comment);
+        res.json({ success: true, data: suggestion });
+    } catch (error) {
+        console.error('Error rating suggestion:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Suggestion not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while rating the suggestion.' });
+        }
     }
 });
 

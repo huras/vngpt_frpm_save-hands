@@ -57,6 +57,9 @@ export const intelligentTagApi = {
   updateCommentary: (storyId, tagId, commentary, userFeedback = null) => 
     api.put(`/intelligent-tags/commentaries/${storyId}/${tagId}`, { commentary, userFeedback }),
 
+  createCommentary: (storyId, tagId, commentary, userFeedback = null, triggerType = 'user_feedback') => 
+    api.post(`/intelligent-tags/commentaries/${storyId}/${tagId}`, { commentary, userFeedback, triggerType }),
+
   getStoryCommentaries: (storyId) => 
     api.get(`/intelligent-tags/commentaries/${storyId}`),
 
@@ -64,5 +67,30 @@ export const intelligentTagApi = {
     api.post(`/intelligent-tags/commentaries/analyze`, { commentary }),
 
   getCommentaryStats: (storyId) => 
-    api.get(`/intelligent-tags/commentaries/${storyId}/stats`)
+    api.get(`/intelligent-tags/commentaries/${storyId}/stats`),
+
+  // Generate AI directive for tag
+  generateDirective: (storyId, tagId, storyTitle = null, storyBrainstorm = null) => 
+    api.post('/intelligent-tags/generate-directive', { 
+      storyId, 
+      tagId, 
+      storyTitle, 
+      storyBrainstorm 
+    }),
+
+  // Generate AI explanation for tag (legacy)
+  generateExplanation: (storyId, tagId, storyTitle = null, storyBrainstorm = null) => 
+    api.post('/intelligent-tags/generate-explanation', { 
+      storyId, 
+      tagId, 
+      storyTitle, 
+      storyBrainstorm 
+    }),
+
+  // Rate a tag suggestion
+  rateSuggestion: (suggestionId, rating, comment = null) => 
+    api.post(`/intelligent-tags/suggestions/${suggestionId}/rate`, { 
+      rating, 
+      comment 
+    })
 }; 

@@ -1,0 +1,158 @@
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+
+  &.readonly {
+    .star {
+      cursor: default;
+      
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+
+  .stars-container {
+    display: flex;
+    gap: 2px;
+  }
+
+  .star {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    &:focus {
+      outline: 2px solid #007bff;
+      outline-offset: 2px;
+    }
+
+    i {
+      font-size: inherit;
+    }
+
+    &.empty {
+      color: #ddd;
+      
+      &:hover {
+        color: #ffd700;
+      }
+    }
+
+    &.filled {
+      color: #ffd700;
+    }
+  }
+
+  .rating-label {
+    font-size: 0.875em;
+    color: #666;
+    font-weight: 500;
+    min-width: 80px;
+  }
+
+  // Size variants
+  &.small {
+    .star {
+      font-size: 14px;
+    }
+    
+    .rating-label {
+      font-size: 0.75em;
+      min-width: 60px;
+    }
+  }
+
+  &.medium {
+    .star {
+      font-size: 18px;
+    }
+  }
+
+  &.large {
+    .star {
+      font-size: 24px;
+    }
+    
+    .rating-label {
+      font-size: 1em;
+      min-width: 100px;
+    }
+  }
+
+  // Color themes
+  &.theme-primary {
+    .star.filled {
+      color: #007bff;
+    }
+    
+    .star.empty:hover {
+      color: #007bff;
+    }
+  }
+
+  &.theme-success {
+    .star.filled {
+      color: #28a745;
+    }
+    
+    .star.empty:hover {
+      color: #28a745;
+    }
+  }
+
+  &.theme-warning {
+    .star.filled {
+      color: #ffc107;
+    }
+    
+    .star.empty:hover {
+      color: #ffc107;
+    }
+  }
+
+  &.theme-danger {
+    .star.filled {
+      color: #dc3545;
+    }
+    
+    .star.empty:hover {
+      color: #dc3545;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .star-rating {
+    gap: 6px;
+    
+    .stars-container {
+      gap: 1px;
+    }
+    
+    .rating-label {
+      font-size: 0.8em;
+      min-width: 70px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .star-rating {
+    .rating-label {
+      display: none;
+    }
+  }
+} 

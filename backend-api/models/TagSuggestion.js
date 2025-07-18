@@ -68,6 +68,21 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: true,
             comment: 'JSON array of tag IDs that were used as context for this suggestion'
         },
+        userRating: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            comment: 'User rating (1-5 stars) for this suggestion'
+        },
+        ratingComment: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+            comment: 'User comment provided with the rating'
+        },
+        ratedAt: {
+            type: Sequelize.DATE,
+            allowNull: true,
+            comment: 'When the user rated this suggestion'
+        },
         createdAt: {
             allowNull: false,
             type: Sequelize.DATE,

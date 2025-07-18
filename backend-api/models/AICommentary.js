@@ -59,10 +59,13 @@ module.exports = (sequelize, Sequelize) => {
             comment: 'JSON object containing story context when commentary was generated (title, brainstorm, etc.)'
         },
         triggerType: {
-            type: Sequelize.ENUM('initial_suggestion', 'reevaluation', 'user_feedback', 'story_update', 'manual_update'),
+            type: Sequelize.STRING,
             allowNull: false,
             defaultValue: 'initial_suggestion',
-            comment: 'What triggered this commentary generation'
+            comment: 'What triggered this commentary generation',
+            validate: {
+                isIn: [['initial_suggestion', 'reevaluation', 'user_feedback', 'story_update', 'manual_update', 'ai_regenerate', 'ai_directive']]
+            }
         },
         previousCommentaryId: {
             type: Sequelize.INTEGER,
