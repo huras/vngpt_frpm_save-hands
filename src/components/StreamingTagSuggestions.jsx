@@ -49,6 +49,8 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
   };
 
   const handleRateClick = () => {
+    // Get rating from suggestion (which now comes from StoryTagReasoning via backend)
+    // If no rating exists yet, start with 0
     setRatingValue(suggestion.userRating || 0);
     setRatingComment(suggestion.ratingComment || '');
     setShowRatingModal(true);
@@ -84,7 +86,7 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
     }
 
     try {
-      await intelligentTagApi.rateSuggestion(suggestion.id, ratingValue, ratingComment);
+      const response = await intelligentTagApi.rateSuggestion(suggestion.id, ratingValue, ratingComment);
       setShowRatingModal(false);
       setRatingValue(0);
       setRatingComment('');
@@ -179,9 +181,13 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
               <span className="confidence">
                 Confidence: {(suggestion.confidence * 100).toFixed(1)}%
               </span>
-              {suggestion.userRating && (
+              {suggestion.userRating ? (
                 <span className="rating-display">
                   {'★'.repeat(suggestion.userRating)}{'☆'.repeat(5 - suggestion.userRating)}
+                </span>
+              ) : (
+                <span className="rating-display no-rating">
+                  <i className="fas fa-star-o"></i> Rate
                 </span>
               )}
               {type === 'rejected' && (
@@ -281,7 +287,7 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
                           <p>{version.reasoning}</p>
                         </div>
                         <div className="history-meta">
-                          {version.userRating && (
+                          {version.userRating ? (
                             <div className="rating-info">
                               <span className="rating-stars">
                                 {'★'.repeat(version.userRating)}{'☆'.repeat(5 - version.userRating)}
@@ -289,6 +295,10 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
                               {version.ratingComment && (
                                 <span className="rating-comment">"{version.ratingComment}"</span>
                               )}
+                            </div>
+                          ) : (
+                            <div className="rating-info no-rating">
+                              <span className="rating-stars">No rating</span>
                             </div>
                           )}
                           {version.regenerationReason && (
@@ -392,7 +402,7 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
                       <div className="history-meta">
                         <span className="version">v{version.version}</span>
                         <span className="date">{formatDate(version.createdAt)}</span>
-                        {version.userRating && (
+                        {version.userRating ? (
                           <div className="rating-info">
                             <span className="rating-stars">
                               {'★'.repeat(version.userRating)}{'☆'.repeat(5 - version.userRating)}
@@ -400,6 +410,10 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
                             {version.ratingComment && (
                               <span className="rating-comment">"{version.ratingComment}"</span>
                             )}
+                          </div>
+                        ) : (
+                          <div className="rating-info no-rating">
+                            <span className="rating-stars">No rating</span>
                           </div>
                         )}
                         {version.regenerationReason && (
@@ -1175,6 +1189,15 @@ const StreamingTagSuggestions = ({ storyId }) => {
           font-size: 0.9em;
         }
 
+        .rating-display.no-rating {
+          color: #6c757d;
+          font-style: italic;
+        }
+
+        .rating-display.no-rating i {
+          margin-right: 4px;
+        }
+
         .rejected-badge {
           background: #dc3545;
           color: white;
@@ -1455,6 +1478,11 @@ const StreamingTagSuggestions = ({ storyId }) => {
 
         .rating-info {
           margin-top: 5px;
+        }
+
+        .rating-info.no-rating .rating-stars {
+          color: #6c757d;
+          font-style: italic;
         }
 
         .rating-stars {

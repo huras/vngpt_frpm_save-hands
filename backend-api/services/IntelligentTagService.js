@@ -645,7 +645,27 @@ class IntelligentTagService {
                 order: [['confidence', 'DESC'], ['createdAt', 'ASC']]
             });
 
-            return suggestions;
+            // Get ratings from StoryTagReasoning for each suggestion
+            const suggestionsWithRatings = await Promise.all(
+                suggestions.map(async (suggestion) => {
+                    // Find the corresponding StoryTagReasoning for this suggestion
+                    const reasoning = await StoryTagReasoning.findOne({
+                        where: {
+                            storyId: suggestion.storyId,
+                            tagId: suggestion.tagId,
+                            suggestionId: suggestion.id
+                        }
+                    });
+
+                    return {
+                        ...suggestion.toJSON(),
+                        userRating: reasoning?.userRating || null, // Only use reasoning rating
+                        ratingComment: reasoning?.ratingComment || null // Only use reasoning comment
+                    };
+                })
+            );
+
+            return suggestionsWithRatings;
         } catch (error) {
             console.error('Error getting story suggestions:', error);
             throw error;
@@ -1024,7 +1044,7 @@ Return only the explanation text, no JSON formatting or additional text.`;
     }
 
     /**
-     * Rate a tag suggestion
+     * Rate a tag suggestion (stores rating in StoryTagReasoning only)
      */
     async rateSuggestion(suggestionId, rating, comment = null) {
         try {
@@ -1038,8 +1058,28 @@ Return only the explanation text, no JSON formatting or additional text.`;
                 throw new Error('Rating must be between 1 and 5');
             }
 
-            // Update the suggestion with rating
-            await suggestion.update({
+            // Find or create StoryTagReasoning for this suggestion
+            let reasoning = await StoryTagReasoning.findOne({
+                where: {
+                    storyId: suggestion.storyId,
+                    tagId: suggestion.tagId,
+                    suggestionId: suggestion.id
+                }
+            });
+
+            if (!reasoning) {
+                // Create a new StoryTagReasoning record for this suggestion
+                reasoning = await StoryTagReasoning.create({
+                    storyId: suggestion.storyId,
+                    tagId: suggestion.tagId,
+                    reasoning: suggestion.reasoning,
+                    source: 'ai_suggestion',
+                    suggestionId: suggestion.id
+                });
+            }
+
+            // Update the reasoning with rating (this is the primary storage)
+            await reasoning.update({
                 userRating: rating,
                 ratingComment: comment,
                 ratedAt: new Date()
@@ -1048,7 +1088,10 @@ Return only the explanation text, no JSON formatting or additional text.`;
             // Learn from the rating for future suggestions
             await this.learnFromRating(suggestion, rating, comment);
 
-            return suggestion;
+            return {
+                suggestion: suggestion,
+                reasoning: reasoning
+            };
         } catch (error) {
             console.error('Error rating suggestion:', error);
             throw error;
@@ -1251,21 +1294,37 @@ Return only the explanation text, no JSON formatting or additional text.`;
                 order: [['versionNumber', 'ASC']]
             });
 
+            // Get ratings from StoryTagReasoning for each suggestion
+            const historyWithRatings = await Promise.all(
+                suggestions.map(async (suggestion) => {
+                    // Find the corresponding StoryTagReasoning for this suggestion
+                    const reasoning = await StoryTagReasoning.findOne({
+                        where: {
+                            storyId: suggestion.storyId,
+                            tagId: suggestion.tagId,
+                            suggestionId: suggestion.id
+                        }
+                    });
+
+                    return {
+                        id: suggestion.id,
+                        version: suggestion.versionNumber,
+                        reasoning: suggestion.reasoning,
+                        confidence: suggestion.confidence,
+                        status: suggestion.status,
+                        userRating: reasoning?.userRating || null, // Only use reasoning rating
+                        ratingComment: reasoning?.ratingComment || null, // Only use reasoning comment
+                        regenerationReason: suggestion.regenerationReason,
+                        createdAt: suggestion.createdAt,
+                        updatedAt: suggestion.updatedAt,
+                        tag: suggestion.tag
+                    };
+                })
+            );
+
             return {
                 success: true,
-                history: suggestions.map(suggestion => ({
-                    id: suggestion.id,
-                    version: suggestion.versionNumber,
-                    reasoning: suggestion.reasoning,
-                    confidence: suggestion.confidence,
-                    status: suggestion.status,
-                    userRating: suggestion.userRating,
-                    ratingComment: suggestion.ratingComment,
-                    regenerationReason: suggestion.regenerationReason,
-                    createdAt: suggestion.createdAt,
-                    updatedAt: suggestion.updatedAt,
-                    tag: suggestion.tag
-                }))
+                history: historyWithRatings
             };
         } catch (error) {
             console.error('Error getting suggestion history:', error);
@@ -1317,6 +1376,68 @@ Return only the explanation text, no JSON formatting or additional text.`;
             };
         } catch (error) {
             console.error('Error clearing pending suggestions:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Rate a reasoning directly
+     */
+    async rateReasoning(reasoningId, rating, comment = null) {
+        try {
+            const reasoning = await StoryTagReasoning.findByPk(reasoningId, {
+                include: [
+                    { model: Tag, as: 'tag' }
+                ]
+            });
+
+            if (!reasoning) {
+                throw new Error('Reasoning not found');
+            }
+
+            // Validate rating
+            if (rating < 1 || rating > 5) {
+                throw new Error('Rating must be between 1 and 5');
+            }
+
+            // Update the reasoning with rating
+            await reasoning.update({
+                userRating: rating,
+                ratingComment: comment,
+                ratedAt: new Date()
+            });
+
+            return reasoning;
+        } catch (error) {
+            console.error('Error rating reasoning:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update a reasoning
+     */
+    async updateReasoning(reasoningId, newReasoning) {
+        try {
+            const reasoning = await StoryTagReasoning.findByPk(reasoningId, {
+                include: [
+                    { model: Tag, as: 'tag' }
+                ]
+            });
+
+            if (!reasoning) {
+                throw new Error('Reasoning not found');
+            }
+
+            // Update the reasoning
+            await reasoning.update({
+                reasoning: newReasoning,
+                updatedAt: new Date()
+            });
+
+            return reasoning;
+        } catch (error) {
+            console.error('Error updating reasoning:', error);
             throw error;
         }
     }

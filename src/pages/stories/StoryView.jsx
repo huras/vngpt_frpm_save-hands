@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
 import StreamingTagSuggestions from '../../components/StreamingTagSuggestions';
+import StoryTagReasoningList from '../../components/StoryTagReasoningList';
 import { BACKEND_CONFIG } from '../../config/backend';
 import './StoryView.scss';
 
@@ -12,6 +13,7 @@ const StoryView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showTagManagement, setShowTagManagement] = useState(false);
+  const [showReasonings, setShowReasonings] = useState(false);
 
   useEffect(() => {
     const fetchStory = async () => {
@@ -182,6 +184,27 @@ const StoryView = () => {
               The AI will learn from your choices to provide better suggestions with real-time streaming updates.
             </p>
             <StreamingTagSuggestions storyId={id} />
+          </div>
+        )}
+      </div>
+
+      <div className="reasonings-section">
+        <div className="section-header">
+          <h2>Story Tag Reasonings</h2>
+          <button 
+            className="btn btn-outline-secondary"
+            onClick={() => setShowReasonings(!showReasonings)}
+          >
+            {showReasonings ? 'Hide Reasonings' : 'Show Reasonings'}
+          </button>
+        </div>
+        
+        {showReasonings && (
+          <div className="reasonings-content">
+            <p className="section-description">
+              View and rate the reasoning behind each tag in your story. Your ratings help improve future AI suggestions.
+            </p>
+            <StoryTagReasoningList storyId={id} />
           </div>
         )}
       </div>

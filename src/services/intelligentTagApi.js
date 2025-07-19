@@ -182,5 +182,16 @@ export const intelligentTagApi = {
 
   // Reject an accepted suggestion
   rejectAcceptedSuggestion: (reasoningId, reason = null) => 
-    api.post(`/intelligent-tags/reasonings/${reasoningId}/reject`, { reason })
+    api.post(`/intelligent-tags/reasonings/${reasoningId}/reject`, { reason }),
+
+  // Rate a reasoning directly
+  rateReasoning: (reasoningId, rating, comment = null) => 
+    api.post(`/intelligent-tags/reasonings/${reasoningId}/rate`, { 
+      rating, 
+      comment 
+    }),
+
+  // Update a reasoning
+  updateReasoning: (reasoningId, reasoning) => 
+    api.put(`/intelligent-tags/reasonings/${reasoningId}`, { reasoning })
 }; 

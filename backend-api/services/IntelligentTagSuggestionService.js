@@ -211,7 +211,7 @@ LEARNING FROM PREVIOUS SUGGESTIONS:
                     const suggestion = {
                         tagId: tag.id,
                         tag: tag,
-                        reasoning: reasoning,
+                        reasoning: `${tagSelectionResult.reasoning}\n\n${reasoning}`,
                         confidence: reasoningResult.confidence || tagSelectionResult.confidence || 0.8,
                         suggestionNumber: i + 1,
                         totalSuggestions: limit
@@ -317,12 +317,16 @@ ${storyContext.tagReasonings.map(reasoning => `• ${reasoning.tagTitle}: "${rea
 ${rejectionLearning.rejections.length > 0 ? `WHAT DIDN'T WORK:
 ${rejectionLearning.rejections.map(rejection => `• ${rejection.tagTitle}: ${rejection.rejectionReason || 'Author felt it didn\'t fit'}`).join('\n')}
 
-LEARNING FROM FEEDBACK:
+` : ''}${rejectionLearning.ratedReasonings.length > 0 ? `RATING INSIGHTS:
+${rejectionLearning.ratedReasonings.map(reasoning => `• ${reasoning.tagTitle}: ${reasoning.rating}/5 stars${reasoning.comment ? ` - "${reasoning.comment}"` : ''}`).join('\n')}
+
+` : ''}LEARNING FROM FEEDBACK:
 - Author seems to avoid: ${rejectionLearning.avoidCategories.join(', ') || 'No clear patterns yet'}
 - Common concerns: ${rejectionLearning.commonReasons.join(', ') || 'None identified'}
 - Author's style preferences: ${rejectionLearning.userPreferences.join(', ') || 'Still discovering'}
+${rejectionLearning.ratingInsights.length > 0 ? `- Rating insights: ${rejectionLearning.ratingInsights.join('; ')}` : ''}
 
-` : ''}${alreadySuggestedContext}
+${alreadySuggestedContext}
 
 AVAILABLE INSPIRATION CATALOG (choose ONE from these):
 ${remainingTags.map(tag => `• ID ${tag.id}: ${tag.title} - ${tag.short_description || 'No description'} (${tag.category || 'Uncategorized'})`).join('\n')}
@@ -338,13 +342,14 @@ ${alreadySuggestedContext ? `CREATIVE STRATEGY:
 
 Provide a JSON response with EXACTLY this structure:
 {
-  "resoning": Brief reasoning for picking the selected tag
+  "reasoning": Brief reasoning for picking the selected tag,
   "tagId": [NUMERIC_ID_FROM_CATALOG],
   "tagName": "[TAG_NAME_FROM_CATALOG]",
   "confidence": [0.0_TO_1.0]
 }
 
 Consider:
+- The most obvious tags first, tags that could beused to classify the current story
 - Which tag has the most storytelling potential
 - How it could complement or contrast with existing story elements
 - Which tag would be most inspiring for the author
@@ -385,12 +390,16 @@ ${storyContext.tagReasonings.map(reasoning => `• ${reasoning.tagTitle}: "${rea
 ${rejectionLearning.rejections.length > 0 ? `WHAT DIDN'T WORK:
 ${rejectionLearning.rejections.map(rejection => `• ${rejection.tagTitle}: ${rejection.rejectionReason || 'Author felt it didn\'t fit'}`).join('\n')}
 
-LEARNING FROM FEEDBACK:
+` : ''}${rejectionLearning.ratedReasonings.length > 0 ? `RATING INSIGHTS:
+${rejectionLearning.ratedReasonings.map(reasoning => `• ${reasoning.tagTitle}: ${reasoning.rating}/5 stars${reasoning.comment ? ` - "${reasoning.comment}"` : ''}`).join('\n')}
+
+` : ''}LEARNING FROM FEEDBACK:
 - Author seems to avoid: ${rejectionLearning.avoidCategories.join(', ') || 'No clear patterns yet'}
 - Common concerns: ${rejectionLearning.commonReasons.join(', ') || 'None identified'}
 - Author's style preferences: ${rejectionLearning.userPreferences.join(', ') || 'Still discovering'}
+${rejectionLearning.ratingInsights.length > 0 ? `- Rating insights: ${rejectionLearning.ratingInsights.join('; ')}` : ''}
 
-` : ''}${alreadySuggestedContext ? alreadySuggestedContext + '\n' : ''}
+${alreadySuggestedContext ? alreadySuggestedContext + '\n' : ''}
 
 SELECTED STORY ELEMENT TO PITCH:
 • ${tag.title}: ${tag.short_description || 'No description'} (Category: ${tag.category || 'Uncategorized'}, Keywords: ${tag.keywords || 'None'})
@@ -405,16 +414,14 @@ Provide a JSON response with EXACTLY this structure:
 }
 
 The "reasoning" field should be a compelling story pitch that shows how this element could transform or enhance their story. Be specific, creative, and inspiring. Think about:
-- Bullet points of directives that this tag would have to follow to be used in the story
-- How this could add new layers to their existing story elements
-- What exciting plot developments or character arcs it could enable
-- How this could create interesting conflicts or opportunities
-- What unique storytelling possibilities it opens up
+- Ideas for the story using this tag and maybe mixing with other existing tags
+- To be able to guide the story on exciting plot developments or character arcs it could enable
+- To be able to guide the story creating interesting conflicts or opportunities
+- Maybe an unique storytelling possibilities it opens up
 ${suggestedTagsWithReasoning.length > 0 ? `- How this builds upon or contrasts with previous suggestions` : ''}
 
 APPROACH:
-- Be enthusiastic and inspiring in your pitch
-- Connect this new idea to what they've already established
+- Connect this new idea to what they've already established for sure
 - Suggest specific ways this could enhance their story
 - Consider how it could create interesting character dynamics or plot twists
 - Think about the emotional impact and storytelling potential
@@ -429,7 +436,7 @@ Format as valid JSON only. Return pure JSON without markdown formatting.`;
      */
     async getRejectionLearningData(storyId) {
         try {
-            const { TagSuggestion, Tag } = require('../models');
+            const { TagSuggestion, Tag, StoryTagReasoning } = require('../models');
 
             // Get rejected suggestions for this story
             const rejections = await TagSuggestion.findAll({
@@ -455,11 +462,24 @@ Format as valid JSON only. Return pure JSON without markdown formatting.`;
                 order: [['acceptedAt', 'DESC']]
             });
 
+            // Get all StoryTagReasoning records with ratings for this story
+            const ratedReasonings = await StoryTagReasoning.findAll({
+                where: { 
+                    storyId,
+                    userRating: { [require('sequelize').Op.not]: null }
+                },
+                include: [
+                    { model: Tag, as: 'tag' }
+                ],
+                order: [['ratedAt', 'DESC']]
+            });
+
             // Analyze patterns
             const rejectedCategories = {};
             const acceptedCategories = {};
             const rejectionReasons = {};
             const userPreferences = [];
+            const ratingInsights = [];
 
             // Analyze rejections
             rejections.forEach(rejection => {
@@ -482,11 +502,37 @@ Format as valid JSON only. Return pure JSON without markdown formatting.`;
                 }
             });
 
-            // Determine categories to avoid (rejected more than accepted)
+            // Analyze ratings from StoryTagReasoning
+            const highRatedCategories = {};
+            const lowRatedCategories = {};
+            const ratingComments = [];
+
+            ratedReasonings.forEach(reasoning => {
+                if (reasoning.tag.category) {
+                    if (reasoning.userRating >= 4) {
+                        highRatedCategories[reasoning.tag.category] = 
+                            (highRatedCategories[reasoning.tag.category] || 0) + 1;
+                    } else if (reasoning.userRating <= 2) {
+                        lowRatedCategories[reasoning.tag.category] = 
+                            (lowRatedCategories[reasoning.tag.category] || 0) + 1;
+                    }
+                }
+
+                if (reasoning.ratingComment) {
+                    ratingComments.push({
+                        tag: reasoning.tag.title,
+                        rating: reasoning.userRating,
+                        comment: reasoning.ratingComment
+                    });
+                }
+            });
+
+            // Determine categories to avoid (rejected more than accepted OR low rated)
             const avoidCategories = Object.keys(rejectedCategories).filter(category => {
                 const rejectedCount = rejectedCategories[category] || 0;
                 const acceptedCount = acceptedCategories[category] || 0;
-                return rejectedCount > acceptedCount;
+                const lowRatedCount = lowRatedCategories[category] || 0;
+                return rejectedCount > acceptedCount || lowRatedCount > 0;
             });
 
             // Extract common rejection reasons
@@ -494,12 +540,33 @@ Format as valid JSON only. Return pure JSON without markdown formatting.`;
                 .sort((a, b) => rejectionReasons[b] - rejectionReasons[a])
                 .slice(0, 5);
 
-            // Determine user preferences based on acceptances
+            // Determine user preferences based on acceptances and high ratings
             const preferredCategories = Object.keys(acceptedCategories)
                 .sort((a, b) => acceptedCategories[b] - acceptedCategories[a])
                 .slice(0, 3);
 
             userPreferences.push(...preferredCategories.map(cat => `Prefers ${cat} category`));
+
+            // Add rating-based preferences
+            const topRatedCategories = Object.keys(highRatedCategories)
+                .sort((a, b) => highRatedCategories[b] - highRatedCategories[a])
+                .slice(0, 3);
+
+            userPreferences.push(...topRatedCategories.map(cat => `Highly rated ${cat} category`));
+
+            // Create rating insights for AI prompts
+            if (ratingComments.length > 0) {
+                const positiveComments = ratingComments.filter(r => r.rating >= 4);
+                const negativeComments = ratingComments.filter(r => r.rating <= 2);
+
+                if (positiveComments.length > 0) {
+                    ratingInsights.push(`Likes: ${positiveComments.map(r => `${r.tag} (${r.comment.substring(0, 50)}...)`).join(', ')}`);
+                }
+
+                if (negativeComments.length > 0) {
+                    ratingInsights.push(`Dislikes: ${negativeComments.map(r => `${r.tag} (${r.comment.substring(0, 50)}...)`).join(', ')}`);
+                }
+            }
 
             return {
                 rejections: rejections.map(r => ({
@@ -509,7 +576,15 @@ Format as valid JSON only. Return pure JSON without markdown formatting.`;
                 })),
                 avoidCategories,
                 commonReasons,
-                userPreferences
+                userPreferences,
+                ratingInsights,
+                ratedReasonings: ratedReasonings.map(r => ({
+                    tagTitle: r.tag.title,
+                    tagCategory: r.tag.category,
+                    rating: r.userRating,
+                    comment: r.ratingComment,
+                    reasoning: r.reasoning
+                }))
             };
 
         } catch (error) {
@@ -518,7 +593,9 @@ Format as valid JSON only. Return pure JSON without markdown formatting.`;
                 rejections: [],
                 avoidCategories: [],
                 commonReasons: [],
-                userPreferences: []
+                userPreferences: [],
+                ratingInsights: [],
+                ratedReasonings: []
             };
         }
     }

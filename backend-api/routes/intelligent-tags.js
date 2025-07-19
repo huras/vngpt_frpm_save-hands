@@ -424,8 +424,8 @@ router.post('/suggestions/:suggestionId/rate', async (req, res) => {
             return res.status(400).json({ error: 'rating must be between 1 and 5.' });
         }
 
-        const suggestion = await intelligentTagService.rateSuggestion(suggestionId, rating, comment);
-        res.json({ success: true, data: suggestion });
+        const result = await intelligentTagService.rateSuggestion(suggestionId, rating, comment);
+        res.json({ success: true, data: result });
     } catch (error) {
         console.error('Error rating suggestion:', error);
         if (error.message.includes('not found')) {
@@ -450,6 +450,54 @@ router.post('/reasonings/:reasoningId/reject', async (req, res) => {
             res.status(404).json({ error: 'Reasoning not found.' });
         } else {
             res.status(500).json({ error: 'An error occurred while rejecting the suggestion.' });
+        }
+    }
+});
+
+// POST /intelligent-tags/reasonings/:reasoningId/rate - Rate a reasoning directly
+router.post('/reasonings/:reasoningId/rate', async (req, res) => {
+    try {
+        const { reasoningId } = req.params;
+        const { rating, comment } = req.body;
+
+        if (!rating) {
+            return res.status(400).json({ error: 'rating is required.' });
+        }
+
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({ error: 'rating must be between 1 and 5.' });
+        }
+
+        const result = await intelligentTagService.rateReasoning(reasoningId, rating, comment);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error('Error rating reasoning:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Reasoning not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while rating the reasoning.' });
+        }
+    }
+});
+
+// PUT /intelligent-tags/reasonings/:reasoningId - Update a reasoning
+router.put('/reasonings/:reasoningId', async (req, res) => {
+    try {
+        const { reasoningId } = req.params;
+        const { reasoning } = req.body;
+
+        if (!reasoning) {
+            return res.status(400).json({ error: 'reasoning is required.' });
+        }
+
+        const result = await intelligentTagService.updateReasoning(reasoningId, reasoning);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error('Error updating reasoning:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Reasoning not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while updating the reasoning.' });
         }
     }
 });

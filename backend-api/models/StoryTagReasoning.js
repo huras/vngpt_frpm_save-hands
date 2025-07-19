@@ -68,6 +68,21 @@ module.exports = (sequelize, Sequelize) => {
             onDelete: 'SET NULL',
             comment: 'Reference to the current AI commentary for this story-tag relationship'
         },
+        userRating: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            comment: 'User rating (1-5 stars) for this story-tag reasoning'
+        },
+        ratingComment: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+            comment: 'User comment provided with the rating'
+        },
+        ratedAt: {
+            type: Sequelize.DATE,
+            allowNull: true,
+            comment: 'When the user rated this story-tag reasoning'
+        },
         createdAt: {
             allowNull: false,
             type: Sequelize.DATE,
