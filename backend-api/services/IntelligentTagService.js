@@ -1,13 +1,15 @@
-const { Story, Tag, TagSuggestion, StoryTagReasoning, TagSuggestionPitch } = require('../models');
+const { Story, Tag, TagSuggestion, StoryTagReasoning } = require('../models');
 const AIService = require('./AIService');
 const AICommentaryService = require('./AICommentaryService');
 const IntelligentTagSuggestionService = require('./IntelligentTagSuggestionService');
+const PitchService = require('./PitchService');
 
 class IntelligentTagService {
     constructor() {
         this.aiService = new AIService();
         this.commentaryService = new AICommentaryService(this.aiService);
         this.suggestionService = new IntelligentTagSuggestionService();
+        this.pitchService = new PitchService();
     }
 
     /**
@@ -1446,184 +1448,42 @@ Return only the explanation text, no JSON formatting or additional text.`;
      * Generate pitches for a tag suggestion
      */
     async generatePitches(suggestionId, count = 3) {
-        try {
-            const suggestion = await TagSuggestion.findByPk(suggestionId, {
-                include: [
-                    { model: Story, as: 'story' },
-                    { model: Tag, as: 'tag' }
-                ]
-            });
-
-            if (!suggestion) {
-                throw new Error('Tag suggestion not found');
-            }
-
-            // Get story context for pitch generation
-            const story = await Story.findByPk(suggestion.storyId, {
-                include: [
-                    { model: Tag, as: 'tags' },
-                    { 
-                        model: StoryTagReasoning, 
-                        as: 'tagReasonings',
-                        include: [{ model: Tag, as: 'tag' }]
-                    }
-                ]
-            });
-
-            // Generate pitches using AI
-            const pitches = await this.aiService.generatePitches(
-                suggestion,
-                story,
-                count
-            );
-
-            // Save pitches to database
-            const savedPitches = [];
-            for (const pitchData of pitches) {
-                const pitch = await TagSuggestionPitch.create({
-                    tagSuggestionId: suggestionId,
-                    pitch: pitchData.pitch,
-                    pitchType: pitchData.type,
-                    confidence: pitchData.confidence,
-                    generationContext: JSON.stringify({
-                        storyTitle: story.title,
-                        storyBrainstorm: story.brainstorm,
-                        currentTags: story.tags.map(tag => tag.title),
-                        suggestionReasoning: suggestion.reasoning,
-                        tagTitle: suggestion.tag.title
-                    })
-                });
-                savedPitches.push(pitch);
-            }
-
-            return {
-                success: true,
-                pitches: savedPitches,
-                message: `Generated ${savedPitches.length} pitches`
-            };
-        } catch (error) {
-            console.error('Error generating pitches:', error);
-            throw error;
-        }
+        return await this.pitchService.generatePitches(suggestionId, count);
     }
 
     /**
      * Get pitches for a tag suggestion
      */
     async getPitches(suggestionId) {
-        try {
-            const pitches = await TagSuggestionPitch.findAll({
-                where: { tagSuggestionId: suggestionId },
-                order: [['createdAt', 'DESC']]
-            });
-
-            return {
-                success: true,
-                pitches: pitches
-            };
-        } catch (error) {
-            console.error('Error getting pitches:', error);
-            throw error;
-        }
+        return await this.pitchService.getPitches(suggestionId);
     }
 
     /**
      * Delete a pitch
      */
     async deletePitch(pitchId) {
-        try {
-            const pitch = await TagSuggestionPitch.findByPk(pitchId);
-            if (!pitch) {
-                throw new Error('Pitch not found');
-            }
-
-            await pitch.destroy();
-
-            return {
-                success: true,
-                message: 'Pitch deleted successfully'
-            };
-        } catch (error) {
-            console.error('Error deleting pitch:', error);
-            throw error;
-        }
+        return await this.pitchService.deletePitch(pitchId);
     }
 
     /**
      * Delete all pitches for a suggestion
      */
     async deleteAllPitches(suggestionId) {
-        try {
-            const deletedCount = await TagSuggestionPitch.destroy({
-                where: { tagSuggestionId: suggestionId }
-            });
-
-            return {
-                success: true,
-                message: `Deleted ${deletedCount} pitches`,
-                deletedCount: deletedCount
-            };
-        } catch (error) {
-            console.error('Error deleting all pitches:', error);
-            throw error;
-        }
+        return await this.pitchService.deleteAllPitches(suggestionId);
     }
 
     /**
      * Rate a pitch
      */
     async ratePitch(pitchId, rating, comment = null) {
-        try {
-            const pitch = await TagSuggestionPitch.findByPk(pitchId);
-            if (!pitch) {
-                throw new Error('Pitch not found');
-            }
-
-            // Validate rating
-            if (rating < 1 || rating > 5) {
-                throw new Error('Rating must be between 1 and 5');
-            }
-
-            // Update the pitch with rating
-            await pitch.update({
-                userRating: rating,
-                ratingComment: comment,
-                ratedAt: new Date()
-            });
-
-            return {
-                success: true,
-                pitch: pitch
-            };
-        } catch (error) {
-            console.error('Error rating pitch:', error);
-            throw error;
-        }
+        return await this.pitchService.ratePitch(pitchId, rating, comment);
     }
 
     /**
      * Toggle favorite status for a pitch
      */
     async togglePitchFavorite(pitchId) {
-        try {
-            const pitch = await TagSuggestionPitch.findByPk(pitchId);
-            if (!pitch) {
-                throw new Error('Pitch not found');
-            }
-
-            // Toggle the favorite status
-            await pitch.update({
-                isFavorite: !pitch.isFavorite
-            });
-
-            return {
-                success: true,
-                pitch: pitch
-            };
-        } catch (error) {
-            console.error('Error toggling pitch favorite:', error);
-            throw error;
-        }
+        return await this.pitchService.togglePitchFavorite(pitchId);
     }
 }
 

@@ -197,20 +197,35 @@ export const intelligentTagApi = {
 
   // Pitch Management endpoints
   generatePitches: (suggestionId, count = 3) => 
-    api.post(`/intelligent-tags/suggestions/${suggestionId}/pitches`, { count }),
+    api.post(`/pitches/suggestions/${suggestionId}/generate`, { count }),
 
   getPitches: (suggestionId) => 
-    api.get(`/intelligent-tags/suggestions/${suggestionId}/pitches`),
+    api.get(`/pitches/suggestions/${suggestionId}`),
 
   deletePitch: (pitchId) => 
-    api.delete(`/intelligent-tags/pitches/${pitchId}`),
+    api.delete(`/pitches/${pitchId}`),
 
   deleteAllPitches: (suggestionId) => 
-    api.delete(`/intelligent-tags/suggestions/${suggestionId}/pitches`),
+    api.delete(`/pitches/suggestions/${suggestionId}`),
 
   ratePitch: (pitchId, rating, comment = null) => 
-    api.post(`/intelligent-tags/pitches/${pitchId}/rate`, { rating, comment }),
+    api.post(`/pitches/${pitchId}/rate`, { rating, comment }),
 
   togglePitchFavorite: (pitchId) => 
-    api.post(`/intelligent-tags/pitches/${pitchId}/favorite`)
+    api.post(`/pitches/${pitchId}/favorite`),
+
+  // Additional pitch endpoints
+  regeneratePitch: (pitchId, userFeedback = null) => 
+    api.post(`/pitches/${pitchId}/regenerate`, { userFeedback }),
+
+  getPitchStats: (suggestionId = null) => {
+    const params = suggestionId ? `?suggestionId=${suggestionId}` : '';
+    return api.get(`/pitches/stats${params}`);
+  },
+
+  getTopRatedPitches: (limit = 10) => 
+    api.get(`/pitches/top-rated?limit=${limit}`),
+
+  getFavoritePitches: (limit = 10) => 
+    api.get(`/pitches/favorites?limit=${limit}`)
 }; 
