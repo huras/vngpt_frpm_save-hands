@@ -39,11 +39,12 @@ async function testStreamingSuggestions() {
         }
 
         // Test the iterative AI service
-        const aiService = new AIService();
+        const IntelligentTagSuggestionService = require('./services/IntelligentTagSuggestionService');
+        const suggestionService = new IntelligentTagSuggestionService();
         console.log('\n=== Testing Iterative AI Service ===');
         
         let suggestionCount = 0;
-        const aiGenerator = aiService.generateIntelligentSuggestionsIterative(story, availableTags, 3);
+        const aiGenerator = suggestionService.generateIntelligentSuggestionsIterative(story, availableTags, 3);
         
         for await (const suggestion of aiGenerator) {
             suggestionCount++;

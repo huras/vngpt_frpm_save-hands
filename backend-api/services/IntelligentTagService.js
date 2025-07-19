@@ -1,11 +1,13 @@
 const { Story, Tag, TagSuggestion, StoryTagReasoning } = require('../models');
 const AIService = require('./AIService');
 const AICommentaryService = require('./AICommentaryService');
+const IntelligentTagSuggestionService = require('./IntelligentTagSuggestionService');
 
 class IntelligentTagService {
     constructor() {
         this.aiService = new AIService();
         this.commentaryService = new AICommentaryService(this.aiService);
+        this.suggestionService = new IntelligentTagSuggestionService();
     }
 
     /**
@@ -142,63 +144,14 @@ class IntelligentTagService {
         try {
             console.log(`Generating streaming suggestions for story ${storyId} with limit ${limit}`);
             
-            const story = await Story.findByPk(storyId, {
-                include: [
-                    { model: Tag, as: 'tags' },
-                    { 
-                        model: StoryTagReasoning, 
-                        as: 'tagReasonings',
-                        include: [{ model: Tag, as: 'tag' }]
-                    }
-                ]
-            });
-
-            if (!story) {
-                throw new Error('Story not found');
-            }
-
-            console.log(`Found story: ${story.title} with ${story.tags?.length || 0} tags`);
-
-            // Get all available tags
-            const allTags = await Tag.findAll({
-                order: [['title', 'ASC']]
-            });
-
-            console.log(`Found ${allTags.length} total tags available`);
-
-            // Get existing suggestions to avoid duplicates
-            const existingSuggestions = await TagSuggestion.findAll({
-                where: { 
-                    storyId,
-                    status: ['pending', 'accepted']
-                }
-            });
-
-            console.log(`Found ${existingSuggestions.length} existing suggestions`);
-
-            const existingTagIds = new Set([
-                ...story.tags.map(tag => tag.id),
-                ...existingSuggestions.map(suggestion => suggestion.tagId)
-            ]);
-
-            // Filter out already suggested or selected tags
-            const availableTags = allTags.filter(tag => !existingTagIds.has(tag.id));
-
-            console.log(`Available tags after filtering: ${availableTags.length}`);
-
-            if (availableTags.length === 0) {
-                console.log('No available tags for suggestion');
-                return { suggestions: [], message: 'No more tags available for suggestion' };
-            }
-
             const suggestions = [];
             const createdSuggestions = [];
 
-            // Use the iterative AI service
+            // Use the iterative AI service (data fetching is now handled inside the service)
             console.log('Starting iterative AI generation...');
             let aiGenerator;
             try {
-                aiGenerator = this.aiService.generateIntelligentSuggestionsIterative(story, availableTags, limit);
+                aiGenerator = this.suggestionService.generateIntelligentSuggestionsIterative(storyId, limit);
             } catch (aiError) {
                 console.error('Failed to start iterative AI generation:', aiError);
                 throw new Error('AI service failed to start: ' + aiError.message);
@@ -233,6 +186,12 @@ class IntelligentTagService {
                 
                 try {
                     console.log(`Saving suggestion to database with reasoning: ${aiSuggestion.reasoning.substring(0, 100)}...`);
+                    
+                    // Get current story tags for context (since story data is refreshed each iteration)
+                    const currentStory = await Story.findByPk(storyId, {
+                        include: [{ model: Tag, as: 'tags' }]
+                    });
+                    
                     const suggestion = await TagSuggestion.create({
                         storyId,
                         tagId: aiSuggestion.tagId,
@@ -240,7 +199,7 @@ class IntelligentTagService {
                         confidence: aiSuggestion.confidence,
                         status: 'pending',
                         suggestionType: 'ai_generated',
-                        contextTags: JSON.stringify(story.tags.map(tag => tag.id))
+                        contextTags: JSON.stringify(currentStory.tags.map(tag => tag.id))
                     });
 
                     const suggestionWithTag = {
@@ -1310,6 +1269,54 @@ Return only the explanation text, no JSON formatting or additional text.`;
             };
         } catch (error) {
             console.error('Error getting suggestion history:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Clear all pending suggestions for a story
+     */
+    async clearPendingSuggestions(storyId) {
+        try {
+            // Find all pending suggestions for the story
+            const pendingSuggestions = await TagSuggestion.findAll({
+                where: {
+                    storyId,
+                    status: 'pending'
+                }
+            });
+
+            if (pendingSuggestions.length === 0) {
+                return {
+                    success: true,
+                    message: 'No pending suggestions to clear',
+                    clearedCount: 0
+                };
+            }
+
+            // Update all pending suggestions to 'expired' status
+            await TagSuggestion.update(
+                {
+                    status: 'expired',
+                    updatedAt: new Date()
+                },
+                {
+                    where: {
+                        storyId,
+                        status: 'pending'
+                    }
+                }
+            );
+
+            console.log(`Cleared ${pendingSuggestions.length} pending suggestions for story ${storyId}`);
+
+            return {
+                success: true,
+                message: `Cleared ${pendingSuggestions.length} pending suggestions`,
+                clearedCount: pendingSuggestions.length
+            };
+        } catch (error) {
+            console.error('Error clearing pending suggestions:', error);
             throw error;
         }
     }

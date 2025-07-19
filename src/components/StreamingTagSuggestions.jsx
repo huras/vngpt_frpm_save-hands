@@ -651,6 +651,33 @@ const StreamingTagSuggestions = ({ storyId }) => {
     }
   };
 
+  const clearPendingSuggestions = async () => {
+    if (!window.confirm('Are you sure you want to clear all pending suggestions? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await intelligentTagApi.clearPendingSuggestions(storyId);
+      
+      if (response.data?.success) {
+        console.log(`Cleared ${response.data.clearedCount} pending suggestions`);
+        // Clear the suggestions from the state
+        setSuggestions([]);
+        // Show success message
+        alert(`Successfully cleared ${response.data.clearedCount} pending suggestions`);
+      } else {
+        console.error('Failed to clear suggestions:', response.data);
+        alert('Failed to clear suggestions. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error clearing pending suggestions:', error);
+      alert('Error clearing suggestions. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleRatingUpdate = async (suggestionId, rating, comment) => {
     // Update the suggestion in the appropriate list with the new rating
     const updateSuggestionInList = (list, setList) => {
@@ -709,6 +736,18 @@ const StreamingTagSuggestions = ({ storyId }) => {
         >
           {isGenerating ? 'Generating...' : 'Generate 10 Suggestions'}
         </button>
+
+        {suggestions.length > 0 && (
+          <button 
+            onClick={clearPendingSuggestions}
+            disabled={isGenerating || isLoading}
+            className="clear-btn"
+            title="Clear all pending suggestions"
+          >
+            <i className="fas fa-trash"></i>
+            Clear Pending
+          </button>
+        )}
       </div>
 
       {isGenerating && (
@@ -862,6 +901,28 @@ const StreamingTagSuggestions = ({ storyId }) => {
         }
 
         .generate-btn:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+        }
+
+        .clear-btn {
+          padding: 10px 20px;
+          background: #dc3545;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: background 0.3s ease;
+        }
+
+        .clear-btn:hover:not(:disabled) {
+          background: #c82333;
+        }
+
+        .clear-btn:disabled {
           background: #ccc;
           cursor: not-allowed;
         }

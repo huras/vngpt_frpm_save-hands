@@ -200,6 +200,23 @@ router.post('/suggestions/:storyId/reevaluate', async (req, res) => {
     }
 });
 
+// DELETE /intelligent-tags/suggestions/:storyId/clear-pending - Clear all pending suggestions
+router.delete('/suggestions/:storyId/clear-pending', async (req, res) => {
+    try {
+        const { storyId } = req.params;
+
+        const result = await intelligentTagService.clearPendingSuggestions(storyId);
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('Error clearing pending suggestions:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Story not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while clearing pending suggestions.' });
+        }
+    }
+});
+
 // POST /intelligent-tags/suggestions/:storyId/generate-streaming - Generate suggestions iteratively with streaming
 router.post('/suggestions/:storyId/generate-streaming', async (req, res) => {
     try {

@@ -129,6 +129,10 @@ export const intelligentTagApi = {
     return api.get(`/intelligent-tags/statistics${params}`);
   },
 
+  // Clear pending suggestions
+  clearPendingSuggestions: (storyId) => 
+    api.delete(`/intelligent-tags/suggestions/${storyId}/clear-pending`),
+
   // AI Commentary endpoints
   getCommentary: (storyId, tagId) => 
     api.get(`/intelligent-tags/commentaries/${storyId}/${tagId}`),

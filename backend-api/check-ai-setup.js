@@ -45,7 +45,9 @@ async function checkAISetup() {
             { id: 1, title: "Fantasy", short_description: "Fantasy genre", category: "Genre", keywords: "fantasy" }
         ];
         
-        const aiGenerator = aiService.generateIntelligentSuggestionsIterative(testStory, testTags, 1);
+        const IntelligentTagSuggestionService = require('./services/IntelligentTagSuggestionService');
+        const suggestionService = new IntelligentTagSuggestionService();
+        const aiGenerator = suggestionService.generateIntelligentSuggestionsIterative(testStory, testTags, 1);
         
         for await (const suggestion of aiGenerator) {
             console.log('✓ Iterative generation successful');

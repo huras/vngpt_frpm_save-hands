@@ -21,11 +21,12 @@ async function testAIResponse() {
             { id: 3, title: "Action", short_description: "Action elements", category: "Genre", keywords: "action, combat" }
         ];
 
-        const aiService = new AIService();
+        const IntelligentTagSuggestionService = require('./services/IntelligentTagSuggestionService');
+        const suggestionService = new IntelligentTagSuggestionService();
         
         // Test the iterative method
         console.log('Testing iterative AI method...');
-        const aiGenerator = aiService.generateIntelligentSuggestionsIterative(testStory, availableTags, 1);
+        const aiGenerator = suggestionService.generateIntelligentSuggestionsIterative(testStory, availableTags, 1);
         
         for await (const suggestion of aiGenerator) {
             console.log('\n=== AI Response ===');
