@@ -562,4 +562,117 @@
     top: 3px;
     right: 3px;
   }
+}
+
+/* Pitch Section Styles */
+.pitch-section {
+  margin: 15px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+
+  .pitch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+
+    h5 {
+      margin: 0;
+      color: #495057;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .pitch-controls {
+      display: flex;
+      gap: 10px;
+
+      button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        &.generate-pitches-btn {
+          background: #007bff;
+          color: white;
+
+          &:hover:not(:disabled) {
+            background: #0056b3;
+          }
+        }
+
+        &.clear-pitches-btn {
+          background: #dc3545;
+          color: white;
+
+          &:hover:not(:disabled) {
+            background: #c82333;
+          }
+        }
+      }
+    }
+  }
+
+  .loading-pitches {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+
+    i {
+      margin-right: 8px;
+    }
+  }
+
+  .pitches-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .no-pitches {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+    font-style: italic;
+    background: white;
+    border-radius: 6px;
+    border: 1px dashed #dee2e6;
+  }
+}
+
+/* Pitch button in suggestion actions */
+.pitch-btn {
+  padding: 8px 16px;
+  background: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &:hover {
+    background: #138496;
+  }
+
+  i {
+    font-size: 14px;
+  }
 } 

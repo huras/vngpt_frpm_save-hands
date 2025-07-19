@@ -1144,6 +1144,135 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
             return [];
         }
     }
+
+    /**
+     * Generate pitches for a tag suggestion based on the suggestion's reasoning
+     */
+    async generatePitches(suggestion, story, count = 3) {
+        try {
+            console.log('=== Generating Pitches ===');
+            console.log(`Suggestion: ${suggestion.tag.title}`);
+            console.log(`Story: ${story.title}`);
+            console.log(`Count: ${count}`);
+
+            const prompt = `You are an expert story development consultant. Based on a tag suggestion for a story, generate ${count} creative pitches that show how this tag could be effectively used in the story.
+
+Story Context:
+- Title: ${story.title}
+- Brainstorm: ${story.brainstorm || 'No brainstorm provided'}
+
+Current Story Tags:
+${story.tags ? story.tags.map(tag => `- ${tag.title}: ${tag.short_description || 'No description'}`).join('\n') : 'No tags yet'}
+
+Tag Suggestion:
+- Tag: ${suggestion.tag.title}
+- Description: ${suggestion.tag.short_description || 'No description'}
+- Category: ${suggestion.tag.category || 'General'}
+- Keywords: ${suggestion.tag.keywords || 'None'}
+
+AI Reasoning for this tag:
+"${suggestion.reasoning}"
+
+Generate ${count} different pitches that show creative ways to incorporate this tag into the story. Each pitch should be:
+1. Specific and actionable
+2. Different from the others (different approaches, angles, or story elements)
+3. Realistic and achievable within the story context
+4. Engaging and inspiring
+
+Pitch types to include (distribute evenly):
+- character_development: How this tag affects character growth, relationships, or personality
+- plot_enhancement: How this tag drives the plot forward or creates new storylines
+- theme_exploration: How this tag deepens the story's themes or messages
+- world_building: How this tag enriches the story's setting or atmosphere
+- conflict_creation: How this tag introduces or resolves conflicts
+- general: General creative applications of the tag
+
+Provide a JSON response with an array of pitch objects, each containing:
+1. "pitch": The pitch text (2-3 sentences)
+2. "type": One of the pitch types listed above
+3. "confidence": Confidence score (0-1) for how well this pitch fits
+
+Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
+
+            const response = await this.openai.chat.completions.create({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "system", content: prompt }],
+                temperature: 0.8,
+                max_tokens: 1500
+            });
+
+            const content = response.choices[0].message.content;
+            const cleanedContent = this.cleanAIResponse(content);
+            const result = JSON.parse(cleanedContent);
+
+            // Ensure we have the expected structure
+            if (!result.pitches || !Array.isArray(result.pitches)) {
+                console.error('Invalid pitch response structure:', result);
+                return this.getFallbackPitches(suggestion, count);
+            }
+
+            // Validate and clean pitches
+            const validPitches = result.pitches
+                .filter(pitch => pitch.pitch && pitch.type)
+                .map(pitch => ({
+                    pitch: pitch.pitch.trim(),
+                    type: this.validatePitchType(pitch.type),
+                    confidence: Math.min(Math.max(pitch.confidence || 0.8, 0), 1)
+                }))
+                .slice(0, count);
+
+            console.log(`Generated ${validPitches.length} valid pitches`);
+            return validPitches;
+
+        } catch (error) {
+            console.error('Error generating pitches:', error);
+            return this.getFallbackPitches(suggestion, count);
+        }
+    }
+
+    /**
+     * Validate and normalize pitch type
+     */
+    validatePitchType(type) {
+        const validTypes = [
+            'character_development',
+            'plot_enhancement', 
+            'theme_exploration',
+            'world_building',
+            'conflict_creation',
+            'general'
+        ];
+        
+        return validTypes.includes(type) ? type : 'general';
+    }
+
+    /**
+     * Generate fallback pitches when AI fails
+     */
+    getFallbackPitches(suggestion, count = 3) {
+        const tagTitle = suggestion.tag.title;
+        const tagDescription = suggestion.tag.short_description || 'this tag';
+        
+        const fallbackPitches = [
+            {
+                pitch: `Incorporate ${tagTitle} to add depth to your story's world-building and create a more immersive experience for readers.`,
+                type: 'world_building',
+                confidence: 0.7
+            },
+            {
+                pitch: `Use ${tagTitle} to develop your main character's personality and create interesting character dynamics throughout the story.`,
+                type: 'character_development',
+                confidence: 0.7
+            },
+            {
+                pitch: `Apply ${tagTitle} to enhance your plot by introducing new story elements that drive the narrative forward in unexpected ways.`,
+                type: 'plot_enhancement',
+                confidence: 0.7
+            }
+        ];
+
+        return fallbackPitches.slice(0, count);
+    }
 }
 
 module.exports = AIService;

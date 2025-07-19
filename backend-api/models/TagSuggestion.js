@@ -149,6 +149,12 @@ module.exports = (sequelize, Sequelize) => {
             foreignKey: 'tagId',
             as: 'tag'
         });
+
+        // One-to-Many relationship with TagSuggestionPitch
+        TagSuggestion.hasMany(models.TagSuggestionPitch, {
+            foreignKey: 'tagSuggestionId',
+            as: 'pitches'
+        });
     };
 
     return TagSuggestion;

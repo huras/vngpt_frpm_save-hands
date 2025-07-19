@@ -1,0 +1,289 @@
+.pitch-card {
+  background: #fff;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  position: relative;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+  }
+
+  &.favorite {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+    
+    .favorite-btn {
+      color: #dc3545;
+    }
+  }
+
+  .pitch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+
+    .pitch-type {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #495057;
+
+      i {
+        font-size: 16px;
+        color: #007bff;
+      }
+    }
+
+    .pitch-actions {
+      display: flex;
+      gap: 8px;
+
+      button {
+        background: none;
+        border: none;
+        padding: 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+
+        &:hover {
+          background: #f8f9fa;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        &.favorite-btn {
+          color: #6c757d;
+
+          &.active {
+            color: #dc3545;
+          }
+
+          &:hover {
+            color: #dc3545;
+          }
+        }
+
+        &.rate-btn {
+          color: #6c757d;
+
+          &:hover {
+            color: #ffc107;
+          }
+        }
+
+        &.delete-btn {
+          color: #6c757d;
+
+          &:hover {
+            color: #dc3545;
+          }
+        }
+      }
+    }
+  }
+
+  .pitch-content {
+    margin-bottom: 12px;
+
+    .pitch-text {
+      margin: 0;
+      line-height: 1.6;
+      color: #212529;
+      font-size: 14px;
+    }
+  }
+
+  .pitch-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #6c757d;
+
+    .pitch-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .confidence {
+        font-weight: 500;
+      }
+
+      .rating-display {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        &.no-rating {
+          color: #adb5bd;
+          font-style: italic;
+        }
+      }
+    }
+
+    .pitch-date {
+      font-style: italic;
+    }
+  }
+}
+
+// Dialog styles (reused from SuggestionCard)
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e9ecef;
+
+    h4 {
+      margin: 0;
+      color: #212529;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #6c757d;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+
+      &:hover {
+        background: #f8f9fa;
+        color: #495057;
+      }
+    }
+  }
+
+  .modal-body {
+    margin-bottom: 20px;
+
+    .rating-preview {
+      margin-bottom: 20px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+
+      h6 {
+        margin: 0 0 8px 0;
+        color: #495057;
+      }
+
+      p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 14px;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.15s ease-in-out;
+
+        &:focus {
+          outline: none;
+          border-color: #007bff;
+          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+      }
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #e9ecef;
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      &.btn-secondary {
+        background: #6c757d;
+        color: white;
+
+        &:hover:not(:disabled) {
+          background: #5a6268;
+        }
+      }
+
+      &.btn-warning {
+        background: #ffc107;
+        color: #212529;
+
+        &:hover:not(:disabled) {
+          background: #e0a800;
+        }
+      }
+    }
+  }
+} 

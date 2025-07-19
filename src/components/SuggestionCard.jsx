@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { intelligentTagApi } from '../services/intelligentTagApi';
 import { BACKEND_CONFIG } from '../config/backend';
 import TagImagePopup from './TagImagePopup';
 import StarRating from './StarRating';
+import TagSuggestionPitchCard from './TagSuggestionPitchCard';
 import './SuggestionCard.scss';
 
-// Enhanced SuggestionCard component with rating, history, and regenerate features
+// Enhanced SuggestionCard component with rating, history, regenerate, and pitch features
 const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistory, onRegenerate }) => {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -18,6 +19,12 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
   const [suggestionHistory, setSuggestionHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  
+  // Pitch-related state
+  const [showPitches, setShowPitches] = useState(false);
+  const [pitches, setPitches] = useState([]);
+  const [loadingPitches, setLoadingPitches] = useState(false);
+  const [generatingPitches, setGeneratingPitches] = useState(false);
 
   const handleReject = () => {
     if (showRejectDialog) {
@@ -135,6 +142,73 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
 
   const closeHistory = () => {
     setShowHistoryModal(false);
+  };
+
+  // Pitch-related functions
+  const fetchPitches = async () => {
+    try {
+      setLoadingPitches(true);
+      const response = await intelligentTagApi.getPitches(suggestion.id);
+      if (response.data.success) {
+        setPitches(response.data.pitches);
+      } else {
+        setPitches([]);
+      }
+    } catch (error) {
+      console.error('Error fetching pitches:', error);
+      setPitches([]);
+    } finally {
+      setLoadingPitches(false);
+    }
+  };
+
+  const generatePitches = async (count = 3) => {
+    try {
+      setGeneratingPitches(true);
+      const response = await intelligentTagApi.generatePitches(suggestion.id, count);
+      if (response.data.success) {
+        setPitches(response.data.pitches);
+        setShowPitches(true);
+      } else {
+        throw new Error('Failed to generate pitches');
+      }
+    } catch (error) {
+      console.error('Error generating pitches:', error);
+      alert('Failed to generate pitches. Please try again.');
+    } finally {
+      setGeneratingPitches(false);
+    }
+  };
+
+  const handlePitchDelete = (pitchId) => {
+    setPitches(prev => prev.filter(pitch => pitch.id !== pitchId));
+  };
+
+  const handlePitchUpdate = (pitchId, updatedPitch) => {
+    setPitches(prev => prev.map(pitch => 
+      pitch.id === pitchId ? updatedPitch : pitch
+    ));
+  };
+
+  const deleteAllPitches = async () => {
+    if (!window.confirm('Are you sure you want to delete all pitches for this suggestion?')) {
+      return;
+    }
+
+    try {
+      await intelligentTagApi.deleteAllPitches(suggestion.id);
+      setPitches([]);
+    } catch (error) {
+      console.error('Error deleting all pitches:', error);
+      alert('Failed to delete pitches. Please try again.');
+    }
+  };
+
+  const togglePitches = () => {
+    if (!showPitches && pitches.length === 0) {
+      fetchPitches();
+    }
+    setShowPitches(!showPitches);
   };
 
   const formatDate = (dateString) => {
@@ -444,6 +518,64 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
           </div>
         </div>
       )}
+
+      {/* Pitch Section */}
+      {showPitches && (
+        <div className="pitch-section">
+          <div className="pitch-header">
+            <h5>Story Pitches</h5>
+            <div className="pitch-controls">
+              <button 
+                onClick={() => generatePitches(3)}
+                disabled={generatingPitches}
+                className="generate-pitches-btn"
+              >
+                {generatingPitches ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i> Generating...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-magic"></i> Generate New
+                  </>
+                )}
+              </button>
+              {pitches.length > 0 && (
+                <button 
+                  onClick={deleteAllPitches}
+                  className="clear-pitches-btn"
+                  title="Delete all pitches"
+                >
+                  <i className="fas fa-trash"></i>
+                  Clear All
+                </button>
+              )}
+            </div>
+          </div>
+
+          {loadingPitches ? (
+            <div className="loading-pitches">
+              <i className="fas fa-spinner fa-spin"></i>
+              <p>Loading pitches...</p>
+            </div>
+          ) : pitches.length > 0 ? (
+            <div className="pitches-list">
+              {pitches.map((pitch) => (
+                <TagSuggestionPitchCard
+                  key={pitch.id}
+                  pitch={pitch}
+                  onDelete={handlePitchDelete}
+                  onUpdate={handlePitchUpdate}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="no-pitches">
+              <p>No pitches generated yet. Click "Generate New" to create story pitches based on this suggestion.</p>
+            </div>
+          )}
+        </div>
+      )}
       
       <div className="suggestion-actions">
         {type === 'pending' && (
@@ -476,6 +608,14 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
               <i className="fas fa-history"></i>
               History
             </button>
+            <button 
+              onClick={togglePitches}
+              className="pitch-btn"
+              title="View story pitches"
+            >
+              <i className="fas fa-lightbulb"></i>
+              Pitches ({pitches.length})
+            </button>
           </>
         )}
         {type === 'rejected' && (
@@ -502,6 +642,14 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
               <i className="fas fa-history"></i>
               History
             </button>
+            <button 
+              onClick={togglePitches}
+              className="pitch-btn"
+              title="View story pitches"
+            >
+              <i className="fas fa-lightbulb"></i>
+              Pitches ({pitches.length})
+            </button>
           </>
         )}
         {type === 'accepted' && (
@@ -527,6 +675,14 @@ const SuggestionCard = ({ suggestion, onAccept, onReject, type, onRate, onHistor
             >
               <i className="fas fa-history"></i>
               History
+            </button>
+            <button 
+              onClick={togglePitches}
+              className="pitch-btn"
+              title="View story pitches"
+            >
+              <i className="fas fa-lightbulb"></i>
+              Pitches ({pitches.length})
             </button>
           </>
         )}

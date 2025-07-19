@@ -193,5 +193,24 @@ export const intelligentTagApi = {
 
   // Update a reasoning
   updateReasoning: (reasoningId, reasoning) => 
-    api.put(`/intelligent-tags/reasonings/${reasoningId}`, { reasoning })
+    api.put(`/intelligent-tags/reasonings/${reasoningId}`, { reasoning }),
+
+  // Pitch Management endpoints
+  generatePitches: (suggestionId, count = 3) => 
+    api.post(`/intelligent-tags/suggestions/${suggestionId}/pitches`, { count }),
+
+  getPitches: (suggestionId) => 
+    api.get(`/intelligent-tags/suggestions/${suggestionId}/pitches`),
+
+  deletePitch: (pitchId) => 
+    api.delete(`/intelligent-tags/pitches/${pitchId}`),
+
+  deleteAllPitches: (suggestionId) => 
+    api.delete(`/intelligent-tags/suggestions/${suggestionId}/pitches`),
+
+  ratePitch: (pitchId, rating, comment = null) => 
+    api.post(`/intelligent-tags/pitches/${pitchId}/rate`, { rating, comment }),
+
+  togglePitchFavorite: (pitchId) => 
+    api.post(`/intelligent-tags/pitches/${pitchId}/favorite`)
 }; 
