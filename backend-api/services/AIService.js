@@ -727,56 +727,59 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
             // Get rejection learning data for this story
             const rejectionLearning = await this.getRejectionLearningData(story.id);
             
-            const prompt = `Based on this story and its current tag selections, generate ${limit} intelligent tag suggestions.
+            const prompt = `You are a creative writing consultant helping an author develop their story. Your role is to inspire and pitch exciting new directions for their narrative.
 
-Story Context:
-- Title: ${storyContext.title}
-- Brainstorm: ${storyContext.brainstorm || 'No brainstorm provided'}
+STORY BACKGROUND:
+"${storyContext.title}"
+${storyContext.brainstorm ? `Brainstorm: ${storyContext.brainstorm}` : 'No brainstorm provided yet'}
 
-Current Tags:
-${storyContext.currentTags.map(tag => `- ${tag.title}: ${tag.description} (Category: ${tag.category}, Keywords: ${tag.keywords})`).join('\n')}
+CURRENT STORY DIRECTION:
+${storyContext.currentTags.length > 0 ? storyContext.currentTags.map(tag => `• ${tag.title}: ${tag.description} (${tag.category})`).join('\n') : 'Story is just beginning - no tags selected yet'}
 
-Previous Tag Choices and Reasoning:
-${storyContext.tagReasonings.map(reasoning => `- ${reasoning.tagTitle}: ${reasoning.reasoning} (Source: ${reasoning.source})${reasoning.userExplanation ? ` - User: ${reasoning.userExplanation}` : ''}`).join('\n')}
+${storyContext.tagReasonings.length > 0 ? `AUTHOR'S CREATIVE CHOICES:
+${storyContext.tagReasonings.map(reasoning => `• ${reasoning.tagTitle}: "${reasoning.reasoning}"${reasoning.userExplanation ? ` (Author's note: ${reasoning.userExplanation})` : ''}`).join('\n')}` : ''}
 
-${rejectionLearning.rejections.length > 0 ? `Rejected Tags and Reasons:
-${rejectionLearning.rejections.map(rejection => `- ${rejection.tagTitle} (${rejection.tagCategory}): ${rejection.rejectionReason || 'No reason provided'}`).join('\n')}
+${rejectionLearning.rejections.length > 0 ? `WHAT DIDN'T WORK:
+${rejectionLearning.rejections.map(rejection => `• ${rejection.tagTitle}: ${rejection.rejectionReason || 'Author felt it didn\'t fit'}`).join('\n')}
 
-Learning from Rejections:
-- Avoid suggesting tags from these categories: ${rejectionLearning.avoidCategories.join(', ') || 'None'}
-- Common rejection reasons: ${rejectionLearning.commonReasons.join(', ') || 'None'}
-- User preferences: ${rejectionLearning.userPreferences.join(', ') || 'None'}
+LEARNING FROM FEEDBACK:
+- Author seems to avoid: ${rejectionLearning.avoidCategories.join(', ') || 'No clear patterns yet'}
+- Common concerns: ${rejectionLearning.commonReasons.join(', ') || 'None identified'}
+- Author's style preferences: ${rejectionLearning.userPreferences.join(', ') || 'Still discovering'}
 
-` : ''}Available Tags:
-${availableTags.map(tag => `- ID: ${tag.id}, Title: ${tag.title}: ${tag.short_description || ''} (Category: ${tag.category || ''}, Keywords: ${tag.keywords || ''})`).join('\n')}
+` : ''}INSPIRATION CATALOG:
+${availableTags.map(tag => `• ID ${tag.id}: ${tag.title} - ${tag.short_description || 'No description'} (${tag.category || 'Uncategorized'})`).join('\n')}
 
-Generate a JSON response with:
-1. "suggestions": Array of ${limit} objects with:
-   - "tagId": The NUMERIC ID of the suggested tag (use the ID number from the available tags list above)
-   - "reasoning": Detailed explanation of why this tag fits the story based on current context
-   - "confidence": Confidence score (0-1) for this suggestion
-   - "relevance": How relevant this tag is to the story direction
+YOUR MISSION:
+Pitch ${limit} exciting new story directions that will inspire the author. Think like a creative consultant who's helping them discover new possibilities for their narrative.
 
-IMPORTANT: The "tagId" must be the numeric ID from the available tags list above, NOT the tag title. For example, if you want to suggest "Fantasy", use the ID number associated with that tag.
+For each suggestion, provide:
+1. "tagId": The numeric ID from the inspiration catalog above
+2. "reasoning": A compelling story pitch that shows how this element could transform or enhance their story. Be specific, creative, and inspiring. Think about:
+   - How this could add new layers to their existing story elements
+   - What exciting plot developments or character arcs it could enable
+   - How it could create interesting conflicts or opportunities
+   - What unique storytelling possibilities it opens up
+3. "confidence": How strongly you believe this direction could work (0-1)
+4. "tagName": The name of the tag that was used to generate the suggestion
 
-Consider:
-- The story's current direction based on existing tags
-- User's previous choices and reasoning
-- How new tags would complement existing ones
-- The story's themes, genre, and content
-- User's expressed preferences through their choices
-${rejectionLearning.rejections.length > 0 ? `- Avoid suggesting tags similar to previously rejected ones
-- Focus on categories and themes the user has shown preference for
-- Consider the specific reasons given for rejections` : ''}
+APPROACH:
+- Be enthusiastic and inspiring in your pitches
+- Connect new ideas to what they've already established
+- Suggest specific ways this could enhance their story
+- Consider how it could create interesting character dynamics or plot twists
+- Think about the emotional impact and storytelling potential
+${rejectionLearning.rejections.length > 0 ? `- Respect their previous feedback while offering fresh perspectives
+- Focus on directions they seem to enjoy based on their choices` : ''}
 
-Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
+Format as valid JSON only. Return pure JSON without markdown formatting.`;
 
             console.log('Calling OpenAI API...');
             const response = await this.openai.chat.completions.create({
                 model: "gpt-3.5-turbo",
                 messages: [{ role: "system", content: prompt }],
                 temperature: 0.7,
-                max_tokens: 2000
+                max_tokens: 5000
             });
 
             console.log('OpenAI API response received');
@@ -817,7 +820,6 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
                         tag: tag,
                         reasoning: suggestion.reasoning,
                         confidence: suggestion.confidence || 0.8,
-                        relevance: suggestion.relevance || 'high'
                     };
                 })
                 .filter(suggestion => suggestion !== null)
@@ -839,21 +841,21 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
             const storyContext = {
                 title: story.title,
                 brainstorm: story.brainstorm,
-                currentTags: story.tags.map(tag => ({
+                currentTags: story.tags ? story.tags.map(tag => ({
                     title: tag.title,
-                    description: tag.short_description,
-                    category: tag.category,
-                    keywords: tag.keywords
-                })),
-                tagReasonings: story.tagReasonings.map(reasoning => ({
-                    tagTitle: reasoning.tag.title,
-                    reasoning: reasoning.reasoning,
-                    source: reasoning.source,
-                    userExplanation: reasoning.userExplanation
-                }))
+                    description: tag.short_description || '',
+                    category: tag.category || '',
+                    keywords: tag.keywords || ''
+                })) : [],
+                tagReasonings: story.tagReasonings ? story.tagReasonings.map(reasoning => ({
+                    tagTitle: reasoning.tag ? reasoning.tag.title : 'Unknown',
+                    reasoning: reasoning.reasoning || '',
+                    source: reasoning.source || '',
+                    userExplanation: reasoning.userExplanation || ''
+                })) : []
             };
 
-            const prompt = `Re-evaluate this tag suggestion based on the updated story context.
+            const prompt = `Evaluate this tag suggestion based on how the story has evolved:
 
 Story Context:
 - Title: ${storyContext.title}
@@ -868,17 +870,16 @@ ${storyContext.tagReasonings.map(reasoning => `- ${reasoning.tagTitle}: ${reason
 Tag to Re-evaluate:
 - ${tag.title}: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})
 
-Original Reasoning: ${originalReasoning}
+Original Reasoning:
+"${originalReasoning}"
 
 Provide a JSON response with:
 1. "reasoning": Updated reasoning for why this tag still fits (or doesn't fit) the story
 2. "confidence": Updated confidence score (0-1)
-3. "stillRelevant": Boolean indicating if the tag is still relevant
 
 Consider:
 - How the story has evolved with new tags
 - Whether the original reasoning still holds
-- If the tag still complements the current direction
 - User's evolving preferences
 
 Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
@@ -897,14 +898,93 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
             return {
                 reasoning: result.reasoning,
                 confidence: result.confidence || 0.8,
-                stillRelevant: result.stillRelevant !== false
             };
         } catch (error) {
             console.error('Error re-evaluating suggestion:', error);
             return {
                 reasoning: originalReasoning,
                 confidence: 0.5,
-                stillRelevant: true
+            };
+        }
+    }
+
+    async reevaluateSuggestionWithFeedback(story, tag, originalReasoning, userFeedback) {
+        try {
+            const storyContext = {
+                title: story.title,
+                brainstorm: story.brainstorm,
+                currentTags: story.tags ? story.tags.map(tag => ({
+                    title: tag.title,
+                    description: tag.short_description || '',
+                    category: tag.category || '',
+                    keywords: tag.keywords || ''
+                })) : [],
+                tagReasonings: story.tagReasonings ? story.tagReasonings.map(reasoning => ({
+                    tagTitle: reasoning.tag ? reasoning.tag.title : 'Unknown',
+                    reasoning: reasoning.reasoning || '',
+                    source: reasoning.source || '',
+                    userExplanation: reasoning.userExplanation || ''
+                })) : []
+            };
+
+            let prompt = `Improve this tag suggestion based on user feedback and story context:
+
+Story Context:
+- Title: ${storyContext.title}
+- Brainstorm: ${storyContext.brainstorm || 'No brainstorm provided'}
+
+Current Tags:
+${storyContext.currentTags.map(tag => `- ${tag.title}: ${tag.description} (Category: ${tag.category}, Keywords: ${tag.keywords})`).join('\n')}
+
+Previous Tag Choices and Reasoning:
+${storyContext.tagReasonings.map(reasoning => `- ${reasoning.tagTitle}: ${reasoning.reasoning} (Source: ${reasoning.source})${reasoning.userExplanation ? ` - User: ${reasoning.userExplanation}` : ''}`).join('\n')}
+
+Tag to Improve:
+- ${tag.title}: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})
+
+Current Suggestion:
+"${originalReasoning}"
+
+${userFeedback ? `User Feedback:
+"${userFeedback}"
+
+Please address the user's feedback and provide an improved suggestion that:` : 'Please provide an improved suggestion that:'}
+
+1. Addresses any concerns or suggestions from the user feedback
+2. Is more specific and relevant to the story
+3. Provides better reasoning for why this tag fits
+4. Considers the current story direction and existing tags
+5. Avoids generic statements and provides concrete reasoning
+
+Provide a JSON response with:
+1. "reasoning": Improved reasoning for why this tag fits the story
+2. "confidence": Updated confidence score (0-1) based on improvements
+3. "improvements": Brief description of what was improved
+
+Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
+
+            const response = await this.openai.chat.completions.create({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "system", content: prompt }],
+                temperature: 0.8,
+                max_tokens: 1200
+            });
+
+            const content = response.choices[0].message.content;
+            const cleanedContent = this.cleanAIResponse(content);
+            const result = JSON.parse(cleanedContent);
+
+            return {
+                reasoning: result.reasoning,
+                confidence: result.confidence || 0.8,
+                improvements: result.improvements || 'Improved based on user feedback'
+            };
+        } catch (error) {
+            console.error('Error re-evaluating suggestion with feedback:', error);
+            return {
+                reasoning: originalReasoning,
+                confidence: 0.5,
+                improvements: 'Failed to improve suggestion'
             };
         }
     }

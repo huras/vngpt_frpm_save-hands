@@ -70,6 +70,37 @@ router.post('/suggestions/:suggestionId/reject', async (req, res) => {
     }
 });
 
+// POST /intelligent-tags/suggestions/:suggestionId/regenerate - Regenerate a single suggestion
+router.post('/suggestions/:suggestionId/regenerate', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const { userFeedback } = req.body;
+
+        const result = await intelligentTagService.regenerateSuggestion(suggestionId, userFeedback);
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('Error regenerating suggestion:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Suggestion not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while regenerating the suggestion.' });
+        }
+    }
+});
+
+// GET /intelligent-tags/suggestions/:storyId/:tagId/history - Get suggestion history
+router.get('/suggestions/:storyId/:tagId/history', async (req, res) => {
+    try {
+        const { storyId, tagId } = req.params;
+
+        const result = await intelligentTagService.getSuggestionHistory(storyId, tagId);
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('Error getting suggestion history:', error);
+        res.status(500).json({ error: 'An error occurred while getting suggestion history.' });
+    }
+});
+
 // GET /intelligent-tags/statistics - Get rejection statistics
 router.get('/statistics', async (req, res) => {
     try {
@@ -335,6 +366,24 @@ router.post('/suggestions/:suggestionId/rate', async (req, res) => {
             res.status(404).json({ error: 'Suggestion not found.' });
         } else {
             res.status(500).json({ error: 'An error occurred while rating the suggestion.' });
+        }
+    }
+});
+
+// POST /intelligent-tags/reasonings/:reasoningId/reject - Reject an accepted suggestion
+router.post('/reasonings/:reasoningId/reject', async (req, res) => {
+    try {
+        const { reasoningId } = req.params;
+        const { reason } = req.body;
+
+        const result = await intelligentTagService.rejectAcceptedSuggestion(reasoningId, reason);
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('Error rejecting accepted suggestion:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Reasoning not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while rejecting the suggestion.' });
         }
     }
 });

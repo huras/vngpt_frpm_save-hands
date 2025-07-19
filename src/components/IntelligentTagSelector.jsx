@@ -4,6 +4,8 @@ import { intelligentTagApi } from '../services/intelligentTagApi';
 import TagImagePopup from './TagImagePopup';
 import ReasoningDialogTree from './ReasoningDialogTree';
 import StarRating from './StarRating';
+import TagCardSuggestion from './TagCardSuggestion';
+import TagCardSelected from './TagCardSelected';
 import './IntelligentTagSelector.scss';
 
 const IntelligentTagSelector = ({ 
@@ -38,6 +40,18 @@ const IntelligentTagSelector = ({
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingComment, setRatingComment] = useState('');
   const [ratingSuggestionId, setRatingSuggestionId] = useState(null);
+  const [regeneratingSuggestion, setRegeneratingSuggestion] = useState(null);
+  const [showSuggestionHistory, setShowSuggestionHistory] = useState(false);
+  const [selectedSuggestionForHistory, setSelectedSuggestionForHistory] = useState(null);
+  const [regeneratingInModal, setRegeneratingInModal] = useState(false);
+  const [suggestionHistory, setSuggestionHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [acceptingSuggestion, setAcceptingSuggestion] = useState(null);
+  const [acceptExplanation, setAcceptExplanation] = useState('');
+  const [showRejectAcceptedModal, setShowRejectAcceptedModal] = useState(false);
+  const [rejectingReasoning, setRejectingReasoning] = useState(null);
+  const [rejectAcceptedReason, setRejectAcceptedReason] = useState('');
 
   // Fetch initial data
   useEffect(() => {
@@ -122,12 +136,20 @@ const IntelligentTagSelector = ({
     }
   };
 
-  const handleAcceptClick = (suggestion) => {
-    // Show rating modal first, then accept after rating
+  const handleRateClick = (suggestion) => {
+    // Show rating modal with history
     setRatingSuggestion(suggestion);
     setRatingValue(0);
     setRatingComment('');
     setRatingSuggestionId(suggestion.id);
+    fetchSuggestionHistory(storyId, suggestion.tag.id);
+  };
+
+  const handleAcceptClick = (suggestion) => {
+    // Show accept modal
+    setAcceptingSuggestion(suggestion);
+    setAcceptExplanation('');
+    setShowAcceptModal(true);
   };
 
   const rejectSuggestion = async (suggestionId, reason = null) => {
@@ -277,6 +299,84 @@ const IntelligentTagSelector = ({
     }
   };
 
+  const regenerateSuggestion = async (suggestionId) => {
+    try {
+      setRegeneratingSuggestion(suggestionId);
+      const response = await intelligentTagApi.regenerateSuggestion(suggestionId);
+      
+      if (response.data.success) {
+        // Refresh suggestions to show the updated one
+        await fetchSuggestions();
+      } else {
+        throw new Error('Failed to regenerate suggestion');
+      }
+    } catch (error) {
+      console.error('Error regenerating suggestion:', error);
+      alert('Failed to regenerate suggestion. Please try again.');
+    } finally {
+      setRegeneratingSuggestion(null);
+    }
+  };
+
+  const regenerateSuggestionInModal = async () => {
+    if (!ratingSuggestion) return;
+
+    try {
+      setRegeneratingInModal(true);
+      
+      // Combine rating and feedback for better AI improvement
+      const feedback = `Rating: ${ratingValue}/5 stars${ratingComment ? ` | Comments: ${ratingComment}` : ''}`;
+      
+      const response = await intelligentTagApi.regenerateSuggestion(ratingSuggestion.id, feedback);
+      
+      if (response.data.success) {
+        // Update the current suggestion in the modal
+        setRatingSuggestion(response.data.suggestion);
+        setRatingValue(0);
+        setRatingComment('');
+        
+        // Refresh suggestions list
+        await fetchSuggestions();
+      } else {
+        throw new Error('Failed to regenerate suggestion');
+      }
+    } catch (error) {
+      console.error('Error regenerating suggestion in modal:', error);
+      alert('Failed to regenerate suggestion. Please try again.');
+    } finally {
+      setRegeneratingInModal(false);
+    }
+  };
+
+  const fetchSuggestionHistory = async (storyId, tagId) => {
+    try {
+      setLoadingHistory(true);
+      const response = await intelligentTagApi.getSuggestionHistory(storyId, tagId);
+      
+      if (response.data.success) {
+        setSuggestionHistory(response.data.history);
+      } else {
+        setSuggestionHistory([]);
+      }
+    } catch (error) {
+      console.error('Error fetching suggestion history:', error);
+      setSuggestionHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const openSuggestionHistory = (suggestion) => {
+    setSelectedSuggestionForHistory(suggestion);
+    setShowSuggestionHistory(true);
+    fetchSuggestionHistory(storyId, suggestion.tag.id);
+  };
+
+  const closeSuggestionHistory = () => {
+    setShowSuggestionHistory(false);
+    setSelectedSuggestionForHistory(null);
+  };
+
   const updateExistingReasoning = async (reasoningId, newReasoning) => {
     try {
       // Find the reasoning to get the tagId
@@ -336,7 +436,7 @@ const IntelligentTagSelector = ({
     }
 
     try {
-      // First, rate the suggestion
+      // Rate the suggestion only
       const ratingResponse = await intelligentTagApi.rateSuggestion(
         ratingSuggestionId,
         ratingValue,
@@ -344,30 +444,22 @@ const IntelligentTagSelector = ({
       );
       
       if (ratingResponse.data.success) {
-        // Then accept the suggestion
-        const acceptResponse = await intelligentTagApi.acceptSuggestion(ratingSuggestionId);
+        // Refresh suggestions to show updated rating
+        await fetchSuggestions();
         
-        if (acceptResponse.data.success) {
-          // Refresh data
-          await fetchSuggestions();
-          await fetchReasonings();
-          await checkReevaluationStatus();
-          onTagsChange && onTagsChange(selectedTags);
-          
-          // Close rating modal
-          setRatingSuggestion(null);
-          setRatingValue(0);
-          setRatingComment('');
-          setRatingSuggestionId(null);
-        } else {
-          throw new Error('Failed to accept suggestion after rating');
-        }
+        // Close rating modal
+        setRatingSuggestion(null);
+        setRatingValue(0);
+        setRatingComment('');
+        setRatingSuggestionId(null);
+        
+        alert('Rating submitted successfully! You can now accept or reject this suggestion.');
       } else {
         throw new Error('Failed to submit rating');
       }
     } catch (error) {
-      console.error('Error in rating and accepting suggestion:', error);
-      alert('Failed to process suggestion. Please try again.');
+      console.error('Error in rating suggestion:', error);
+      alert('Failed to submit rating. Please try again.');
     }
   };
 
@@ -376,6 +468,71 @@ const IntelligentTagSelector = ({
     setRatingValue(0);
     setRatingComment('');
     setRatingSuggestionId(null);
+  };
+
+  const handleRejectAcceptedClick = (reasoning) => {
+    setRejectingReasoning(reasoning);
+    setRejectAcceptedReason('');
+    setShowRejectAcceptedModal(true);
+  };
+
+  const handleRejectAcceptedConfirm = async () => {
+    if (!rejectAcceptedReason.trim()) {
+      alert('Please provide a reason for rejecting this tag.');
+      return;
+    }
+
+    try {
+      const response = await intelligentTagApi.rejectAcceptedSuggestion(
+        rejectingReasoning.id,
+        rejectAcceptedReason
+      );
+      
+      if (response.data.success) {
+        await fetchSuggestions();
+        await fetchReasonings();
+        setShowRejectAcceptedModal(false);
+        setRejectingReasoning(null);
+        setRejectAcceptedReason('');
+        onTagsChange && onTagsChange(selectedTags);
+      }
+    } catch (error) {
+      console.error('Error rejecting accepted suggestion:', error);
+      alert('Failed to reject suggestion. Please try again.');
+    }
+  };
+
+  const handleRejectAcceptedCancel = () => {
+    setShowRejectAcceptedModal(false);
+    setRejectingReasoning(null);
+    setRejectAcceptedReason('');
+  };
+
+  const handleAcceptConfirm = async () => {
+    try {
+      const response = await intelligentTagApi.acceptSuggestion(
+        acceptingSuggestion.id,
+        acceptExplanation
+      );
+      
+      if (response.data.success) {
+        await fetchSuggestions();
+        await fetchReasonings();
+        setShowAcceptModal(false);
+        setAcceptingSuggestion(null);
+        setAcceptExplanation('');
+        onTagsChange && onTagsChange(selectedTags);
+      }
+    } catch (error) {
+      console.error('Error accepting suggestion:', error);
+      alert('Failed to accept suggestion. Please try again.');
+    }
+  };
+
+  const handleAcceptCancel = () => {
+    setShowAcceptModal(false);
+    setAcceptingSuggestion(null);
+    setAcceptExplanation('');
   };
 
   const reevaluateSuggestions = async () => {
@@ -569,108 +726,29 @@ const IntelligentTagSelector = ({
           <div className="selected-tags-list">
             {reasonings.map(reasoning => (
               <div key={reasoning.id} className="selected-tag-item">
-                <div className="tag-card">
-                  {reasoning.tag.thumb_url && (
-                    <TagImagePopup tag={reasoning.tag} position="top">
-                      <img 
-                        src={BACKEND_CONFIG.getImageUrl(reasoning.tag.thumb_url)} 
-                        alt={reasoning.tag.title} 
-                        className="tag-thumb"
-                      />
-                    </TagImagePopup>
-                  )}
-                  <div className="tag-content">
-                    <div className="tag-header">
-                      <h5>{reasoning.tag.title}</h5>
-                      <div className="tag-actions">
-                        <button
-                          type="button"
-                          className="btn btn-outline-primary btn-sm ai-regenerate-btn"
-                          onClick={() => regenerateDirective(reasoning.id, reasoning.tagId)}
-                          disabled={regeneratingExplanationFor === reasoning.id || disabled}
-                          title="Use AI to regenerate the directive for this tag"
-                        >
-                          {regeneratingExplanationFor === reasoning.id ? (
-                            <>
-                              <i className="fas fa-spinner fa-spin"></i>
-                              <span>Generating...</span>
-                            </>
-                          ) : (
-                            <>
-                              <i className="fas fa-magic"></i>
-                              <span>AI Regenerate</span>
-                            </>
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary btn-sm edit-reasoning-btn"
-                          onClick={() => setEditingReasoning(editingReasoning === reasoning.id ? null : reasoning.id)}
-                          disabled={disabled}
-                          title="Edit the explanation for this tag"
-                        >
-                          <i className="fas fa-edit"></i>
-                          <span>{editingReasoning === reasoning.id ? 'Cancel' : 'Edit'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-outline-info btn-sm reasoning-history-btn"
-                          onClick={() => openReasoningDialog(reasoning)}
-                          disabled={disabled}
-                          title="View reasoning history and manage versions"
-                        >
-                          <i className="fas fa-history"></i>
-                          <span>History</span>
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {editingReasoning === reasoning.id ? (
-                      <div className="editing-reasoning">
-                        <textarea
-                          className="form-control"
-                          value={reasoning.reasoning}
-                          onChange={(e) => {
-                            setReasonings(prev => prev.map(r => 
-                              r.id === reasoning.id 
-                                ? { ...r, reasoning: e.target.value }
-                                : r
-                            ));
-                          }}
-                          rows={3}
-                          placeholder="Edit the explanation..."
-                        />
-                        <div className="edit-actions">
-                          <button
-                            type="button"
-                            className="btn btn-success btn-sm"
-                            onClick={() => updateExistingReasoning(reasoning.id, reasoning.reasoning)}
-                          >
-                            Save
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => {
-                              setEditingReasoning(null);
-                              // Reset to original reasoning
-                              fetchReasonings();
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="reasoning">{reasoning.reasoning}</p>
-                    )}
-                    
-                    {reasoning.userExplanation && (
-                      <p className="user-explanation">Your note: {reasoning.userExplanation}</p>
-                    )}
-                    <span className="source-badge">{reasoning.source}</span>
-                  </div>
-                </div>
+                <TagCardSelected
+                  reasoning={reasoning}
+                  onAIRegenerate={regenerateDirective}
+                  onEdit={(reasoningId) => setEditingReasoning(editingReasoning === reasoningId ? null : reasoningId)}
+                  onRate={handleRateClick}
+                  onHistory={openReasoningDialog}
+                  onReject={handleRejectAcceptedClick}
+                  onSaveEdit={updateExistingReasoning}
+                  onCancelEdit={() => {
+                    setEditingReasoning(null);
+                    fetchReasonings();
+                  }}
+                  isEditing={editingReasoning === reasoning.id}
+                  isRegenerating={regeneratingExplanationFor === reasoning.id}
+                  disabled={disabled}
+                  onReasoningChange={(newReasoning) => {
+                    setReasonings(prev => prev.map(r => 
+                      r.id === reasoning.id 
+                        ? { ...r, reasoning: newReasoning }
+                        : r
+                    ));
+                  }}
+                />
               </div>
             ))}
           </div>
@@ -690,46 +768,13 @@ const IntelligentTagSelector = ({
           <div className="suggestions-list">
             {suggestions.map(suggestion => (
               <div key={suggestion.id} className="suggestion-item">
-                <div className="suggestion-card">
-                  {suggestion.tag.thumb_url && (
-                    <TagImagePopup tag={suggestion.tag} position="top">
-                      <img 
-                        src={BACKEND_CONFIG.getImageUrl(suggestion.tag.thumb_url)} 
-                        alt={suggestion.tag.title} 
-                        className="tag-thumb"
-                      />
-                    </TagImagePopup>
-                  )}
-                  <div className="suggestion-content">
-                    <h5>{suggestion.tag.title}</h5>
-                    <p className="reasoning">{suggestion.reasoning}</p>
-                    <div className="confidence-bar">
-                      <div 
-                        className="confidence-fill" 
-                        style={{ width: `${suggestion.confidence * 100}%` }}
-                      ></div>
-                      <span className="confidence-text">{Math.round(suggestion.confidence * 100)}%</span>
-                    </div>
-                  </div>
-                  <div className="suggestion-actions">
-                    <button 
-                      className="btn btn-success btn-sm"
-                      onClick={() => handleAcceptClick(suggestion)}
-                      disabled={disabled}
-                      title="Rate and accept this suggestion"
-                    >
-                      <i className="fas fa-star"></i>
-                      <span>Rate & Accept</span>
-                    </button>
-                    <button 
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleRejectClick(suggestion)}
-                      disabled={disabled}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
+                <TagCardSuggestion
+                  suggestion={suggestion}
+                  onRate={handleRateClick}
+                  onAccept={handleAcceptClick}
+                  onReject={handleRejectClick}
+                  disabled={disabled}
+                />
               </div>
             ))}
           </div>
@@ -794,7 +839,7 @@ const IntelligentTagSelector = ({
         <div className="modal-overlay">
           <div className="modal-content rating-modal">
             <div className="modal-header">
-              <h5 className="modal-title">Rate & Accept Suggestion</h5>
+              <h5 className="modal-title">Rate Suggestion</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -803,9 +848,66 @@ const IntelligentTagSelector = ({
             </div>
             <div className="modal-body">
               <div className="rating-preview">
-                <h6>Accepting: {ratingSuggestion.tag.title}</h6>
+                <h6>Rating: {ratingSuggestion.tag.title}</h6>
                 <p className="text-muted">{ratingSuggestion.reasoning}</p>
               </div>
+              
+              {/* Suggestion History Section */}
+              <div className="suggestion-history-section">
+                <h6>Suggestion History</h6>
+                {loadingHistory ? (
+                  <div className="loading-history">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <p>Loading history...</p>
+                  </div>
+                ) : suggestionHistory.length > 1 ? (
+                  <div className="history-list">
+                    {suggestionHistory.slice(0, 3).map((version, index) => (
+                      <div key={version.id} className={`history-item ${index === suggestionHistory.length - 1 ? 'current' : ''}`}>
+                        <div className="history-header">
+                          <span className="version-number">Version {version.version}</span>
+                          <span className="version-date">{new Date(version.createdAt).toLocaleString()}</span>
+                          {index === suggestionHistory.length - 1 && (
+                            <span className="current-badge">Current</span>
+                          )}
+                        </div>
+                        <div className="history-content">
+                          <p className="reasoning">{version.reasoning}</p>
+                          <div className="confidence-bar">
+                            <div 
+                              className="confidence-fill" 
+                              style={{ width: `${version.confidence * 100}%` }}
+                            ></div>
+                            <span className="confidence-text">{Math.round(version.confidence * 100)}%</span>
+                          </div>
+                        </div>
+                        <div className="history-meta">
+                          {version.userRating && (
+                            <div className="rating-info">
+                              <span className="rating-stars">
+                                {'★'.repeat(version.userRating)}{'☆'.repeat(5 - version.userRating)}
+                              </span>
+                              {version.ratingComment && (
+                                <span className="rating-comment">"{version.ratingComment}"</span>
+                              )}
+                            </div>
+                          )}
+                          {version.regenerationReason && (
+                            <div className="regeneration-reason">
+                              <strong>Regeneration reason:</strong> {version.regenerationReason}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-history">
+                    <p>No previous versions found. This is the original suggestion.</p>
+                  </div>
+                )}
+              </div>
+
               <div className="form-group">
                 <label htmlFor="rating">How would you rate this suggestion?</label>
                 <StarRating
@@ -821,12 +923,12 @@ const IntelligentTagSelector = ({
                   id="ratingComment"
                   className="form-control"
                   rows={3}
-                  placeholder="Share your thoughts about this suggestion..."
+                  placeholder="Share your thoughts about this suggestion. This feedback helps improve future AI suggestions..."
                   value={ratingComment}
                   onChange={(e) => setRatingComment(e.target.value)}
                 />
                 <small className="form-text text-muted">
-                  Your feedback helps improve future suggestions for this story.
+                  Your feedback helps improve future suggestions for this story and will be used to enhance AI recommendations.
                 </small>
               </div>
             </div>
@@ -840,11 +942,27 @@ const IntelligentTagSelector = ({
               </button>
               <button
                 type="button"
-                className="btn btn-success"
+                className="btn btn-warning"
                 onClick={submitRating}
                 disabled={ratingValue === 0}
               >
-                Rate & Accept
+                Submit Rating
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-primary"
+                onClick={regenerateSuggestionInModal}
+                disabled={regeneratingInModal || disabled}
+              >
+                {regeneratingInModal ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i> Regenerating...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-magic"></i> Regenerate
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -864,6 +982,216 @@ const IntelligentTagSelector = ({
           }}
           onReasoningUpdate={handleReasoningUpdate}
         />
+      )}
+
+      {/* Accept Modal */}
+      {showAcceptModal && acceptingSuggestion && (
+        <div className="modal-overlay">
+          <div className="modal-content accept-modal">
+            <div className="modal-header">
+              <h5 className="modal-title">Accept Suggestion</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={handleAcceptCancel}
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="accept-preview">
+                <h6>Accepting: {acceptingSuggestion.tag.title}</h6>
+                <p className="text-muted">{acceptingSuggestion.reasoning}</p>
+              </div>
+              <div className="form-group">
+                <label htmlFor="acceptExplanation">Additional explanation (optional)</label>
+                <textarea
+                  id="acceptExplanation"
+                  className="form-control"
+                  rows={3}
+                  placeholder="Why are you accepting this suggestion? This helps improve future AI suggestions..."
+                  value={acceptExplanation}
+                  onChange={(e) => setAcceptExplanation(e.target.value)}
+                />
+                <small className="form-text text-muted">
+                  Your explanation helps improve future suggestions for this story.
+                </small>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleAcceptCancel}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-success"
+                onClick={handleAcceptConfirm}
+              >
+                Accept Suggestion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Accepted Modal */}
+      {showRejectAcceptedModal && rejectingReasoning && (
+        <div className="modal-overlay">
+          <div className="modal-content rejection-modal">
+            <div className="modal-header">
+              <h5 className="modal-title">Reject Accepted Tag</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={handleRejectAcceptedCancel}
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="rejection-preview">
+                <h6>Rejecting: {rejectingReasoning.tag.title}</h6>
+                <p className="text-muted">{rejectingReasoning.reasoning}</p>
+              </div>
+              <div className="form-group">
+                <label htmlFor="rejectAcceptedReason">Why are you rejecting this tag?</label>
+                <textarea
+                  id="rejectAcceptedReason"
+                  className="form-control"
+                  rows={3}
+                  placeholder="Please provide a reason for rejecting this tag. This helps the AI learn and provide better suggestions in the future..."
+                  value={rejectAcceptedReason}
+                  onChange={(e) => setRejectAcceptedReason(e.target.value)}
+                />
+                <small className="form-text text-muted">
+                  Your feedback helps improve future suggestions for this story.
+                </small>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleRejectAcceptedCancel}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleRejectAcceptedConfirm}
+                disabled={!rejectAcceptedReason.trim()}
+              >
+                Reject Tag
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suggestion History Modal */}
+      {showSuggestionHistory && selectedSuggestionForHistory && (
+        <div className="modal-overlay">
+          <div className="modal-content suggestion-history-modal">
+            <div className="modal-header">
+              <h5 className="modal-title">Suggestion History: {selectedSuggestionForHistory.tag.title}</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={closeSuggestionHistory}
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="current-suggestion">
+                <h6>Current Suggestion</h6>
+                <div className="suggestion-preview">
+                  <p className="reasoning">{selectedSuggestionForHistory.reasoning}</p>
+                  <div className="confidence-bar">
+                    <div 
+                      className="confidence-fill" 
+                      style={{ width: `${selectedSuggestionForHistory.confidence * 100}%` }}
+                    ></div>
+                    <span className="confidence-text">{Math.round(selectedSuggestionForHistory.confidence * 100)}%</span>
+                  </div>
+                  <div className="suggestion-meta">
+                    <span className="created-date">
+                      Created: {new Date(selectedSuggestionForHistory.createdAt).toLocaleString()}
+                    </span>
+                    {selectedSuggestionForHistory.updatedAt !== selectedSuggestionForHistory.createdAt && (
+                      <span className="updated-date">
+                        Updated: {new Date(selectedSuggestionForHistory.updatedAt).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="suggestion-history">
+                <h6>Suggestion History</h6>
+                {loadingHistory ? (
+                  <div className="loading-history">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <p>Loading history...</p>
+                  </div>
+                ) : suggestionHistory.length > 1 ? (
+                  <div className="history-list">
+                    {suggestionHistory.map((version, index) => (
+                      <div key={version.id} className={`history-item ${index === suggestionHistory.length - 1 ? 'current' : ''}`}>
+                        <div className="history-header">
+                          <span className="version-number">Version {version.version}</span>
+                          <span className="version-date">{new Date(version.createdAt).toLocaleString()}</span>
+                          {index === suggestionHistory.length - 1 && (
+                            <span className="current-badge">Current</span>
+                          )}
+                        </div>
+                        <div className="history-content">
+                          <p className="reasoning">{version.reasoning}</p>
+                          <div className="confidence-bar">
+                            <div 
+                              className="confidence-fill" 
+                              style={{ width: `${version.confidence * 100}%` }}
+                            ></div>
+                            <span className="confidence-text">{Math.round(version.confidence * 100)}%</span>
+                          </div>
+                        </div>
+                        <div className="history-meta">
+                          {version.userRating && (
+                            <div className="rating-info">
+                              <span className="rating-stars">
+                                {'★'.repeat(version.userRating)}{'☆'.repeat(5 - version.userRating)}
+                              </span>
+                              {version.ratingComment && (
+                                <span className="rating-comment">"{version.ratingComment}"</span>
+                              )}
+                            </div>
+                          )}
+                          {version.regenerationReason && (
+                            <div className="regeneration-reason">
+                              <strong>Regeneration reason:</strong> {version.regenerationReason}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-history">
+                    <p>No previous versions found. This is the original suggestion.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={closeSuggestionHistory}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

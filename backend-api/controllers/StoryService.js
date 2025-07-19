@@ -82,6 +82,21 @@ class StoryService extends BaseService {
             },
         };
     }
+
+    async duplicateStory(id) {
+        const originalStory = await this.findById(id);
+        if (!originalStory) {
+            throw new Error(`Story with ID ${id} not found.`);
+        }
+
+        // Create a new story with the same title and brainstorm
+        const duplicatedStory = await this.create({
+            title: `${originalStory.title} (Copy)`,
+            brainstorm: originalStory.brainstorm || ''
+        });
+
+        return duplicatedStory;
+    }
 }
 
 module.exports = new StoryService();

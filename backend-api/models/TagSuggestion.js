@@ -83,6 +83,26 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: true,
             comment: 'When the user rated this suggestion'
         },
+        previousVersionId: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'TagSuggestions',
+                key: 'id'
+            },
+            comment: 'Reference to the previous version of this suggestion'
+        },
+        versionNumber: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            defaultValue: 1,
+            comment: 'Version number of this suggestion'
+        },
+        regenerationReason: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+            comment: 'Reason for regenerating this suggestion (user feedback, rating, etc.)'
+        },
         createdAt: {
             allowNull: false,
             type: Sequelize.DATE,
@@ -97,8 +117,15 @@ module.exports = (sequelize, Sequelize) => {
         indexes: [
             {
                 unique: true,
+                fields: ['storyId', 'tagId', 'status'],
+                where: {
+                    status: 'pending'
+                },
+                name: 'unique_pending_story_tag_suggestion'
+            },
+            {
                 fields: ['storyId', 'tagId'],
-                name: 'unique_story_tag_suggestion'
+                name: 'idx_story_tag_suggestion'
             },
             {
                 fields: ['status'],

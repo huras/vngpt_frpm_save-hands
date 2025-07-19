@@ -26,6 +26,9 @@ export const storyApi = {
   // Delete a story
   deleteStory: (id) => api.delete(`/stories/${id}`),
 
+  // Duplicate a story
+  duplicateStory: (id) => api.post(`/stories/${id}/duplicate`),
+
   // Search stories
   searchStories: (searchTerm, params = {}) => {
     const { page = 1, perPage = 10 } = params;

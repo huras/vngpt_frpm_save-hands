@@ -17,6 +17,14 @@ export const intelligentTagApi = {
   rejectSuggestion: (suggestionId, reason = null) => 
     api.post(`/intelligent-tags/suggestions/${suggestionId}/reject`, { reason }),
 
+  // Regenerate a single suggestion
+  regenerateSuggestion: (suggestionId, userFeedback = null) => 
+    api.post(`/intelligent-tags/suggestions/${suggestionId}/regenerate`, { userFeedback }),
+
+  // Get suggestion history
+  getSuggestionHistory: (storyId, tagId) => 
+    api.get(`/intelligent-tags/suggestions/${storyId}/${tagId}/history`),
+
   // Add tag manually with reasoning
   addTagManually: (storyId, tagId, reasoning, userExplanation = null) => 
     api.post(`/intelligent-tags/stories/${storyId}/tags`, { 
@@ -92,5 +100,9 @@ export const intelligentTagApi = {
     api.post(`/intelligent-tags/suggestions/${suggestionId}/rate`, { 
       rating, 
       comment 
-    })
+    }),
+
+  // Reject an accepted suggestion
+  rejectAcceptedSuggestion: (reasoningId, reason = null) => 
+    api.post(`/intelligent-tags/reasonings/${reasoningId}/reject`, { reason })
 }; 

@@ -1,0 +1,244 @@
+.tag-card {
+  display: flex;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: #007bff;
+  }
+
+  .tag-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-right: 16px;
+  }
+
+  .tag-content {
+    flex: 1;
+
+    .tag-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+
+      h5 {
+        margin: 0;
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
+        flex: 1;
+      }
+    }
+
+    .reasoning {
+      margin: 0 0 8px 0;
+      color: #495057;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .user-explanation {
+      margin: 0 0 8px 0;
+      color: #6c757d;
+      font-size: 13px;
+      font-style: italic;
+      background: #e9ecef;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    .source-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #007bff;
+      color: white;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .confidence-bar {
+      position: relative;
+      height: 20px;
+      background: #e9ecef;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 8px;
+
+      .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #20c997);
+        transition: width 0.3s ease;
+      }
+
+      .confidence-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 11px;
+        font-weight: 600;
+        color: #333;
+        text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    .tag-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      margin-top: 8px;
+
+      .btn {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+        }
+
+        i {
+          font-size: 12px;
+        }
+
+        span {
+          font-weight: 500;
+        }
+      }
+
+      .ai-regenerate-btn {
+        background: white;
+        border: 1px solid #007bff;
+        color: #007bff;
+
+        &:hover:not(:disabled) {
+          background: #007bff;
+          color: white;
+        }
+      }
+
+      .edit-reasoning-btn {
+        background: white;
+        border: 1px solid #6c757d;
+        color: #6c757d;
+
+        &:hover:not(:disabled) {
+          background: #6c757d;
+          color: white;
+        }
+      }
+
+      .reasoning-history-btn {
+        background: white;
+        border: 1px solid #17a2b8;
+        color: #17a2b8;
+
+        &:hover:not(:disabled) {
+          background: #17a2b8;
+          color: white;
+        }
+      }
+
+      .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+
+        &:hover:not(:disabled) {
+          background-color: #218838;
+          border-color: #1e7e34;
+        }
+      }
+
+      .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+
+        &:hover:not(:disabled) {
+          background-color: #c82333;
+          border-color: #bd2130;
+        }
+      }
+
+      .btn-warning {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #212529;
+
+        &:hover:not(:disabled) {
+          background-color: #e0a800;
+          border-color: #d39e00;
+        }
+      }
+    }
+
+    .editing-reasoning {
+      margin-bottom: 8px;
+
+      .form-control {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        resize: vertical;
+        margin-bottom: 8px;
+
+        &:focus {
+          outline: none;
+          border-color: #007bff;
+          box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+      }
+
+      .edit-actions {
+        display: flex;
+        gap: 8px;
+
+        .btn {
+          font-size: 12px;
+          padding: 4px 8px;
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .tag-card {
+    flex-direction: column;
+
+    .tag-thumb {
+      margin-right: 0;
+      margin-bottom: 16px;
+      align-self: center;
+    }
+
+    .tag-content .tag-actions {
+      justify-content: center;
+    }
+  }
+} 

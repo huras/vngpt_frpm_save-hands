@@ -1,0 +1,80 @@
+.tag-card-selected {
+  // Override the base tag-card background to match the original selected tags styling
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+
+  &:hover {
+    border-color: #007bff;
+  }
+
+  .tag-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    margin-top: 8px;
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      i {
+        font-size: 12px;
+      }
+
+      span {
+        font-weight: 500;
+      }
+    }
+
+    .ai-regenerate-btn {
+      background: white;
+      border: 1px solid #007bff;
+      color: #007bff;
+
+      &:hover:not(:disabled) {
+        background: #007bff;
+        color: white;
+      }
+    }
+
+    .edit-reasoning-btn {
+      background: white;
+      border: 1px solid #6c757d;
+      color: #6c757d;
+
+      &:hover:not(:disabled) {
+        background: #6c757d;
+        color: white;
+      }
+    }
+
+    .reasoning-history-btn {
+      background: white;
+      border: 1px solid #17a2b8;
+      color: #17a2b8;
+
+      &:hover:not(:disabled) {
+        background: #17a2b8;
+        color: white;
+      }
+    }
+  }
+} 

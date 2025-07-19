@@ -16,6 +16,9 @@ const StoryList = () => {
   const [perPage] = useState(10);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [storyToDelete, setStoryToDelete] = useState(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [storyToDuplicate, setStoryToDuplicate] = useState(null);
+  const [duplicating, setDuplicating] = useState(false);
 
   const navigate = useNavigate();
 
@@ -80,6 +83,33 @@ const StoryList = () => {
   const handleDeleteCancel = () => {
     setShowDeleteModal(false);
     setStoryToDelete(null);
+  };
+
+  const handleDuplicateClick = (story) => {
+    setStoryToDuplicate(story);
+    setShowDuplicateModal(true);
+  };
+
+  const handleDuplicateConfirm = async () => {
+    try {
+      setDuplicating(true);
+      const response = await storyApi.duplicateStory(storyToDuplicate.id);
+      setShowDuplicateModal(false);
+      setStoryToDuplicate(null);
+      setDuplicating(false);
+      
+      // Navigate to the new duplicated story
+      navigate(`/stories/${response.data.id}`);
+    } catch (err) {
+      setError('Failed to duplicate story. Please try again.');
+      console.error('Error duplicating story:', err);
+      setDuplicating(false);
+    }
+  };
+
+  const handleDuplicateCancel = () => {
+    setShowDuplicateModal(false);
+    setStoryToDuplicate(null);
   };
 
   const formatDate = (dateString) => {
@@ -173,6 +203,13 @@ const StoryList = () => {
                   <Link to={`/stories/${story.id}/edit`} className="btn btn-sm btn-outline-secondary">
                     <i className="fas fa-edit"></i>
                   </Link>
+                  <button
+                    onClick={() => handleDuplicateClick(story)}
+                    className="btn btn-sm btn-outline-info"
+                    title="Duplicate story"
+                  >
+                    <i className="fas fa-copy"></i>
+                  </button>
                   <button
                     onClick={() => handleDeleteClick(story)}
                     className="btn btn-sm btn-outline-danger"
@@ -295,6 +332,44 @@ const StoryList = () => {
                 onClick={handleDeleteConfirm}
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate Confirmation Modal */}
+      {showDuplicateModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Confirm Duplicate</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={handleDuplicateCancel}
+              ></button>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to duplicate "{storyToDuplicate?.title}"?</p>
+              <p className="text-muted">This will create a new story with the same title and brainstorm content. Tags will not be duplicated.</p>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleDuplicateCancel}
+                disabled={duplicating}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-info"
+                onClick={handleDuplicateConfirm}
+                disabled={duplicating}
+              >
+                {duplicating ? 'Duplicating...' : 'Duplicate'}
               </button>
             </div>
           </div>

@@ -98,6 +98,21 @@ router.delete('/:id', async(req, res) => {
     }
 });
 
+// POST /stories/:id/duplicate - Duplicate a story
+router.post('/:id/duplicate', async(req, res) => {
+    try {
+        const duplicatedStory = await storyService.duplicateStory(req.params.id);
+        res.status(201).json(duplicatedStory);
+    } catch (error) {
+        console.error('Error duplicating story:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Story not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while duplicating the story.' });
+        }
+    }
+});
+
 // GET /stories/search/:term - Search stories (alternative endpoint)
 router.get('/search/:term', async(req, res) => {
     try {

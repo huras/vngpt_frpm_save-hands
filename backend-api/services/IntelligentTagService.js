@@ -150,7 +150,6 @@ class IntelligentTagService {
                     tag: tag,
                     reasoning: `Basic suggestion for ${tag.title} - this tag might fit your story based on general compatibility.`,
                     confidence: 0.5,
-                    relevance: 'medium'
                 }));
 
             console.log(`Generated ${suggestions.length} fallback suggestions`);
@@ -996,6 +995,182 @@ Return only the explanation text, no JSON formatting or additional text.`;
             // In a more sophisticated implementation, this would feed into a learning model
         } catch (error) {
             console.error('Error learning from rating:', error);
+        }
+    }
+
+    /**
+     * Regenerate a single suggestion with new AI reasoning
+     */
+    async regenerateSuggestion(suggestionId, userFeedback = null) {
+        try {
+            const suggestion = await TagSuggestion.findByPk(suggestionId, {
+                include: [
+                    { model: Story, as: 'story' },
+                    { model: Tag, as: 'tag' }
+                ]
+            });
+
+            if (!suggestion) {
+                throw new Error('Suggestion not found');
+            }
+
+            // Get the story with current context
+            const story = await Story.findByPk(suggestion.storyId, {
+                include: [
+                    { model: Tag, as: 'tags' },
+                    { 
+                        model: StoryTagReasoning, 
+                        as: 'tagReasonings',
+                        include: [{ model: Tag, as: 'tag' }]
+                    }
+                ]
+            });
+
+            if (!story) {
+                throw new Error('Story not found');
+            }
+
+            // Generate new reasoning using user feedback
+            const newReasoning = await this.aiService.reevaluateSuggestionWithFeedback(
+                story,
+                suggestion.tag,
+                suggestion.reasoning,
+                userFeedback
+            );
+
+            // Get the next version number for this tag-story combination
+            const lastVersion = await TagSuggestion.findOne({
+                where: {
+                    storyId: suggestion.storyId,
+                    tagId: suggestion.tagId
+                },
+                order: [['versionNumber', 'DESC']]
+            });
+            const nextVersion = (lastVersion?.versionNumber || 0) + 1;
+
+            // Mark the old suggestion as expired (if it was pending)
+            if (suggestion.status === 'pending') {
+                await suggestion.update({
+                    status: 'expired'
+                });
+            }
+
+            // Create a new suggestion version
+            const newSuggestion = await TagSuggestion.create({
+                storyId: suggestion.storyId,
+                tagId: suggestion.tagId,
+                reasoning: newReasoning.reasoning,
+                confidence: newReasoning.confidence,
+                status: 'pending',
+                suggestionType: 'ai_generated',
+                contextTags: suggestion.contextTags,
+                previousVersionId: suggestion.id,
+                versionNumber: nextVersion,
+                regenerationReason: userFeedback ? `User feedback: ${userFeedback}` : `AI regeneration requested (from ${suggestion.status} status)`
+            });
+
+            return {
+                success: true,
+                suggestion: {
+                    ...newSuggestion.toJSON(),
+                    tag: suggestion.tag
+                },
+                previousStatus: suggestion.status
+            };
+        } catch (error) {
+            console.error('Error regenerating suggestion:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Reject an accepted suggestion (remove tag from story)
+     */
+    async rejectAcceptedSuggestion(reasoningId, reason = null) {
+        try {
+            const reasoning = await StoryTagReasoning.findByPk(reasoningId, {
+                include: [
+                    { model: Story, as: 'story' },
+                    { model: Tag, as: 'tag' }
+                ]
+            });
+
+            if (!reasoning) {
+                throw new Error('Reasoning not found');
+            }
+
+            // Remove tag from story
+            await reasoning.story.removeTag(reasoning.tag);
+
+            // Update the original suggestion status to rejected if it exists
+            if (reasoning.suggestionId) {
+                const originalSuggestion = await TagSuggestion.findByPk(reasoning.suggestionId);
+                if (originalSuggestion) {
+                    await originalSuggestion.update({
+                        status: 'rejected',
+                        rejectedAt: new Date(),
+                        rejectionReason: reason || 'Rejected after being accepted'
+                    });
+                }
+            }
+
+            // Delete the reasoning record
+            await reasoning.destroy();
+
+            // Learn from the rejection
+            await this.learnFromRejection({
+                storyId: reasoning.storyId,
+                tagId: reasoning.tagId,
+                reasoning: reasoning.reasoning,
+                rejectionReason: reason,
+                wasAccepted: true
+            });
+
+            return {
+                success: true,
+                message: `Tag "${reasoning.tag.title}" has been removed from the story`
+            };
+        } catch (error) {
+            console.error('Error rejecting accepted suggestion:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get suggestion history for a specific tag-story combination
+     */
+    async getSuggestionHistory(storyId, tagId) {
+        try {
+            const suggestions = await TagSuggestion.findAll({
+                where: {
+                    storyId,
+                    tagId
+                },
+                include: [
+                    { model: Tag, as: 'tag' }
+                ],
+                order: [['versionNumber', 'ASC']]
+            });
+
+            return {
+                success: true,
+                history: suggestions.map(suggestion => ({
+                    id: suggestion.id,
+                    version: suggestion.versionNumber,
+                    reasoning: suggestion.reasoning,
+                    confidence: suggestion.confidence,
+                    status: suggestion.status,
+                    userRating: suggestion.userRating,
+                    ratingComment: suggestion.ratingComment,
+                    regenerationReason: suggestion.regenerationReason,
+                    createdAt: suggestion.createdAt,
+                    updatedAt: suggestion.updatedAt,
+                    tag: suggestion.tag
+                }))
+            };
+        } catch (error) {
+            console.error('Error getting suggestion history:', error);
+            throw error;
         }
     }
 }
