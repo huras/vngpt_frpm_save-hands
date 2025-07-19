@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
-import IntelligentTagSelector from '../../components/IntelligentTagSelector';
+import StreamingTagSuggestions from '../../components/StreamingTagSuggestions';
 import './StoryForm.scss';
 
 const StoryForm = () => {
@@ -57,6 +57,38 @@ const StoryForm = () => {
     return Object.keys(errors).length === 0;
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const storyData = {
+        title: formData.title.trim(),
+        brainstorm: formData.brainstorm.trim(),
+        tags: selectedTags.map(tag => tag.id)
+      };
+
+      if (isEditing) {
+        await storyApi.updateStory(id, storyData);
+      } else {
+        await storyApi.createStory(storyData);
+      }
+
+      navigate('/stories');
+    } catch (err) {
+      setError('Failed to save story. Please try again.');
+      console.error('Error saving story:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -73,44 +105,6 @@ const StoryForm = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const storyData = {
-        title: formData.title.trim(),
-        brainstorm: formData.brainstorm.trim()
-      };
-
-      let storyId = id;
-      if (isEditing) {
-        await storyApi.updateStory(id, storyData);
-      } else {
-        const res = await storyApi.createStory(storyData);
-        storyId = res.data.id;
-      }
-
-      // Navigate to the story view where the intelligent tag selector will handle tag management
-      navigate(`/stories/${storyId}`);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save story. Please try again.');
-      console.error('Error saving story:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    navigate('/stories');
-  };
-
   if (fetching) {
     return (
       <div className="story-form-container">
@@ -121,97 +115,84 @@ const StoryForm = () => {
 
   return (
     <div className="story-form-container">
-      <div className="story-form-header">
+      <div className="form-header">
         <h1>{isEditing ? 'Edit Story' : 'Create New Story'}</h1>
-        <Link to="/stories" className="btn btn-outline-secondary">
+        <Link to="/stories" className="btn btn-secondary">
           <i className="fas fa-arrow-left"></i> Back to Stories
         </Link>
       </div>
 
       {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
+        <div className="alert alert-danger">
+          <i className="fas fa-exclamation-triangle"></i> {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="story-form">
         <div className="form-group">
-          <label htmlFor="title" className="form-label">
-            Title <span className="required">*</span>
-          </label>
+          <label htmlFor="title">Story Title *</label>
           <input
             type="text"
             id="title"
             name="title"
-            className={`form-control ${validationErrors.title ? 'is-invalid' : ''}`}
             value={formData.title}
             onChange={handleInputChange}
-            placeholder="Enter story title..."
-            maxLength={255}
+            className={`form-control ${validationErrors.title ? 'is-invalid' : ''}`}
+            placeholder="Enter your story title..."
             required
           />
           {validationErrors.title && (
-            <div className="invalid-feedback">
-              {validationErrors.title}
-            </div>
+            <div className="invalid-feedback">{validationErrors.title}</div>
           )}
-          <small className="form-text text-muted">
-            {formData.title.length}/255 characters
-          </small>
         </div>
 
         <div className="form-group">
-          <label htmlFor="brainstorm" className="form-label">
-            Brainstorm
-          </label>
+          <label htmlFor="brainstorm">Story Brainstorm</label>
           <textarea
             id="brainstorm"
             name="brainstorm"
-            className="form-control"
             value={formData.brainstorm}
             onChange={handleInputChange}
-            placeholder="Write your story brainstorm, ideas, notes, or content here..."
-            rows={12}
-            style={{ resize: 'vertical' }}
+            className="form-control"
+            rows="8"
+            placeholder="Describe your story idea, plot, characters, themes, or any other details that will help AI understand your story better..."
           />
           <small className="form-text text-muted">
-            Use this space to brainstorm ideas, write notes, or develop your story content.
-            This will help the AI generate better tag suggestions.
+            This helps the AI provide better tag suggestions for your story.
           </small>
         </div>
 
         <div className="form-actions">
-          <button
-            type="submit"
+          <button 
+            type="submit" 
             className="btn btn-primary"
             disabled={loading}
           >
-            {loading ? 'Saving...' : (isEditing ? 'Update Story' : 'Create Story')}
+            {loading ? (
+              <>
+                <i className="fas fa-spinner fa-spin"></i> Saving...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-save"></i> {isEditing ? 'Update Story' : 'Create Story'}
+              </>
+            )}
           </button>
-          <button
-            type="button"
-            className="btn btn-outline-secondary"
-            onClick={handleCancel}
-            disabled={loading}
-          >
+          <Link to="/stories" className="btn btn-outline-secondary">
             Cancel
-          </button>
+          </Link>
         </div>
       </form>
 
       {isEditing && (
         <div className="tag-management-section">
-          <h2>Tag Management</h2>
+          <h2>AI Tag Management</h2>
           <p className="section-description">
-            Use the intelligent tag system below to manage your story's tags. 
-            The AI will learn from your choices to provide better suggestions.
+            Use the intelligent streaming tag system below to manage your story's tags. 
+            The AI will learn from your choices to provide better suggestions with real-time streaming updates.
           </p>
-          <IntelligentTagSelector
-            storyId={id}
-            onTagsChange={setSelectedTags}
-            disabled={loading}
-            title="Story Tag Management"
-          />
+          
+          <StreamingTagSuggestions storyId={id} />
         </div>
       )}
     </div>

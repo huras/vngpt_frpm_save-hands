@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
-import IntelligentTagSelector from '../../components/IntelligentTagSelector';
+import StreamingTagSuggestions from '../../components/StreamingTagSuggestions';
 import { BACKEND_CONFIG } from '../../config/backend';
 import './StoryView.scss';
 
@@ -67,9 +67,19 @@ const StoryView = () => {
         <div className="error-message">
           <h2>Error</h2>
           <p>{error}</p>
-          <Link to="/stories" className="btn btn-primary">
-            Back to Stories
-          </Link>
+          <Link to="/stories" className="btn btn-primary">Back to Stories</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!story) {
+    return (
+      <div className="story-view-container">
+        <div className="error-message">
+          <h2>Story Not Found</h2>
+          <p>The story you're looking for doesn't exist.</p>
+          <Link to="/stories" className="btn btn-primary">Back to Stories</Link>
         </div>
       </div>
     );
@@ -79,81 +89,84 @@ const StoryView = () => {
     <div className="story-view-container">
       <div className="story-header">
         <div className="story-title-section">
-          <h1 className="story-title">{story.title}</h1>
+          <h1>{story.title}</h1>
           <div className="story-meta">
-            <div className="story-dates">
-              <span className="story-created">
-                <i className="fas fa-calendar-plus"></i> Created: {formatDate(story.createdAt)}
+            <span className="created-date">
+              Created: {formatDate(story.createdAt)}
+            </span>
+            {story.updatedAt !== story.createdAt && (
+              <span className="updated-date">
+                Updated: {formatDate(story.updatedAt)}
               </span>
-              {story.updatedAt !== story.createdAt && (
-                <span className="story-updated">
-                  <i className="fas fa-calendar-check"></i> Updated: {formatDate(story.updatedAt)}
-                </span>
-              )}
-            </div>
+            )}
           </div>
         </div>
-        
         <div className="story-actions">
           <Link to={`/stories/${id}/edit`} className="btn btn-primary">
-            <i className="fas fa-edit"></i> Edit Story
+            <i className="fas fa-edit"></i> Edit
           </Link>
           <button onClick={handleDelete} className="btn btn-danger">
             <i className="fas fa-trash"></i> Delete
           </button>
-          <Link to="/stories" className="btn btn-outline-secondary">
+          <Link to="/stories" className="btn btn-secondary">
             <i className="fas fa-arrow-left"></i> Back to Stories
           </Link>
         </div>
       </div>
 
       <div className="story-content">
-        <div className="story-body">
-          {story.brainstorm ? (
-            <div className="story-brainstorm">
-              <h3>Brainstorm</h3>
-              <div className="brainstorm-content">
-                {story.brainstorm.split('\n').map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
+        <div className="story-section">
+          <h2>Story Details</h2>
+          <div className="story-info">
+            <div className="story-field">
+              <label>Title:</label>
+              <span>{story.title}</span>
+            </div>
+            {story.brainstorm && (
+              <div className="story-field">
+                <label>Brainstorm:</label>
+                <div className="brainstorm-content">
+                  {story.brainstorm.split('\n').map((line, index) => (
+                    <p key={index}>{line}</p>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="no-brainstorm">
-              <p className="text-muted">No brainstorm content available.</p>
-            </div>
-          )}
-
-          {/* Story Tags */}
-          {story.tags && story.tags.length > 0 && (
-            <div className="story-tags-section">
-              <h3>Story Tags</h3>
-              <div className="story-tags">
-                {story.tags.map(tag => (
-                  <span key={tag.id} className="story-tag">
-                    {tag.thumb_url && (
-                      <img 
-                        src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
-                        alt={tag.title} 
-                        className="tag-thumb"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    )}
-                    <span className="tag-title">{tag.title}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
+        {story.tags && story.tags.length > 0 && (
+          <div className="tags-section">
+            <h2>Story Tags</h2>
+            <div className="tags-list">
+              {story.tags.map(tag => (
+                <div key={tag.id} className="tag-item">
+                  {tag.thumb_url ? (
+                    <img 
+                      src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
+                      alt={tag.title}
+                      className="tag-thumb"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.classList.add('no-image');
+                      }}
+                    />
+                  ) : (
+                    <div className="tag-thumb no-image">
+                      <span>{tag.title.charAt(0).toUpperCase()}</span>
+                    </div>
+                  )}
+                  <span className="tag-title">{tag.title}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Tag Management Section */}
       <div className="tag-management-section">
         <div className="section-header">
-          <h2>Tag Management</h2>
+          <h2>AI Tag Management</h2>
           <button 
             className="btn btn-outline-primary"
             onClick={() => setShowTagManagement(!showTagManagement)}
@@ -165,17 +178,10 @@ const StoryView = () => {
         {showTagManagement && (
           <div className="tag-management-content">
             <p className="section-description">
-              Use the intelligent tag system below to manage your story's tags. 
-              The AI will learn from your choices to provide better suggestions.
+              Use the intelligent streaming tag system below to manage your story's tags. 
+              The AI will learn from your choices to provide better suggestions with real-time streaming updates.
             </p>
-            <IntelligentTagSelector
-              storyId={id}
-              onTagsChange={(newTags) => {
-                setStory(prev => ({ ...prev, tags: newTags }));
-              }}
-              disabled={false}
-              title="Story Tag Management"
-            />
+            <StreamingTagSuggestions storyId={id} />
           </div>
         )}
       </div>

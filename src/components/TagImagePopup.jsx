@@ -12,90 +12,59 @@ const TagImagePopup = ({
   const [isVisible, setIsVisible] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showTimeout, setShowTimeout] = useState(null);
+  const [elementRef, setElementRef] = useState(null);
 
-  const handleMouseEnter = (e) => {
-    if (showOnHover) {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-      
-      // Clear any existing timeout
-      if (showTimeout) {
-        clearTimeout(showTimeout);
-      }
-      
-      // Show popup after a small delay
-      const timeout = setTimeout(() => {
-        setIsVisible(true);
-      }, 300);
-      
-      setShowTimeout(timeout);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (showOnHover) {
-      // Clear timeout if mouse leaves before popup shows
-      if (showTimeout) {
-        clearTimeout(showTimeout);
-        setShowTimeout(null);
-      }
-      setIsVisible(false);
-    }
-  };
-
-  const handleClick = () => {
-    if (!showOnHover) {
-      setIsVisible(!isVisible);
-    }
+  const handleClick = (e) => {
+    console.log('TagImagePopup clicked for tag:', tag.title);
+    e.stopPropagation(); // Prevent event bubbling
+    
+    // Get the element's position
+    const rect = e.currentTarget.getBoundingClientRect();
+    const newPosition = { 
+      x: rect.left + rect.width / 2, 
+      y: rect.top + rect.height / 2 
+    };
+    console.log('Element position:', newPosition);
+    setMousePosition(newPosition);
+    
+    // Toggle popup visibility
+    const newVisibility = !isVisible;
+    console.log('Setting visibility to:', newVisibility);
+    setIsVisible(newVisibility);
   };
 
   const getPopupPosition = () => {
-    const offset = 10;
-    const popupWidth = 300; // Approximate popup width
-    const popupHeight = 400; // Approximate popup height
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
+    // Simple positioning - always show above the element
+    const top = mousePosition.y - 420; // 400px popup height + 20px offset
+    const left = mousePosition.x - 150; // Center the popup
     
-    let top, left;
-
-    switch (position) {
-      case 'top':
-        top = mousePosition.y - offset;
-        left = mousePosition.x - (popupWidth / 2);
-        break;
-      case 'bottom':
-        top = mousePosition.y + offset;
-        left = mousePosition.x - (popupWidth / 2);
-        break;
-      case 'left':
-        top = mousePosition.y - (popupHeight / 2);
-        left = mousePosition.x - offset;
-        break;
-      case 'right':
-        top = mousePosition.y - (popupHeight / 2);
-        left = mousePosition.x + offset;
-        break;
-      default:
-        top = mousePosition.y - offset;
-        left = mousePosition.x - (popupWidth / 2);
-    }
-
-    // Ensure popup stays within viewport
-    if (left < 10) left = 10;
-    if (left + popupWidth > windowWidth - 10) left = windowWidth - popupWidth - 10;
-    if (top < 10) top = 10;
-    if (top + popupHeight > windowHeight - 10) top = windowHeight - popupHeight - 10;
-
-    return { top, left };
+    return { 
+      top: `${Math.max(10, top)}px`, 
+      left: `${Math.max(10, left)}px`,
+      position: 'fixed',
+      zIndex: 9999
+    };
   };
 
-  // Cleanup timeout on unmount
+  // Handle clicking outside to close popup
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isVisible && !event.target.closest('.tag-image-popup-container') && !event.target.closest('.tag-image-popup')) {
+        setIsVisible(false);
+      }
+    };
+
+    if (isVisible) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
     return () => {
+      document.removeEventListener('click', handleClickOutside);
       if (showTimeout) {
         clearTimeout(showTimeout);
       }
     };
-  }, [showTimeout]);
+  }, [isVisible, showTimeout]);
 
   if (!tag || !tag.thumb_url) {
     return children;
@@ -104,8 +73,6 @@ const TagImagePopup = ({
   return (
     <div 
       className={`tag-image-popup-container ${className}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
       {children}
@@ -114,8 +81,21 @@ const TagImagePopup = ({
         <div 
           className="tag-image-popup"
           style={getPopupPosition()}
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="popup-content">
+            <div className="popup-header">
+              <button 
+                className="popup-close-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsVisible(false);
+                }}
+                title="Close popup"
+              >
+                ×
+              </button>
+            </div>
             <div className="popup-image">
               <img 
                 src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 

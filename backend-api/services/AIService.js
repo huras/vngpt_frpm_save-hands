@@ -2,9 +2,15 @@ const OpenAI = require('openai');
 
 class AIService {
     constructor() {
+        if (!process.env.OPENAI_API_KEY) {
+            throw new Error('OPENAI_API_KEY environment variable is required');
+        }
+        
         this.openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY
         });
+        
+        console.log('AIService initialized with OpenAI API key');
     }
 
     async generateEmbedding(text) {
@@ -779,7 +785,7 @@ Format as valid JSON only. Return pure JSON without markdown formatting.`;
                 model: "gpt-3.5-turbo",
                 messages: [{ role: "system", content: prompt }],
                 temperature: 0.7,
-                max_tokens: 5000
+                max_tokens: 2000
             });
 
             console.log('OpenAI API response received');
@@ -833,6 +839,259 @@ Format as valid JSON only. Return pure JSON without markdown formatting.`;
             // Fallback to simple suggestions
             console.log('Falling back to simple suggestions...');
             return this.getFallbackIntelligentSuggestions(story, availableTags, limit);
+        }
+    }
+
+    /**
+     * Generate intelligent suggestions iteratively, one at a time
+     * This method returns a generator that yields suggestions as they're generated
+     */
+    async *generateIntelligentSuggestionsIterative(story, availableTags, limit = 10) {
+        // Test AI service connection first
+        try {
+            console.log('Testing AI service connection...');
+            const testResponse = await this.openai.chat.completions.create({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: "Respond with 'OK' if you can read this." }],
+                temperature: 0.1,
+                max_tokens: 10
+            });
+            console.log('AI service connection test successful');
+        } catch (connectionError) {
+            console.error('AI service connection test failed:', connectionError);
+            throw new Error(`AI service is not available: ${connectionError.message}`);
+        }
+        
+        try {
+            console.log('=== AI Service: generateIntelligentSuggestionsIterative called ===');
+            console.log(`Story: ${story.title}`);
+            console.log(`Available tags: ${availableTags.length}`);
+            console.log(`Limit: ${limit}`);
+            
+            // Simplify the story context to avoid complex associations
+            const storyContext = {
+                title: story.title,
+                brainstorm: story.brainstorm,
+                currentTags: story.tags ? story.tags.map(tag => ({
+                    title: tag.title,
+                    description: tag.short_description || '',
+                    category: tag.category || '',
+                    keywords: tag.keywords || ''
+                })) : [],
+                tagReasonings: story.tagReasonings ? story.tagReasonings.map(reasoning => ({
+                    tagTitle: reasoning.tag ? reasoning.tag.title : 'Unknown',
+                    reasoning: reasoning.reasoning || '',
+                    source: reasoning.source || '',
+                    userExplanation: reasoning.userExplanation || ''
+                })) : []
+            };
+
+            // If no available tags, return empty
+            if (availableTags.length === 0) {
+                console.log('No available tags provided');
+                return;
+            }
+
+            // Get rejection learning data for this story
+            const rejectionLearning = await this.getRejectionLearningData(story.id);
+            
+            // Track already suggested tags to avoid duplicates
+            const suggestedTagIds = new Set();
+            const suggestedTagNames = new Set();
+            const suggestedTagsWithReasoning = []; // Track suggestions with their reasoning for context
+            
+            for (let i = 0; i < limit; i++) {
+                try {
+                    console.log(`Generating suggestion ${i + 1}/${limit}...`);
+                    
+                    // Filter out already suggested tags
+                    const remainingTags = availableTags.filter(tag => 
+                        !suggestedTagIds.has(tag.id) && !suggestedTagNames.has(tag.title)
+                    );
+                    
+                    if (remainingTags.length === 0) {
+                        console.log('No more available tags to suggest');
+                        break;
+                    }
+                    
+                    // Build context of already suggested tags with their reasoning
+                    let alreadySuggestedContext = '';
+                    if (suggestedTagsWithReasoning.length > 0) {
+                        alreadySuggestedContext = `\nPREVIOUS SUGGESTIONS (avoid these and build upon their themes):
+${suggestedTagsWithReasoning.map((suggestion, index) => 
+    `${index + 1}. ${suggestion.tag.title}: "${suggestion.reasoning.substring(0, 150)}..."
+`).join('\n')}
+
+LEARNING FROM PREVIOUS SUGGESTIONS:
+- Consider how your new suggestion complements or contrasts with these themes
+- Avoid suggesting similar concepts or overlapping story directions
+- Build upon the creative momentum established by previous suggestions
+- Each suggestion should offer a distinct new direction for the story`;
+                    }
+                    
+                    const prompt = `You are a creative writing consultant helping an author develop their story. Your role is to inspire and pitch exciting new directions for their narrative.
+
+STORY BACKGROUND:
+"${storyContext.title}"
+${storyContext.brainstorm ? `Brainstorm: ${storyContext.brainstorm}` : 'No brainstorm provided yet'}
+
+CURRENT STORY DIRECTION:
+${storyContext.currentTags.length > 0 ? storyContext.currentTags.map(tag => `• ${tag.title}: ${tag.description} (${tag.category})`).join('\n') : 'Story is just beginning - no tags selected yet'}
+
+${storyContext.tagReasonings.length > 0 ? `AUTHOR'S CREATIVE CHOICES:
+${storyContext.tagReasonings.map(reasoning => `• ${reasoning.tagTitle}: "${reasoning.reasoning}"${reasoning.userExplanation ? ` (Author's note: ${reasoning.userExplanation})` : ''}`).join('\n')}` : ''}
+
+${rejectionLearning.rejections.length > 0 ? `WHAT DIDN'T WORK:
+${rejectionLearning.rejections.map(rejection => `• ${rejection.tagTitle}: ${rejection.rejectionReason || 'Author felt it didn\'t fit'}`).join('\n')}
+
+LEARNING FROM FEEDBACK:
+- Author seems to avoid: ${rejectionLearning.avoidCategories.join(', ') || 'No clear patterns yet'}
+- Common concerns: ${rejectionLearning.commonReasons.join(', ') || 'None identified'}
+- Author's style preferences: ${rejectionLearning.userPreferences.join(', ') || 'Still discovering'}
+
+` : ''}${alreadySuggestedContext}
+
+AVAILABLE INSPIRATION CATALOG (choose ONE from these):
+${remainingTags.map(tag => `• ID ${tag.id}: ${tag.title} - ${tag.short_description || 'No description'} (${tag.category || 'Uncategorized'})`).join('\n')}
+
+YOUR MISSION:
+Pitch ONE exciting new story direction that will inspire the author. This is suggestion ${i + 1} of ${limit}, so make it count!
+
+${suggestedTagsWithReasoning.length > 0 ? `CREATIVE STRATEGY:
+- Build upon the creative momentum from previous suggestions
+- Offer a fresh perspective that complements but doesn't duplicate previous themes
+- Consider how this suggestion could create interesting contrasts or synergies
+- Each suggestion should open up new storytelling possibilities` : 'CREATIVE STRATEGY:\n- Start with a strong foundation that will inspire future suggestions\n- Consider multiple story directions this could enable\n- Focus on elements that have rich storytelling potential'}
+
+Provide a JSON response with EXACTLY this structure:
+{
+  "tagName": "[TAG_NAME_FROM_CATALOG]",
+  "tagId": [NUMERIC_ID_FROM_CATALOG],
+  "reasoning": "[COMPELLING_STORY_PITCH_HERE]",
+  "confidence": [0.0_TO_1.0]
+}
+
+The "reasoning" field should be a compelling story pitch that shows how this element could transform or enhance their story. Be specific, creative, and inspiring. Think about:
+- How this could add new layers to their existing story elements
+- What exciting plot developments or character arcs it could enable
+- How it could create interesting conflicts or opportunities
+- What unique storytelling possibilities it opens up
+${suggestedTagsWithReasoning.length > 0 ? `- How this builds upon or contrasts with previous suggestions` : ''}
+
+APPROACH:
+- Be enthusiastic and inspiring in your pitch
+- Connect this new idea to what they've already established
+- Suggest specific ways this could enhance their story
+- Consider how it could create interesting character dynamics or plot twists
+- Think about the emotional impact and storytelling potential
+- IMPORTANT: Choose a tag that hasn't been suggested before
+${rejectionLearning.rejections.length > 0 ? `- Respect their previous feedback while offering fresh perspectives
+- Focus on directions they seem to enjoy based on their choices` : ''}
+
+Format as valid JSON only. Return pure JSON without markdown formatting.`;
+
+                    console.log(`Calling OpenAI API for suggestion ${i + 1}...`);
+                    const response = await this.openai.chat.completions.create({
+                        model: "gpt-3.5-turbo",
+                        messages: [{ role: "system", content: prompt }],
+                        temperature: 0.7,
+                        max_tokens: 1500
+                    });
+
+                    const content = response.choices[0].message.content;
+                    console.log(`Raw AI response for suggestion ${i + 1}:`, content);
+                    
+                    const cleanedContent = this.cleanAIResponse(content);
+                    console.log(`Cleaned AI response for suggestion ${i + 1}:`, cleanedContent);
+                    
+                    let result;
+                    try {
+                        result = JSON.parse(cleanedContent);
+                        console.log(`Parsed result for suggestion ${i + 1}:`, JSON.stringify(result, null, 2));
+                    } catch (parseError) {
+                        console.error(`JSON parsing error for suggestion ${i + 1}:`, parseError);
+                        console.error('Failed to parse content:', cleanedContent);
+                        // Try to extract JSON from the content
+                        const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            try {
+                                result = JSON.parse(jsonMatch[0]);
+                                console.log('Successfully extracted JSON from content');
+                            } catch (extractError) {
+                                console.error('Failed to extract JSON:', extractError);
+                                throw new Error(`Invalid JSON response from AI: ${cleanedContent}`);
+                            }
+                        } else {
+                            throw new Error(`No valid JSON found in AI response: ${cleanedContent}`);
+                        }
+                    }
+
+                    // Find the actual tag object
+                    let tag = null;
+                    if (typeof result.tagId === 'number') {
+                        tag = remainingTags.find(t => t.id === result.tagId);
+                    } else if (typeof result.tagId === 'string') {
+                        tag = remainingTags.find(t => t.title.toLowerCase() === result.tagId.toLowerCase());
+                    }
+
+                    if (!tag) {
+                        console.log(`Tag with ID/title "${result.tagId}" not found in remaining tags, trying fallback...`);
+                        // Fallback: pick a random remaining tag but preserve the AI reasoning
+                        const randomIndex = Math.floor(Math.random() * remainingTags.length);
+                        tag = remainingTags[randomIndex];
+                        console.log(`Using fallback tag: ${tag.title} with AI reasoning`);
+                    }
+
+                    // Add to suggested sets
+                    suggestedTagIds.add(tag.id);
+                    suggestedTagNames.add(tag.title);
+
+                    // Ensure we have proper reasoning from AI
+                    let reasoning = result.reasoning;
+                    if (!reasoning || reasoning.trim() === '') {
+                        console.error(`ERROR: No reasoning provided by AI for suggestion ${i + 1}`);
+                        console.error('AI response result:', JSON.stringify(result, null, 2));
+                        throw new Error(`AI failed to provide reasoning for suggestion ${i + 1}`);
+                    }
+                    
+                    // Check for fallback reasoning patterns
+                    if (reasoning.includes('Basic suggestion for') || 
+                        reasoning.includes('this tag might fit your story based on general compatibility')) {
+                        console.error(`ERROR: AI returned fallback reasoning instead of proper AI reasoning for suggestion ${i + 1}`);
+                        console.error('AI response result:', JSON.stringify(result, null, 2));
+                        throw new Error(`AI returned fallback reasoning for suggestion ${i + 1} - this indicates a problem with the AI service`);
+                    }
+
+                    const suggestion = {
+                        tagId: tag.id,
+                        tag: tag,
+                        reasoning: reasoning,
+                        confidence: result.confidence || 0.8,
+                        suggestionNumber: i + 1,
+                        totalSuggestions: limit
+                    };
+
+                    // Add to tracking for iterative context
+                    suggestedTagsWithReasoning.push(suggestion);
+
+                    console.log(`Final suggestion reasoning: ${suggestion.reasoning.substring(0, 100)}...`);
+                    console.log(`Generated suggestion ${i + 1}: ${tag.title}`);
+                    yield suggestion;
+
+                    // Small delay between requests to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                } catch (error) {
+                    console.error(`Error generating suggestion ${i + 1}:`, error);
+                    console.error('Full error details:', error);
+                    
+                    // Don't continue with fallback - throw the error to prevent fallback suggestions
+                    throw new Error(`AI suggestion generation failed for suggestion ${i + 1}: ${error.message}`);
+                }
+            }
+        } catch (error) {
+            console.error('Error in generateIntelligentSuggestionsIterative:', error);
+            console.error('Error stack:', error.stack);
         }
     }
 

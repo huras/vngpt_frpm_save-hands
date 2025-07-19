@@ -136,6 +136,146 @@ class IntelligentTagService {
     }
 
     /**
+     * Generate intelligent tag suggestions iteratively with streaming
+     */
+    async generateSuggestionsStreaming(storyId, limit = 10, onSuggestionCallback = null) {
+        try {
+            console.log(`Generating streaming suggestions for story ${storyId} with limit ${limit}`);
+            
+            const story = await Story.findByPk(storyId, {
+                include: [
+                    { model: Tag, as: 'tags' },
+                    { 
+                        model: StoryTagReasoning, 
+                        as: 'tagReasonings',
+                        include: [{ model: Tag, as: 'tag' }]
+                    }
+                ]
+            });
+
+            if (!story) {
+                throw new Error('Story not found');
+            }
+
+            console.log(`Found story: ${story.title} with ${story.tags?.length || 0} tags`);
+
+            // Get all available tags
+            const allTags = await Tag.findAll({
+                order: [['title', 'ASC']]
+            });
+
+            console.log(`Found ${allTags.length} total tags available`);
+
+            // Get existing suggestions to avoid duplicates
+            const existingSuggestions = await TagSuggestion.findAll({
+                where: { 
+                    storyId,
+                    status: ['pending', 'accepted']
+                }
+            });
+
+            console.log(`Found ${existingSuggestions.length} existing suggestions`);
+
+            const existingTagIds = new Set([
+                ...story.tags.map(tag => tag.id),
+                ...existingSuggestions.map(suggestion => suggestion.tagId)
+            ]);
+
+            // Filter out already suggested or selected tags
+            const availableTags = allTags.filter(tag => !existingTagIds.has(tag.id));
+
+            console.log(`Available tags after filtering: ${availableTags.length}`);
+
+            if (availableTags.length === 0) {
+                console.log('No available tags for suggestion');
+                return { suggestions: [], message: 'No more tags available for suggestion' };
+            }
+
+            const suggestions = [];
+            const createdSuggestions = [];
+
+            // Use the iterative AI service
+            console.log('Starting iterative AI generation...');
+            let aiGenerator;
+            try {
+                aiGenerator = this.aiService.generateIntelligentSuggestionsIterative(story, availableTags, limit);
+            } catch (aiError) {
+                console.error('Failed to start iterative AI generation:', aiError);
+                throw new Error('AI service failed to start: ' + aiError.message);
+            }
+            
+            let suggestionCount = 0;
+            for await (const aiSuggestion of aiGenerator) {
+                suggestionCount++;
+                console.log(`Received AI suggestion ${aiSuggestion.suggestionNumber}: ${aiSuggestion.tag.title}`);
+                console.log(`AI reasoning: ${aiSuggestion.reasoning.substring(0, 100)}...`);
+                
+                // Check if this is a fallback suggestion
+                if (aiSuggestion.reasoning.includes('Basic suggestion for') || aiSuggestion.reasoning.includes('this tag might fit your story based on general compatibility')) {
+                    console.error('ERROR: Received fallback suggestion instead of AI-generated reasoning!');
+                    console.error('This indicates the AI service is failing and falling back to simple suggestions.');
+                    throw new Error('AI service failed - received fallback suggestion instead of AI reasoning');
+                }
+                
+                // Double-check that this suggestion doesn't already exist
+                const existingSuggestion = await TagSuggestion.findOne({
+                    where: {
+                        storyId,
+                        tagId: aiSuggestion.tagId,
+                        status: ['pending', 'accepted']
+                    }
+                });
+                
+                if (existingSuggestion) {
+                    console.log(`Suggestion for tag ${aiSuggestion.tag.title} already exists, skipping`);
+                    continue;
+                }
+                
+                try {
+                    console.log(`Saving suggestion to database with reasoning: ${aiSuggestion.reasoning.substring(0, 100)}...`);
+                    const suggestion = await TagSuggestion.create({
+                        storyId,
+                        tagId: aiSuggestion.tagId,
+                        reasoning: aiSuggestion.reasoning,
+                        confidence: aiSuggestion.confidence,
+                        status: 'pending',
+                        suggestionType: 'ai_generated',
+                        contextTags: JSON.stringify(story.tags.map(tag => tag.id))
+                    });
+
+                    const suggestionWithTag = {
+                        ...suggestion.toJSON(),
+                        tag: aiSuggestion.tag,
+                        suggestionNumber: aiSuggestion.suggestionNumber,
+                        totalSuggestions: aiSuggestion.totalSuggestions
+                    };
+
+                    console.log(`Saved suggestion with reasoning: ${suggestionWithTag.reasoning.substring(0, 100)}...`);
+
+                    suggestions.push(suggestionWithTag);
+                    createdSuggestions.push(suggestionWithTag);
+
+                    // Call the callback to stream this suggestion
+                    if (onSuggestionCallback) {
+                        onSuggestionCallback(suggestionWithTag);
+                    }
+
+                } catch (createError) {
+                    console.error(`Error creating suggestion for tag ${aiSuggestion.tag.title}:`, createError);
+                    // Continue with other suggestions instead of failing completely
+                    continue;
+                }
+            }
+
+            console.log(`Created ${createdSuggestions.length} suggestion records via streaming`);
+            return { suggestions: createdSuggestions, message: 'Streaming suggestions completed successfully' };
+        } catch (error) {
+            console.error('Error generating streaming suggestions:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Simple fallback suggestions when AI fails
      */
     getSimpleFallbackSuggestions(availableTags, limit = 10) {

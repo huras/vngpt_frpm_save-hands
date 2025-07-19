@@ -9,6 +9,80 @@ export const intelligentTagApi = {
   generateSuggestions: (storyId, limit = 10) => 
     api.post(`/intelligent-tags/suggestions/${storyId}/generate`, { limit }),
 
+  // Generate suggestions with streaming (iterative)
+  generateSuggestionsStreaming: (storyId, limit = 10, onSuggestion, onComplete, onError) => {
+    // Create a fetch request with streaming - use the correct API URL
+    fetch(`http://localhost:3056/api/intelligent-tags/suggestions/${storyId}/generate-streaming`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ limit })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      function readStream() {
+        return reader.read().then(({ done, value }) => {
+          if (done) {
+            return;
+          }
+          
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          
+          lines.forEach(line => {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                
+                switch (data.type) {
+                  case 'connected':
+                    console.log('Streaming connection established');
+                    break;
+                  case 'suggestion':
+                    if (onSuggestion) {
+                      onSuggestion(data.data);
+                    }
+                    break;
+                  case 'complete':
+                    if (onComplete) {
+                      onComplete(data.data);
+                    }
+                    return;
+                  case 'error':
+                    if (onError) {
+                      onError(data.error);
+                    }
+                    return;
+                  default:
+                    console.log('Unknown event type:', data.type);
+                }
+              } catch (error) {
+                console.error('Error parsing streaming data:', error);
+              }
+            }
+          });
+          
+          return readStream();
+        });
+      }
+      
+      return readStream();
+    })
+    .catch(error => {
+      console.error('Streaming request error:', error);
+      if (onError) {
+        onError(error.message);
+      }
+    });
+  },
+
   // Accept a suggestion
   acceptSuggestion: (suggestionId, userExplanation = null) => 
     api.post(`/intelligent-tags/suggestions/${suggestionId}/accept`, { userExplanation }),

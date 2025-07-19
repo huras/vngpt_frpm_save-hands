@@ -200,6 +200,55 @@ router.post('/suggestions/:storyId/reevaluate', async (req, res) => {
     }
 });
 
+// POST /intelligent-tags/suggestions/:storyId/generate-streaming - Generate suggestions iteratively with streaming
+router.post('/suggestions/:storyId/generate-streaming', async (req, res) => {
+    try {
+        const { storyId } = req.params;
+        const { limit = 10 } = req.body;
+
+        // Set headers for streaming
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Cache-Control'
+        });
+
+        // Send initial connection message
+        res.write('data: {"type": "connected", "message": "Streaming suggestions started"}\n\n');
+
+        const result = await intelligentTagService.generateSuggestionsStreaming(storyId, limit, (suggestion) => {
+            // Send each suggestion as it's generated
+            res.write(`data: ${JSON.stringify({
+                type: 'suggestion',
+                data: suggestion
+            })}\n\n`);
+        });
+
+        // Send completion message
+        res.write(`data: ${JSON.stringify({
+            type: 'complete',
+            data: result
+        })}\n\n`);
+
+        res.end();
+    } catch (error) {
+        console.error('Error generating streaming suggestions:', error);
+        
+        // Send error message if connection is still open
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'An error occurred while generating suggestions.' });
+        } else {
+            res.write(`data: ${JSON.stringify({
+                type: 'error',
+                error: 'An error occurred while generating suggestions.'
+            })}\n\n`);
+            res.end();
+        }
+    }
+});
+
 // AI Commentary Routes
 
 // GET /intelligent-tags/commentaries/:storyId/:tagId - Get current AI commentary

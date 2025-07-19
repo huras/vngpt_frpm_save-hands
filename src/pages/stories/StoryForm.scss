@@ -168,6 +168,59 @@
         color: #6c757d;
         font-size: 1.1rem;
     }
+    
+    .tag-management-section {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 2px solid #e9ecef;
+        
+        h2 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .section-description {
+            color: #6c757d;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .ai-suggestions-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            
+            h3 {
+                color: #2c3e50;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+            
+            .section-description {
+                margin-bottom: 20px;
+            }
+        }
+        
+        .traditional-tag-selector {
+            padding: 25px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            
+            h3 {
+                color: #2c3e50;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+            
+            .section-description {
+                margin-bottom: 20px;
+            }
+        }
+    }
 }
 
 // Responsive design
