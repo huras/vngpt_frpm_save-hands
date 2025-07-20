@@ -143,7 +143,8 @@ const StoryForm = () => {
     try {
       setGeneratingTags(true);
       setError(null);
-      setComprehensiveResults(null);
+      // Don't clear existing results - we'll add new ones on top
+      // setComprehensiveResults(null);
       setStreamingData(null);
       setShowComprehensiveResults(true);
 
@@ -158,10 +159,36 @@ const StoryForm = () => {
           console.log('Received streaming update:', update);
           setStreamingData(update);
           
-          // If we have data, update the results
+          // If we have data, merge with existing results instead of replacing
           if (update.data) {
-            setComprehensiveResults(update.data);
-            console.log('Updated comprehensive results:', update.data);
+            setComprehensiveResults(prevResults => {
+              if (!prevResults) {
+                return update.data;
+              }
+              
+              // Merge new results with existing ones, avoiding duplicates
+              const existingTagIds = new Set(prevResults.relevantTags?.map(tag => tag.id) || []);
+              const newRelevantTags = (update.data.relevantTags || []).filter(tag => !existingTagIds.has(tag.id));
+              
+              const mergedResults = {
+                ...prevResults,
+                relevantTags: [
+                  ...newRelevantTags, // New tags first
+                  ...(prevResults.relevantTags || [])
+                ],
+                relatedTagsMap: {
+                  ...(prevResults.relatedTagsMap || {}),
+                  ...(update.data.relatedTagsMap || {})
+                },
+                worldBuildingEffects: [
+                  ...(update.data.worldBuildingEffects || []),
+                  ...(prevResults.worldBuildingEffects || [])
+                ]
+              };
+              
+              console.log(`Added ${newRelevantTags.length} new tags to existing ${prevResults.relevantTags?.length || 0} tags`);
+              return mergedResults;
+            });
           }
           
           // If completed, finish the process
@@ -202,6 +229,11 @@ const StoryForm = () => {
     } else {
       setSelectedTags([...selectedTags, tag]);
     }
+  };
+
+  const handleClearGeneratedTags = () => {
+    setComprehensiveResults(null);
+    setShowComprehensiveResults(false);
   };
 
   if (fetching) {
@@ -291,9 +323,19 @@ const StoryForm = () => {
                 </>
               ) : (
                 <>
-                  <i className="fas fa-magic"></i> {comprehensiveResults ? 'Regenerate Tags' : 'Generate Comprehensive Tags'}
+                  <i className="fas fa-magic"></i> {comprehensiveResults ? 'Generate More Tags' : 'Generate Comprehensive Tags'}
                 </>
               )}
+            </button>
+          )}
+          
+          {comprehensiveResults && !generatingTags && (
+            <button 
+              type="button"
+              onClick={handleClearGeneratedTags}
+              className="btn btn-outline-danger"
+            >
+              <i className="fas fa-trash"></i> Clear All Generated Tags
             </button>
           )}
           
