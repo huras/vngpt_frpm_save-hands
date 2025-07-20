@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BACKEND_CONFIG } from '../config/backend';
+import TagModal from './TagModal';
 import './RelevantTagCard.scss';
 
 const RelevantTagCard = ({
@@ -17,6 +18,12 @@ const RelevantTagCard = ({
   isGenerating = false,
   streamingData = null
 }) => {
+  const [showModal, setShowModal] = useState(false);
+
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    setShowModal(true);
+  };
   // Find world-building effects for this tag
   const tagEffects = results?.worldBuildingEffects?.find(effects => effects.tagId === tag.id);
 
@@ -69,6 +76,8 @@ const RelevantTagCard = ({
             src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
             alt={tag.title}
             className="tag-thumb"
+            onClick={handleImageClick}
+            style={{ cursor: 'pointer' }}
             onError={(e) => {
               e.target.style.display = 'none';
             }}
@@ -269,6 +278,13 @@ const RelevantTagCard = ({
           )}
         </div>
       )}
+      
+      {/* Tag Modal */}
+      <TagModal 
+        tag={tag}
+        show={showModal}
+        onHide={() => setShowModal(false)}
+      />
     </div>
   );
 };

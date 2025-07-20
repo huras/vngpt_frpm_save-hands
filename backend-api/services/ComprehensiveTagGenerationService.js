@@ -10,7 +10,7 @@ class ComprehensiveTagGenerationService {
      * Generate comprehensive tag suggestions for a story with iterative streaming
      * This is the main method that orchestrates the three-stage process with real-time updates
      */
-    async *generateComprehensiveTagsIterative(storyTitle, storyBrainstorm, limit = 10, storyId = null) {
+    async *generateComprehensiveTagsIterative(storyTitle, storyBrainstorm, limit = false, storyId = null) {
         try {
             console.log(`Starting iterative comprehensive tag generation for story: ${storyTitle}`);
             
@@ -177,7 +177,7 @@ class ComprehensiveTagGenerationService {
      * Generate comprehensive tag suggestions for a story (legacy method)
      * This is the main method that orchestrates the three-stage process
      */
-    async generateComprehensiveTags(storyTitle, storyBrainstorm, limit = 10) {
+    async generateComprehensiveTags(storyTitle, storyBrainstorm, limit = false) {
         try {
             console.log(`Starting comprehensive tag generation for story: ${storyTitle}`);
             
@@ -219,14 +219,14 @@ class ComprehensiveTagGenerationService {
     /**
      * Stage 1: Select relevant tags based on story content
      */
-    async selectRelevantTags(storyTitle, storyBrainstorm, limit = 10) {
+    async selectRelevantTags(storyTitle, storyBrainstorm, limit = false) {
         try {
             // Get all available tags
             const allTags = await Tag.findAll({
                 order: [['title', 'ASC']]
             });
 
-            const prompt = `Based on this story, select ${limit} most relevant anime/manga tags with EXCELLENT category diversity:
+            const prompt = `Based on this story, select ${limit ? limit : 'all'} most relevant anime/manga tags with EXCELLENT category diversity:
 
 Story Title: ${storyTitle}
 Story Brainstorm: ${storyBrainstorm}
