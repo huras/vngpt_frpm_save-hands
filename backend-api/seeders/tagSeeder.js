@@ -608,8 +608,8 @@ const tagData = [
         broader_description: "Forbidden Love stories explore romantic relationships that face societal, cultural, or personal obstacles. These narratives often involve secrecy, emotional tension, and the conflict between desire and duty.",
         category: "tropes",
         keywords: "forbidden love, romance, taboo, conflict",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/forbidden-love.png",
+        media_type: "image"
     },
     {
         title: "Lost Civilization",
@@ -617,8 +617,8 @@ const tagData = [
         broader_description: "Lost Civilization stories uncover the remnants of ancient, forgotten societies. These narratives often involve exploration, archaeological discovery, and the mysteries of a once-great culture lost to time.",
         category: "tropes",
         keywords: "lost civilization, ancient, forgotten, ruins, history",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/lost-civilization.png",
+        media_type: "image"
     },
     {
         title: "Ancient Artifact",
@@ -673,8 +673,8 @@ const tagData = [
         "broader_description": "A Villain Protagonist leads the story while embodying traits commonly associated with antagonists—cruelty, ambition, deceit, or malice. These stories invite viewers to explore the darker side of human nature through the lens of a central character who defies heroism.",
         "category": "character_archetype",
         "keywords": "villain protagonist, villain, main character, antihero",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/villain-protagonist.png",
+        "media_type": "image"
     },
     {
         "title": "Strong Female Lead",
@@ -736,7 +736,7 @@ const tagData = [
         "broader_description": "The Chosen One is a character singled out by destiny, prophecy, or circumstance to fulfill an important role or mission. These characters often rise from humble beginnings to confront great challenges, symbolizing hope, fate, and transformation.",
         "category": "character_archetype",
         "keywords": "chosen one, destiny, hero, prophecy, special",
-        "media_url": "/media/tags/chosen-one.jpeg",
+        "media_url": "/media/tags/chosen-one-2.png",
         "media_type": "image"
     },
 
