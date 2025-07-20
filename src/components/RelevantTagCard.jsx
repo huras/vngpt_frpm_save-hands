@@ -165,7 +165,14 @@ const RelevantTagCard = ({
             {isCurrentTag && <span className="current-tag-badge">Current</span>}
             {getTagStatusBadge(tag)}
           </h4>
-          <p className="tag-description">{tag.short_description}</p>
+          {/* <p className="tag-description">{tag.short_description}</p> */}
+          <div className="tag-details">
+            {tag.selectionReasoning && (
+              <div className="selection-reasoning">
+                <p title="Why this tag fits your story">{tag.selectionReasoning}</p>
+              </div>
+            )}
+          </div>
           <div className="tag-meta">
             <span className="tag-category">{tag.category}</span>
             {tag.relevanceScore && (
@@ -174,8 +181,18 @@ const RelevantTagCard = ({
           </div>
         </div>
         <div className="tag-actions">
-          {/* Show Accept/Reject buttons only for suggested tags (not current story tags) */}
-          {!isCurrentTag && tag.suggestionId && (
+          {/* Debug logging for Accept/Reject button visibility */}
+          {console.log(`Tag ${tag.title} (ID: ${tag.id}):`, {
+            isCurrentTag,
+            suggestionId: tag.suggestionId,
+            suggestionStatus: tag.suggestionStatus,
+            hasSelectionReasoning: !!tag.selectionReasoning,
+            shouldShowButtons: !isCurrentTag && (tag.suggestionId || tag.selectionReasoning)
+          })}
+          
+          {/* Show Accept/Reject buttons for suggested tags (not current story tags) */}
+          {/* Fallback: also show if tag has selectionReasoning (AI-generated) even without suggestionId */}
+          {!isCurrentTag && (tag.suggestionId || tag.selectionReasoning) && (
             <>
               {tag.suggestionStatus === 'accepted' ? (
                 <button
@@ -218,13 +235,7 @@ const RelevantTagCard = ({
       </div>
       
       {isExpanded && (
-        <div className="tag-details">
-          {tag.selectionReasoning && (
-            <div className="selection-reasoning">
-              <strong>Why this tag fits your story:</strong>
-              <p>{tag.selectionReasoning}</p>
-            </div>
-          )}
+        <div className="tag-details">          
           
           {/* Related Tags */}
           <div className="related-tags">

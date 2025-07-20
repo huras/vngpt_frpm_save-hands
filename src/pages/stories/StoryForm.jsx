@@ -163,6 +163,7 @@ const StoryForm = () => {
           if (update.data) {
             setComprehensiveResults(prevResults => {
               if (!prevResults) {
+                console.log('No previous results, using new data directly:', update.data);
                 return update.data;
               }
               
@@ -170,10 +171,17 @@ const StoryForm = () => {
               const existingTagIds = new Set(prevResults.relevantTags?.map(tag => tag.id) || []);
               const newRelevantTags = (update.data.relevantTags || []).filter(tag => !existingTagIds.has(tag.id));
               
+              // Ensure new tags have suggestionId and suggestionStatus
+              const processedNewTags = newRelevantTags.map(tag => ({
+                ...tag,
+                suggestionId: tag.suggestionId || null,
+                suggestionStatus: tag.suggestionStatus || 'pending'
+              }));
+              
               const mergedResults = {
                 ...prevResults,
                 relevantTags: [
-                  ...newRelevantTags, // New tags first
+                  ...processedNewTags, // New tags first
                   ...(prevResults.relevantTags || [])
                 ],
                 relatedTagsMap: {
@@ -186,16 +194,28 @@ const StoryForm = () => {
                 ]
               };
               
-              console.log(`Added ${newRelevantTags.length} new tags to existing ${prevResults.relevantTags?.length || 0} tags`);
+              console.log(`Added ${processedNewTags.length} new tags to existing ${prevResults.relevantTags?.length || 0} tags`);
+              console.log('New tags with suggestion data:', processedNewTags.map(tag => ({
+                id: tag.id,
+                title: tag.title,
+                suggestionId: tag.suggestionId,
+                suggestionStatus: tag.suggestionStatus
+              })));
               return mergedResults;
             });
           }
           
-          // If completed, finish the process
+          // If completed, finish the process and refresh state
           if (update.completed) {
             console.log('Streaming completed successfully');
             setGeneratingTags(false);
             setStreamingData(null);
+            
+            // Refresh comprehensive results to ensure all suggestion data is properly set
+            if (isEditing && id) {
+              console.log('Refreshing comprehensive results after generation...');
+              fetchComprehensiveResults();
+            }
           }
         },
         // onComplete callback
@@ -203,6 +223,12 @@ const StoryForm = () => {
           console.log('Streaming completed');
           setGeneratingTags(false);
           setStreamingData(null);
+          
+          // Refresh comprehensive results to ensure all suggestion data is properly set
+          if (isEditing && id) {
+            console.log('Refreshing comprehensive results after generation...');
+            fetchComprehensiveResults();
+          }
         },
         // onError callback
         (error) => {

@@ -54,8 +54,17 @@ class ComprehensiveTagGenerationService {
             if (storyId) {
                 try {
                     console.log(`Auto-saving comprehensive results for story: ${storyId}`);
-                    await this.saveComprehensiveResults(storyId, finalResult);
+                    const savedResults = await this.saveComprehensiveResults(storyId, finalResult);
                     console.log('Comprehensive results auto-saved successfully');
+                    
+                    // Update the tags with their suggestionId values
+                    const updatedRelevantTags = finalResult.relevantTags.map((tag, index) => ({
+                        ...tag,
+                        suggestionId: savedResults.tagSuggestions[index]?.id,
+                        suggestionStatus: 'pending'
+                    }));
+                    
+                    finalResult.relevantTags = updatedRelevantTags;
                 } catch (error) {
                     console.error('Error auto-saving comprehensive results:', error);
                     // Don't fail the generation if saving fails
@@ -147,7 +156,7 @@ Story Title: ${storyTitle}
 Story Brainstorm: ${storyBrainstorm}
 
 Available Tags:
-${allTags.map(tag => `- ${tag.title}: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})`).join('\n')}
+${allTags.map(tag => `- ID: ${tag.id}, Title: ${tag.title}, Description: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})`).join('\n')}
 
 IMPORTANT: Ensure your selection covers multiple categories for comprehensive story representation:
 
@@ -161,10 +170,12 @@ CATEGORY GUIDELINES:
 - Include 1-2 other relevant categories
 
 Provide a JSON response with:
-1. "selectedTags": Array of ${limit} tag titles that are most relevant to this story
-2. "reasoning": Array of brief explanations for why each tag was selected
-3. "relevanceScore": Overall relevance score (1-10) for how well the tags match the story
-4. "categoryBreakdown": Object showing how many tags from each category were selected
+1. "selectedTags": Array of ${limit} objects, each with:
+   - "tagId": The exact ID number from the available tags list
+   - "tagName": The exact title from the available tags list
+   - "reasoning": Array of 2-3 detailed explanations for why this tag was selected
+2. "relevanceScore": Overall relevance score (1-10) for how well the tags match the story
+3. "categoryBreakdown": Object showing how many tags from each category were selected
 
 Consider:
 - Genre relevance to the story themes
@@ -176,6 +187,8 @@ Consider:
 - Thematic depth and meaning
 - Emotional impact and mood
 - Cultural and social elements
+
+CRITICAL: Use EXACT tagId and tagName values from the available tags list. Do not create new names or IDs.
 
 Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
 
@@ -190,37 +203,46 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
             const cleanedContent = this.aiService.cleanAIResponse(content);
             const result = JSON.parse(cleanedContent);
 
-            // Find the actual tag objects for the selected titles
-            const selectedTags = result.selectedTags
-                .map(title => allTags.find(tag => tag.title === title))
-                .filter(tag => tag) // Remove any not found
-                .slice(0, limit);
-
-            // Add reasoning to each tag
-            const tagsWithReasoning = selectedTags.map((tag, index) => {
-                let reason = '';
+            // Process the structured tag objects
+            const tagsWithReasoning = [];
+            
+            for (const selectedTagData of result.selectedTags || []) {
+                // Find the actual tag object by ID
+                const tag = allTags.find(t => t.id === selectedTagData.tagId);
                 
-                if (Array.isArray(result.reasoning)) {
-                    reason = result.reasoning[index] || result.reasoning[0] || 'AI-selected based on story content';
-                } else if (typeof result.reasoning === 'string') {
-                    reason = result.reasoning;
-                } else {
-                    reason = 'AI-selected based on story content';
-                }
+                if (tag) {
+                    // Validate that tagName matches
+                    if (tag.title !== selectedTagData.tagName) {
+                        console.warn(`Tag ID ${selectedTagData.tagId} name mismatch: expected "${tag.title}", got "${selectedTagData.tagName}"`);
+                    }
+                    
+                    // Process reasoning array
+                    let reasoning = 'AI-selected based on story content';
+                    if (Array.isArray(selectedTagData.reasoning) && selectedTagData.reasoning.length > 0) {
+                        reasoning = selectedTagData.reasoning.join('; ');
+                    } else if (typeof selectedTagData.reasoning === 'string') {
+                        reasoning = selectedTagData.reasoning;
+                    }
 
-                return {
-                    ...tag.toJSON(),
-                    selectionReasoning: reason,
-                    relevanceScore: result.relevanceScore || 7
-                };
-            });
+                    tagsWithReasoning.push({
+                        ...tag.toJSON(),
+                        selectionReasoning: reasoning,
+                        relevanceScore: result.relevanceScore || 7
+                    });
+                } else {
+                    console.warn(`Tag with ID ${selectedTagData.tagId} not found in available tags`);
+                }
+            }
+
+            // Apply limit if specified
+            const finalTags = limit ? tagsWithReasoning.slice(0, limit) : tagsWithReasoning;
 
             // Log category breakdown for debugging
             if (result.categoryBreakdown) {
                 console.log('Category breakdown:', result.categoryBreakdown);
             }
 
-            return tagsWithReasoning;
+            return finalTags;
         } catch (error) {
             console.error('Error selecting relevant tags:', error);
             // Fallback to popular tags
@@ -285,16 +307,19 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
             const prompt = `Based on this anime/manga tag, suggest ${limit} related tags that would complement it well:
 
 Focus Tag:
-- ${tag.title}: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})
+- ID: ${tag.id}, Title: ${tag.title}, Description: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})
 
 Available Tags:
-${allTags.map(t => `- ${t.title}: ${t.short_description} (Category: ${t.category}, Keywords: ${t.keywords})`).join('\n')}
+${allTags.map(t => `- ID: ${t.id}, Title: ${t.title}, Description: ${t.short_description} (Category: ${t.category}, Keywords: ${t.keywords})`).join('\n')}
 
 Provide a JSON response with:
-1. "relatedTags": Array of ${limit} tag titles that work well with the focus tag
-2. "relationshipTypes": Array of relationship types for each related tag (complementary, synergistic, thematic, genre_related, setting_related)
-3. "reasoning": Array of brief explanations for why each tag is related
-4. "confidence": Array of confidence scores (0-1) for each relationship
+1. "relatedTags": Array of ${limit} objects, each with:
+   - "tagId": The exact ID number from the available tags list
+   - "tagName": The exact title from the available tags list
+   - "relationshipType": One of: complementary, synergistic, thematic, genre_related, setting_related
+   - "reasoning": Array of 2-3 detailed explanations for why this tag is related
+   - "confidence": Confidence score (0-1) for this relationship
+2. "overallSynergy": Overall synergy score (1-10) for how well the related tags work together
 
 Consider:
 - Genre compatibility
@@ -302,6 +327,8 @@ Consider:
 - Target audience overlaps
 - Storytelling potential
 - World-building opportunities
+
+CRITICAL: Use EXACT tagId and tagName values from the available tags list. Do not create new names or IDs.
 
 Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
 
@@ -316,25 +343,40 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
             const cleanedContent = this.aiService.cleanAIResponse(content);
             const result = JSON.parse(cleanedContent);
 
-            // Find the actual tag objects for the related titles
-            const relatedTags = result.relatedTags
-                .map(title => allTags.find(t => t.title === title))
-                .filter(t => t) // Remove any not found
-                .slice(0, limit);
+            // Process the structured tag objects
+            const relatedTagsWithInfo = [];
+            
+            for (const relatedTagData of result.relatedTags || []) {
+                // Find the actual tag object by ID
+                const relatedTag = allTags.find(t => t.id === relatedTagData.tagId);
+                
+                if (relatedTag) {
+                    // Validate that tagName matches
+                    if (relatedTag.title !== relatedTagData.tagName) {
+                        console.warn(`Related tag ID ${relatedTagData.tagId} name mismatch: expected "${relatedTag.title}", got "${relatedTagData.tagName}"`);
+                    }
+                    
+                    // Process reasoning array
+                    let reasoning = 'AI-determined relationship';
+                    if (Array.isArray(relatedTagData.reasoning) && relatedTagData.reasoning.length > 0) {
+                        reasoning = relatedTagData.reasoning.join('; ');
+                    } else if (typeof relatedTagData.reasoning === 'string') {
+                        reasoning = relatedTagData.reasoning;
+                    }
 
-            // Add relationship information to each tag
-            const relatedTagsWithInfo = relatedTags.map((relatedTag, index) => {
-                const relationshipType = result.relationshipTypes?.[index] || 'complementary';
-                const reasoning = result.reasoning?.[index] || 'AI-determined relationship';
-                const confidence = result.confidence?.[index] || 0.8;
+                    const relationshipType = relatedTagData.relationshipType || 'complementary';
+                    const confidence = relatedTagData.confidence || 0.8;
 
-                return {
-                    ...relatedTag.toJSON(),
-                    relationshipType,
-                    relationshipReasoning: reasoning,
-                    confidence
-                };
-            });
+                    relatedTagsWithInfo.push({
+                        ...relatedTag.toJSON(),
+                        relationshipType,
+                        relationshipReasoning: reasoning,
+                        confidence
+                    });
+                } else {
+                    console.warn(`Related tag with ID ${relatedTagData.tagId} not found in available tags`);
+                }
+            }
 
             return relatedTagsWithInfo;
         } catch (error) {
@@ -503,6 +545,7 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
                 }
             }
 
+            console.log(`Saved ${savedResults.tagSuggestions.length} tag suggestions to database`);
             return savedResults;
         } catch (error) {
             console.error('Error saving comprehensive results:', error);

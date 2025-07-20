@@ -5,8 +5,8 @@ import './TagModal.scss';
 
 const animations = [
   'panXbackBackandForth',
-  'panXbackBackandForthZooming',
-  'panXbackBackandForthZooming2'
+  // 'panXbackBackandForthZooming',
+  // 'panXbackBackandForthZooming2'
 ]
 
 const TagModal = ({ 

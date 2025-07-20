@@ -207,15 +207,42 @@ const ComprehensiveTagResults = ({
   const handleWorldBuildingEffectsGenerated = (tagId, worldBuildingEffects) => {
     setWorldBuildingEffectsMap(prev => ({
       ...prev,
-      [tagId]: {
-        tagId,
-        tagTitle: results?.relevantTags?.find(t => t.id === tagId)?.title || 'Unknown Tag',
-        effects: worldBuildingEffects
-      }
+      [tagId]: worldBuildingEffects
     }));
   };
 
-  // Calculate summary statistics
+  // Utility function to ensure all tags have proper suggestion data
+  const ensureTagSuggestionData = (tags) => {
+    if (!tags) return tags;
+    
+    return tags.map(tag => ({
+      ...tag,
+      suggestionId: tag.suggestionId || null,
+      suggestionStatus: tag.suggestionStatus || 'pending',
+      selectionReasoning: tag.selectionReasoning || tag.reasoning || 'AI-generated suggestion'
+    }));
+  };
+
+  // Utility function to sort tags by status and then alphabetically
+  const sortTagsByStatusAndName = (tags) => {
+    if (!tags) return tags;
+    
+    const statusOrder = { accepted: 1, pending: 2, rejected: 3 };
+    
+    return tags.sort((a, b) => {
+      // First sort by status
+      const statusA = statusOrder[a.suggestionStatus] || 2; // Default to pending if no status
+      const statusB = statusOrder[b.suggestionStatus] || 2;
+      
+      if (statusA !== statusB) {
+        return statusA - statusB;
+      }
+      
+      // Then sort alphabetically by title
+      return a.title.localeCompare(b.title);
+    });
+  };
+
   const getSummaryStats = () => {
     if (!results?.relevantTags) return null;
 
@@ -335,7 +362,7 @@ const ComprehensiveTagResults = ({
           </p>
           
           <div className="relevant-tags-grid">
-            {currentStoryTags.map((tag) => (
+            {sortTagsByStatusAndName(ensureTagSuggestionData(currentStoryTags)).map((tag) => (
               <RelevantTagCard
                 key={tag.id}
                 tag={tag}
@@ -381,7 +408,14 @@ const ComprehensiveTagResults = ({
           
           {results?.relevantTags?.length > 0 && (
             <div className="relevant-tags-grid">
-              {results.relevantTags.map((tag) => (
+              {console.log('Rendering relevant tags:', results.relevantTags.map(tag => ({
+                id: tag.id,
+                title: tag.title,
+                suggestionId: tag.suggestionId,
+                suggestionStatus: tag.suggestionStatus,
+                hasSelectionReasoning: !!tag.selectionReasoning
+              })))}
+              {sortTagsByStatusAndName(ensureTagSuggestionData(results.relevantTags)).map((tag) => (
                 <RelevantTagCard
                   key={tag.id}
                   tag={tag}
