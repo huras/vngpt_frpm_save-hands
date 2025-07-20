@@ -1,10 +1,19 @@
 const BaseService = require('./BaseService');
-const { Story, Tag } = require('../models');
+const { Story, Tag, TagSuggestion } = require('../models');
 
 class StoryService extends BaseService {
     constructor() {
         super(Story, [
-            { model: Tag, as: 'tags' }
+            { model: Tag, as: 'tags' },
+            { 
+                model: TagSuggestion, 
+                as: 'tagSuggestions',
+                include: [
+                    { model: Tag, as: 'tag' }
+                ],
+                where: { status: 'pending' },
+                required: false
+            }
         ]);
     }
 

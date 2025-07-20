@@ -127,11 +127,23 @@
                     margin: 0;
                     font-size: 0.9rem;
                 }
-                .story-tags {
+                .story-tags,
+                .story-tag-suggestions {
                     display: flex;
                     flex-wrap: wrap;
                     gap: 6px;
                     margin-top: 10px;
+                    
+                    .tags-section-title {
+                        width: 100%;
+                        margin: 0 0 5px 0;
+                        font-size: 0.8rem;
+                        font-weight: 600;
+                        color: #495057;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+                    
                     .story-tag {
                         display: inline-flex;
                         align-items: center;
@@ -142,6 +154,19 @@
                         border-radius: 12px;
                         font-size: 0.75rem;
                         font-weight: 500;
+                        
+                        &.suggestion-tag {
+                            background-color: #fff3cd;
+                            color: #856404;
+                            border: 1px solid #ffeaa7;
+                            
+                            .suggestion-confidence {
+                                font-size: 0.65rem;
+                                opacity: 0.8;
+                                font-style: italic;
+                            }
+                        }
+                        
                         .tag-thumb {
                             width: 12px;
                             height: 12px;
