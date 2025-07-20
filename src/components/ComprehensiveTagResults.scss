@@ -288,6 +288,14 @@
           &.pending {
             color: #ffc107;
           }
+
+          &.related {
+            color: #6f42c1;
+          }
+
+          &.world-building {
+            color: #20c997;
+          }
         }
 
         &.generating {

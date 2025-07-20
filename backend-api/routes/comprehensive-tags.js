@@ -635,4 +635,167 @@ router.delete('/suggestions/:storyId/clear', async (req, res) => {
     }
 });
 
+// POST /comprehensive-tags/generate-related/:tagId - Generate related tags for a specific tag
+router.post('/generate-related/:tagId', async (req, res) => {
+    try {
+        const { tagId } = req.params;
+        const { storyId, limit = 3 } = req.body;
+
+        if (!tagId) {
+            return res.status(400).json({ 
+                error: 'tagId is required.' 
+            });
+        }
+
+        console.log(`Generating related tags for tag ID: ${tagId}${storyId ? ` (Story ID: ${storyId})` : ''}`);
+
+        // Get the tag to generate related tags for
+        const { Tag } = require('../models');
+        const sourceTag = await Tag.findByPk(tagId);
+        
+        if (!sourceTag) {
+            return res.status(404).json({ 
+                error: 'Tag not found.' 
+            });
+        }
+
+        // Generate related tags using the service
+        const relatedTags = await comprehensiveTagService.generateRelatedTagsForTag(
+            sourceTag, 
+            limit, 
+            storyId
+        );
+
+        // Save relationships to database if storyId is provided
+        if (storyId && relatedTags.length > 0) {
+            const { TagRelationship } = require('../models');
+            
+            for (const relatedTag of relatedTags) {
+                try {
+                    await TagRelationship.create({
+                        sourceTagId: parseInt(tagId),
+                        relatedTagId: relatedTag.id,
+                        relationshipType: relatedTag.relationshipType,
+                        confidence: relatedTag.confidence,
+                        reasoning: relatedTag.relationshipReasoning
+                    });
+                } catch (error) {
+                    // Ignore duplicate relationship errors
+                    if (error.name !== 'SequelizeUniqueConstraintError') {
+                        console.error('Error saving tag relationship:', error);
+                    }
+                }
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            data: {
+                sourceTag: {
+                    id: sourceTag.id,
+                    title: sourceTag.title,
+                    short_description: sourceTag.short_description,
+                    category: sourceTag.category
+                },
+                relatedTags,
+                totalGenerated: relatedTags.length
+            },
+            message: `Generated ${relatedTags.length} related tags for "${sourceTag.title}"`
+        });
+    } catch (error) {
+        console.error('Error generating related tags for tag:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while generating related tags.',
+            details: error.message
+        });
+    }
+});
+
+// POST /comprehensive-tags/generate-world-building/:tagId - Generate world-building effects for a specific tag
+router.post('/generate-world-building/:tagId', async (req, res) => {
+    try {
+        const { tagId } = req.params;
+        const { storyTitle, storyBrainstorm, storyId } = req.body;
+
+        if (!tagId) {
+            return res.status(400).json({ 
+                error: 'tagId is required.' 
+            });
+        }
+
+        if (!storyTitle || !storyBrainstorm) {
+            return res.status(400).json({ 
+                error: 'storyTitle and storyBrainstorm are required for world-building analysis.' 
+            });
+        }
+
+        console.log(`Generating world-building effects for tag ID: ${tagId}${storyId ? ` (Story ID: ${storyId})` : ''}`);
+
+        // Get the tag to generate world-building effects for
+        const { Tag } = require('../models');
+        const sourceTag = await Tag.findByPk(tagId);
+        
+        if (!sourceTag) {
+            return res.status(404).json({ 
+                error: 'Tag not found.' 
+            });
+        }
+
+        // Generate world-building effects using the service
+        const worldBuildingEffects = await comprehensiveTagService.generateWorldBuildingEffectsForTag(
+            sourceTag, 
+            storyTitle, 
+            storyBrainstorm
+        );
+
+        // Save world-building effects to database if storyId is provided
+        if (storyId && worldBuildingEffects.length > 0) {
+            const { TagWorldBuildingEffect } = require('../models');
+            
+            for (const effect of worldBuildingEffects) {
+                try {
+                    await TagWorldBuildingEffect.create({
+                        tagId: parseInt(tagId),
+                        effectType: effect.effectType,
+                        title: effect.title,
+                        description: effect.description,
+                        impactLevel: effect.impactLevel,
+                        storyElements: JSON.stringify(effect.storyElements || []),
+                        examples: JSON.stringify(effect.examples || []),
+                        conflicts: JSON.stringify(effect.conflicts || []),
+                        synergies: JSON.stringify(effect.synergies || []),
+                        confidence: effect.confidence || 0.8
+                    });
+                } catch (error) {
+                    // Ignore duplicate effect errors
+                    if (error.name !== 'SequelizeUniqueConstraintError') {
+                        console.error('Error saving world-building effect:', error);
+                    }
+                }
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            data: {
+                sourceTag: {
+                    id: sourceTag.id,
+                    title: sourceTag.title,
+                    short_description: sourceTag.short_description,
+                    category: sourceTag.category
+                },
+                worldBuildingEffects,
+                totalGenerated: worldBuildingEffects.length
+            },
+            message: `Generated ${worldBuildingEffects.length} world-building effects for "${sourceTag.title}"`
+        });
+    } catch (error) {
+        console.error('Error generating world-building effects for tag:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while generating world-building effects.',
+            details: error.message
+        });
+    }
+});
+
 module.exports = router; 

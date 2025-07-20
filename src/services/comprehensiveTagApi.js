@@ -60,6 +60,21 @@ export const comprehensiveTagApi = {
     });
   },
 
+  // Generate related tags for a specific tag
+  generateRelatedTagsForTag: (tagId, storyId = null, limit = 3) => 
+    api.post(`/comprehensive-tags/generate-related/${tagId}`, { 
+      storyId, 
+      limit 
+    }),
+
+  // Generate world-building effects for a specific tag
+  generateWorldBuildingEffectsForTag: (tagId, storyTitle, storyBrainstorm, storyId = null) => 
+    api.post(`/comprehensive-tags/generate-world-building/${tagId}`, { 
+      storyTitle, 
+      storyBrainstorm, 
+      storyId 
+    }),
+
   // Save comprehensive results to database
   saveComprehensiveResults: (storyId, results) => 
     api.post(`/comprehensive-tags/save/${storyId}`, { results }),

@@ -16,16 +16,92 @@ const RelevantTagCard = ({
   onTagExpand,
   results = null,
   isGenerating = false,
-  streamingData = null
+  streamingData = null,
+  storyId = null,
+  onRelatedTagsGenerated = null,
+  onWorldBuildingEffectsGenerated = null,
+  storyTitle = null,
+  storyBrainstorm = null
 }) => {
   const [showModal, setShowModal] = useState(false);
+  const [isGeneratingRelatedTags, setIsGeneratingRelatedTags] = useState(false);
+  const [relatedTags, setRelatedTags] = useState(null);
+  const [relatedTagsError, setRelatedTagsError] = useState(null);
+  const [isGeneratingWorldBuildingEffects, setIsGeneratingWorldBuildingEffects] = useState(false);
+  const [worldBuildingEffects, setWorldBuildingEffects] = useState(null);
+  const [worldBuildingEffectsError, setWorldBuildingEffectsError] = useState(null);
 
   const handleImageClick = (e) => {
     e.stopPropagation();
     setShowModal(true);
   };
+
+  const handleGenerateRelatedTags = async () => {
+    if (!tag.id || isGeneratingRelatedTags) return;
+
+    try {
+      setIsGeneratingRelatedTags(true);
+      setRelatedTagsError(null);
+      
+      const { comprehensiveTagApi } = require('../services/comprehensiveTagApi');
+      const response = await comprehensiveTagApi.generateRelatedTagsForTag(tag.id, storyId, 3);
+      
+      if (response.data?.success) {
+        setRelatedTags(response.data.data.relatedTags);
+        if (onRelatedTagsGenerated) {
+          onRelatedTagsGenerated(tag.id, response.data.data.relatedTags);
+        }
+      } else {
+        setRelatedTagsError('Failed to generate related tags');
+      }
+    } catch (error) {
+      console.error('Error generating related tags:', error);
+      setRelatedTagsError('Error generating related tags. Please try again.');
+    } finally {
+      setIsGeneratingRelatedTags(false);
+    }
+  };
+
+  const handleGenerateWorldBuildingEffects = async () => {
+    if (!tag.id || isGeneratingWorldBuildingEffects) return;
+
+    try {
+      setIsGeneratingWorldBuildingEffects(true);
+      setWorldBuildingEffectsError(null);
+      
+      const { comprehensiveTagApi } = require('../services/comprehensiveTagApi');
+      // We need storyTitle and storyBrainstorm from props or context
+      const response = await comprehensiveTagApi.generateWorldBuildingEffectsForTag(
+        tag.id, 
+        storyTitle || 'Story Title',
+        storyBrainstorm || 'Story Brainstorm',
+        storyId
+      );
+      
+      if (response.data?.success) {
+        setWorldBuildingEffects(response.data.data.worldBuildingEffects);
+        if (onWorldBuildingEffectsGenerated) {
+          onWorldBuildingEffectsGenerated(tag.id, response.data.data.worldBuildingEffects);
+        }
+      } else {
+        setWorldBuildingEffectsError('Failed to generate world-building effects');
+      }
+    } catch (error) {
+      console.error('Error generating world-building effects:', error);
+      setWorldBuildingEffectsError('Error generating world-building effects. Please try again.');
+    } finally {
+      setIsGeneratingWorldBuildingEffects(false);
+    }
+  };
+
   // Find world-building effects for this tag
-  const tagEffects = results?.worldBuildingEffects?.find(effects => effects.tagId === tag.id);
+  const tagEffects = worldBuildingEffects || results?.worldBuildingEffects?.find(effects => effects.tagId === tag.id);
+
+  // Get related tags from results or local state
+  const currentRelatedTags = relatedTags || results?.relatedTagsMap?.[tag.id];
+
+  // Check if this tag is accepted (for showing world-building effects button)
+  const isTagAccepted = tag.suggestionStatus === 'accepted';
 
   const getImpactLevelColor = (level) => {
     switch (level) {
@@ -151,11 +227,13 @@ const RelevantTagCard = ({
           )}
           
           {/* Related Tags */}
-          {results?.relatedTagsMap?.[tag.id] && (
-            <div className="related-tags">
-              <h5>Related Tags:</h5>
+          <div className="related-tags">
+            <h5>Related Tags:</h5>
+            
+            {/* Show related tags if they exist */}
+            {currentRelatedTags && currentRelatedTags.length > 0 && (
               <div className="related-tags-list">
-                {results.relatedTagsMap[tag.id].map((relatedTag) => (
+                {currentRelatedTags.map((relatedTag) => (
                   <div key={relatedTag.id} className="related-tag-item">
                     <span className="related-tag-title">{relatedTag.title}</span>
                     <span className={`relationship-type ${relatedTag.relationshipType}`}>
@@ -165,24 +243,54 @@ const RelevantTagCard = ({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-          
-          {/* Show generating indicator for related tags if this tag is currently being processed */}
-          {isGenerating && streamingData?.currentTag?.id === tag.id && streamingData?.stage === 2 && (
-            <div className="related-tags">
-              <h5>Related Tags:</h5>
+            )}
+            
+            {/* Show error message if related tag generation failed */}
+            {relatedTagsError && (
+              <div className="related-tags-error">
+                <i className="fas fa-exclamation-triangle"></i>
+                <span>{relatedTagsError}</span>
+              </div>
+            )}
+            
+            {/* Show generating indicator for related tags */}
+            {isGeneratingRelatedTags && (
               <div className="generating-related-tags">
                 <i className="fas fa-spinner fa-spin"></i>
                 <span>Finding related tags for "{tag.title}"...</span>
               </div>
-            </div>
-          )}
+            )}
+            
+            {/* Show "Suggest Related Tags" button if no related tags exist and not currently generating */}
+            {!currentRelatedTags && !isGeneratingRelatedTags && !relatedTagsError && (
+              <div className="suggest-related-tags">
+                <button
+                  onClick={handleGenerateRelatedTags}
+                  className="btn btn-sm btn-outline-primary"
+                  disabled={isGeneratingRelatedTags}
+                >
+                  <i className="fas fa-lightbulb"></i>
+                  Suggest Related Tags
+                </button>
+                <p className="suggest-hint">Click to get AI-suggested tags that work well with this one</p>
+              </div>
+            )}
+            
+            {/* Show "No related tags" message if user tried but got no results */}
+            {currentRelatedTags && currentRelatedTags.length === 0 && !isGeneratingRelatedTags && (
+              <div className="no-related-tags">
+                <i className="fas fa-info-circle"></i>
+                <span>No related tags suggested by the AI</span>
+              </div>
+            )}
+          </div>
 
           {/* World-Building Effects */}
-          {tagEffects && (
-            <div className="world-building-effects">
-              <h5>World-Building Effects:</h5>
+          <div className="world-building-effects">
+            <h5>World-Building Effects:</h5>
+            
+            {/* Show world-building effects if they exist */}
+            {tagEffects && tagEffects.effects && tagEffects.effects.length > 0 && (
               <div className="effects-list">
                 {tagEffects.effects.map((effect, index) => (
                   <div key={index} className="effect-item">
@@ -263,19 +371,47 @@ const RelevantTagCard = ({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Show generating indicator for world-building effects if currently processing */}
-          {isGenerating && streamingData?.stage === 3 && streamingData?.currentTag?.id === tag.id && (
-            <div className="world-building-effects">
-              <h5>World-Building Effects:</h5>
+            )}
+            
+            {/* Show error message if world-building effects generation failed */}
+            {worldBuildingEffectsError && (
+              <div className="world-building-effects-error">
+                <i className="fas fa-exclamation-triangle"></i>
+                <span>{worldBuildingEffectsError}</span>
+              </div>
+            )}
+            
+            {/* Show generating indicator for world-building effects */}
+            {isGeneratingWorldBuildingEffects && (
               <div className="generating-effects">
                 <i className="fas fa-spinner fa-spin"></i>
                 <span>Generating world-building effects for "{tag.title}"...</span>
               </div>
-            </div>
-          )}
+            )}
+            
+            {/* Show "Generate World-Building Effects" button if tag is accepted and no effects exist */}
+            {isTagAccepted && !tagEffects && !isGeneratingWorldBuildingEffects && !worldBuildingEffectsError && (
+              <div className="generate-world-building-effects">
+                <button
+                  onClick={handleGenerateWorldBuildingEffects}
+                  className="btn btn-sm btn-outline-success"
+                  disabled={isGeneratingWorldBuildingEffects}
+                >
+                  <i className="fas fa-magic"></i>
+                  Generate World-Building Effects
+                </button>
+                <p className="generate-hint">Click to analyze how this tag affects your story's world-building</p>
+              </div>
+            )}
+            
+            {/* Show "No world-building effects" message if user tried but got no results */}
+            {tagEffects && (!tagEffects.effects || tagEffects.effects.length === 0) && !isGeneratingWorldBuildingEffects && (
+              <div className="no-world-building-effects">
+                <i className="fas fa-info-circle"></i>
+                <span>No world-building effects generated by the AI</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
       

@@ -11,11 +11,15 @@ const ComprehensiveTagResults = ({
   currentStoryTags = [],
   selectedTags = [],
   onTagSelection = () => {},
-  isLoading = false
+  isLoading = false,
+  storyTitle = null,
+  storyBrainstorm = null
 }) => {
   const [expandedTags, setExpandedTags] = useState(new Set());
   const [processingTags, setProcessingTags] = useState(new Set());
   const [localSelectedTags, setLocalSelectedTags] = useState(new Set());
+  const [relatedTagsMap, setRelatedTagsMap] = useState({});
+  const [worldBuildingEffectsMap, setWorldBuildingEffectsMap] = useState({});
 
   // Show component if we have results OR if we're generating OR if we have current story tags OR if we're loading
   if (!results && !isGenerating && currentStoryTags.length === 0 && !isLoading) {
@@ -193,6 +197,24 @@ const ComprehensiveTagResults = ({
     setExpandedTags(newExpanded);
   };
 
+  const handleRelatedTagsGenerated = (tagId, relatedTags) => {
+    setRelatedTagsMap(prev => ({
+      ...prev,
+      [tagId]: relatedTags
+    }));
+  };
+
+  const handleWorldBuildingEffectsGenerated = (tagId, worldBuildingEffects) => {
+    setWorldBuildingEffectsMap(prev => ({
+      ...prev,
+      [tagId]: {
+        tagId,
+        tagTitle: results?.relevantTags?.find(t => t.id === tagId)?.title || 'Unknown Tag',
+        effects: worldBuildingEffects
+      }
+    }));
+  };
+
   // Calculate summary statistics
   const getSummaryStats = () => {
     if (!results?.relevantTags) return null;
@@ -202,7 +224,17 @@ const ComprehensiveTagResults = ({
     const rejected = results.relevantTags.filter(tag => tag.suggestionStatus === 'rejected').length;
     const pending = results.relevantTags.filter(tag => tag.suggestionStatus === 'pending').length;
 
-    return { total, accepted, rejected, pending };
+    // Calculate total related tags from both results and local state
+    const totalRelatedTags = Object.values({ ...results?.relatedTagsMap, ...relatedTagsMap })
+      .flat()
+      .length;
+
+    // Calculate total world-building effects from both results and local state
+    const totalWorldBuildingEffects = Object.values({ ...results?.worldBuildingEffects, ...worldBuildingEffectsMap })
+      .filter(effect => effect.effects && effect.effects.length > 0)
+      .reduce((total, effect) => total + effect.effects.length, 0);
+
+    return { total, accepted, rejected, pending, totalRelatedTags, totalWorldBuildingEffects };
   };
 
   const summaryStats = getSummaryStats();
@@ -273,6 +305,14 @@ const ComprehensiveTagResults = ({
                 <span className="stat-label">Pending:</span>
                 <span className="stat-value pending">{summaryStats.pending}</span>
               </div>
+              <div className="stat-item">
+                <span className="stat-label">Related Tags:</span>
+                <span className="stat-value related">{summaryStats.totalRelatedTags}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">World-Building Effects:</span>
+                <span className="stat-value world-building">{summaryStats.totalWorldBuildingEffects}</span>
+              </div>
               {isGenerating && results?.relevantTags?.length > 0 && (
                 <div className="stat-item generating">
                   <span className="stat-label">Adding New:</span>
@@ -308,9 +348,18 @@ const ComprehensiveTagResults = ({
                 onTagReject={handleTagReject}
                 onTagReset={handleTagReset}
                 onTagExpand={handleTagExpand}
-                results={results}
+                results={{ 
+                  ...results, 
+                  relatedTagsMap: { ...results?.relatedTagsMap, ...relatedTagsMap },
+                  worldBuildingEffects: [...(results?.worldBuildingEffects || []), ...Object.values(worldBuildingEffectsMap)]
+                }}
                 isGenerating={isGenerating}
                 streamingData={streamingData}
+                storyId={storyId}
+                onRelatedTagsGenerated={handleRelatedTagsGenerated}
+                onWorldBuildingEffectsGenerated={handleWorldBuildingEffectsGenerated}
+                storyTitle={storyTitle}
+                storyBrainstorm={storyBrainstorm}
               />
             ))}
           </div>
@@ -333,22 +382,31 @@ const ComprehensiveTagResults = ({
           {results?.relevantTags?.length > 0 && (
             <div className="relevant-tags-grid">
               {results.relevantTags.map((tag) => (
-                              <RelevantTagCard
-                key={tag.id}
-                tag={tag}
-                isCurrentTag={false}
-                isSelected={isTagSelected(tag)}
-                isExpanded={expandedTags.has(tag.id)}
-                isProcessing={isTagProcessing(tag)}
-                onTagToggle={handleTagToggle}
-                onTagAccept={handleTagAccept}
-                onTagReject={handleTagReject}
-                onTagReset={handleTagReset}
-                onTagExpand={handleTagExpand}
-                results={results}
-                isGenerating={isGenerating}
-                streamingData={streamingData}
-              />
+                <RelevantTagCard
+                  key={tag.id}
+                  tag={tag}
+                  isCurrentTag={false}
+                  isSelected={isTagSelected(tag)}
+                  isExpanded={expandedTags.has(tag.id)}
+                  isProcessing={isTagProcessing(tag)}
+                  onTagToggle={handleTagToggle}
+                  onTagAccept={handleTagAccept}
+                  onTagReject={handleTagReject}
+                  onTagReset={handleTagReset}
+                  onTagExpand={handleTagExpand}
+                  results={{ 
+                    ...results, 
+                    relatedTagsMap: { ...results?.relatedTagsMap, ...relatedTagsMap },
+                    worldBuildingEffects: [...(results?.worldBuildingEffects || []), ...Object.values(worldBuildingEffectsMap)]
+                  }}
+                  isGenerating={isGenerating}
+                  streamingData={streamingData}
+                  storyId={storyId}
+                  onRelatedTagsGenerated={handleRelatedTagsGenerated}
+                  onWorldBuildingEffectsGenerated={handleWorldBuildingEffectsGenerated}
+                  storyTitle={storyTitle}
+                  storyBrainstorm={storyBrainstorm}
+                />
               ))}
             </div>
           )}

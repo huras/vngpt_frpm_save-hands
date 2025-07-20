@@ -8,7 +8,8 @@ class ComprehensiveTagGenerationService {
 
     /**
      * Generate comprehensive tag suggestions for a story with iterative streaming
-     * This is the main method that orchestrates the three-stage process with real-time updates
+     * This is the main method that orchestrates the single-stage process with real-time updates
+     * Note: Related tag and world-building effect generation are now handled separately per tag via user request
      */
     async *generateComprehensiveTagsIterative(storyTitle, storyBrainstorm, limit = false, storyId = null) {
         try {
@@ -33,107 +34,19 @@ class ComprehensiveTagGenerationService {
                 stageName: 'Selecting Relevant Tags',
                 progress: 1,
                 total: 1,
-                message: `Found ${relevantTags.length} relevant tags for your story`,
+                message: `Found ${relevantTags.length} relevant tags for your story. Related tags and world-building effects can be generated individually per tag.`,
                 data: { relevantTags }
             };
-
-            // Stage 2: Generate related tags for each selected tag
-            console.log('Stage 2: Generating related tags...');
-            const relatedTagsMap = {};
-            const totalRelatedTags = relevantTags.length;
-
-            for (let i = 0; i < relevantTags.length; i++) {
-                const tag = relevantTags[i];
-                console.log(`Generating related tags for: ${tag.title} (${i + 1}/${totalRelatedTags})`);
-                
-                yield {
-                    stage: 2,
-                    stageName: 'Generating Related Tags',
-                    progress: i,
-                    total: totalRelatedTags,
-                    message: `Finding related tags for "${tag.title}"...`,
-                    data: { 
-                        relevantTags,
-                        relatedTagsMap: { ...relatedTagsMap },
-                        currentTag: tag
-                    }
-                };
-
-                try {
-                    const relatedTags = await this.generateRelatedTagsForTag(tag, 3, storyId);
-                    relatedTagsMap[tag.id] = relatedTags;
-                    console.log(`Generated ${relatedTags.length} related tags for ${tag.title}`);
-                } catch (error) {
-                    console.error(`Error generating related tags for ${tag.title}:`, error);
-                    relatedTagsMap[tag.id] = [];
-                }
-            }
-
-            yield {
-                stage: 2,
-                stageName: 'Generating Related Tags',
-                progress: totalRelatedTags,
-                total: totalRelatedTags,
-                message: `Generated related tags for all ${totalRelatedTags} tags`,
-                data: { 
-                    relevantTags,
-                    relatedTagsMap
-                }
-            };
-
-            // Stage 3: Generate world-building effects for each tag
-            console.log('Stage 3: Generating world-building effects...');
-            const worldBuildingEffects = [];
-
-            for (let i = 0; i < relevantTags.length; i++) {
-                const tag = relevantTags[i];
-                console.log(`Generating world-building effects for: ${tag.title} (${i + 1}/${totalRelatedTags})`);
-                
-                yield {
-                    stage: 3,
-                    stageName: 'Generating World-Building Effects',
-                    progress: i,
-                    total: totalRelatedTags,
-                    message: `Analyzing world-building effects for "${tag.title}"...`,
-                    data: { 
-                        relevantTags,
-                        relatedTagsMap,
-                        worldBuildingEffects: [...worldBuildingEffects],
-                        currentTag: tag
-                    }
-                };
-
-                try {
-                    const effects = await this.generateWorldBuildingEffectsForTag(
-                        tag, 
-                        storyTitle, 
-                        storyBrainstorm
-                    );
-                    worldBuildingEffects.push({
-                        tagId: tag.id,
-                        tagTitle: tag.title,
-                        effects
-                    });
-                    console.log(`Generated ${effects.length} world-building effects for ${tag.title}`);
-                } catch (error) {
-                    console.error(`Error generating world-building effects for ${tag.title}:`, error);
-                    worldBuildingEffects.push({
-                        tagId: tag.id,
-                        tagTitle: tag.title,
-                        effects: []
-                    });
-                }
-            }
 
             // Final result
             const finalResult = {
                 relevantTags,
-                relatedTagsMap,
-                worldBuildingEffects,
+                relatedTagsMap: {}, // Empty since related tags are generated separately
+                worldBuildingEffects: [], // Empty since world-building effects are generated separately
                 summary: {
                     totalRelevantTags: relevantTags.length,
-                    totalRelatedTags: Object.values(relatedTagsMap).flat().length,
-                    totalWorldBuildingEffects: worldBuildingEffects.length
+                    totalRelatedTags: 0, // Will be populated when users request related tags
+                    totalWorldBuildingEffects: 0 // Will be populated when users request world-building effects
                 }
             };
 
@@ -150,11 +63,11 @@ class ComprehensiveTagGenerationService {
             }
 
             yield {
-                stage: 3,
-                stageName: 'Generating World-Building Effects',
-                progress: totalRelatedTags,
-                total: totalRelatedTags,
-                message: 'Comprehensive tag analysis completed and saved!',
+                stage: 1,
+                stageName: 'Selecting Relevant Tags',
+                progress: 1,
+                total: 1,
+                message: 'Comprehensive tag analysis completed and saved! Related tags and world-building effects can be generated individually per tag.',
                 data: finalResult,
                 completed: true
             };
@@ -175,7 +88,8 @@ class ComprehensiveTagGenerationService {
 
     /**
      * Generate comprehensive tag suggestions for a story (legacy method)
-     * This is the main method that orchestrates the three-stage process
+     * This is the main method that orchestrates the single-stage process
+     * Note: Related tag and world-building effect generation are now handled separately per tag via user request
      */
     async generateComprehensiveTags(storyTitle, storyBrainstorm, limit = false) {
         try {
@@ -186,28 +100,14 @@ class ComprehensiveTagGenerationService {
             const relevantTags = await this.selectRelevantTags(storyTitle, storyBrainstorm, limit, null);
             console.log(`Selected ${relevantTags.length} relevant tags`);
 
-            // Stage 2: Generate related tags for each selected tag
-            console.log('Stage 2: Generating related tags...');
-            const relatedTagsMap = await this.generateRelatedTags(relevantTags, 3, null);
-            console.log(`Generated related tags for ${Object.keys(relatedTagsMap).length} tags`);
-
-            // Stage 3: Generate world-building effects for each tag
-            console.log('Stage 3: Generating world-building effects...');
-            const worldBuildingEffects = await this.generateWorldBuildingEffects(
-                relevantTags, 
-                storyTitle, 
-                storyBrainstorm
-            );
-            console.log(`Generated world-building effects for ${worldBuildingEffects.length} tags`);
-
             return {
                 relevantTags,
-                relatedTagsMap,
-                worldBuildingEffects,
+                relatedTagsMap: {}, // Empty since related tags are generated separately
+                worldBuildingEffects: [], // Empty since world-building effects are generated separately
                 summary: {
                     totalRelevantTags: relevantTags.length,
-                    totalRelatedTags: Object.values(relatedTagsMap).flat().length,
-                    totalWorldBuildingEffects: worldBuildingEffects.length
+                    totalRelatedTags: 0, // Will be populated when users request related tags
+                    totalWorldBuildingEffects: 0 // Will be populated when users request world-building effects
                 }
             };
         } catch (error) {

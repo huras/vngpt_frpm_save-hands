@@ -411,6 +411,8 @@ const StoryForm = () => {
             selectedTags={selectedTags}
             onTagSelection={handleTagSelection}
             isLoading={loadingComprehensiveResults}
+            storyTitle={formData.title}
+            storyBrainstorm={formData.brainstorm}
           />
         </div>
       )}

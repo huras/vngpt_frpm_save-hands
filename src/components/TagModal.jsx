@@ -3,6 +3,12 @@ import { Modal, Button } from 'react-bootstrap';
 import { BACKEND_CONFIG } from '../config/backend';
 import './TagModal.scss';
 
+const animations = [
+  'panXbackBackandForth',
+  'panXbackBackandForthZooming',
+  'panXbackBackandForthZooming2'
+]
+
 const TagModal = ({ 
   tag, 
   show, 
@@ -27,8 +33,8 @@ const TagModal = ({
       </Modal.Header>
       
       <Modal.Body className="modal-body animated-background-tag-image" style={{
-        backgroundSize: 'cover', 
         backgroundImage: tag.thumb_url ? `url(${BACKEND_CONFIG.getImageUrl(tag.thumb_url)})` : 'none',
+        animation: `${animations[Math.floor(Math.random() * animations.length)]} 40s ease infinite`
       }}>
         <div className="tag-modal-content">
           {/* Tag Image */}

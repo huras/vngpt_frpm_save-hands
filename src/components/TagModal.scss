@@ -189,28 +189,89 @@
 .animated-background-tag-image {
   background-position-x: 0%;
   background-position-y: 20%;
-  animation: panXbackBackandForth 35s ease infinite;
+  background-size: 100%;
 }
 
 @keyframes panXbackBackandForth {
   0% {
     background-position-x: 0%;
     background-position-y: 20%;
+    background-size: cover;
   }
   25% {
     background-position-x: 100%;
     background-position-y: 0%;
+    background-size: cover;
   }
   50% {
     background-position-x: 0%;
     background-position-y: 100%;
+    background-size: cover;
   }
   75% {
     background-position-x: 50%;
     background-position-y: 50%;
+    background-size: cover;
   }
   100% {
     background-position-x: 0%;
     background-position-y: 20%;
+    background-size: cover;
+  }
+}
+
+@keyframes panXbackBackandForthZooming {
+  0% {
+    background-position-x: 0%;
+    background-position-y: 20%;
+    background-size: 110%;
+  }
+  25% {
+    background-position-x: 100%;
+    background-position-y: 0%;
+    background-size: 100%;
+  }
+  50% {
+    background-position-x: 0%;
+    background-position-y: 80%;
+    background-size: 125%;
+  }
+  75% {
+    background-position-x: 50%;
+    background-position-y: 50%;
+    background-size: 100%;
+  }
+  100% {
+    background-position-x: 0%;
+    background-position-y: 20%;
+    background-size: 110%;
+  }
+}
+
+@keyframes panXbackBackandForthZooming2 {
+  0% {
+    background-position-x: 0%;
+    background-position-y: 20%;
+    background-size: 100%;
+  }
+  25% {
+    background-position-x: 100%;
+    background-position-y: 0%;
+    background-size: 125%;
+  }
+  50% {
+    background-position-x: 0%;
+    background-position-y: 80%;
+    background-size: 105%;
+  }
+  75% {
+    background-position-x: 50%;
+    background-position-y: 100%;
+    background-size: 120%;
+  }
+  100% {
+    background-position-x: 0%;
+    background-position-y: 20%;
+    background-size: 100%;
   }
 }
