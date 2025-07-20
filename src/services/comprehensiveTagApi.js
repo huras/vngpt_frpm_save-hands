@@ -121,5 +121,9 @@ export const comprehensiveTagApi = {
     api.post(`/comprehensive-tags/suggestions/${suggestionId}/rate`, {
       userRating,
       ratingComment
-    })
+    }),
+
+  // Reset a tag suggestion back to pending status
+  resetTagSuggestion: (suggestionId) => 
+    api.post(`/comprehensive-tags/suggestions/${suggestionId}/reset`)
 }; 

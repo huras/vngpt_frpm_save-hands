@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import RelevantTagCard from './RelevantTagCard';
+import { comprehensiveTagApi } from '../services/comprehensiveTagApi';
 import './ComprehensiveTagResults.scss';
 
 const ComprehensiveTagResults = ({
@@ -14,6 +15,7 @@ const ComprehensiveTagResults = ({
 }) => {
   const [expandedTags, setExpandedTags] = useState(new Set());
   const [processingTags, setProcessingTags] = useState(new Set());
+  const [localSelectedTags, setLocalSelectedTags] = useState(new Set());
 
   // Show component if we have results OR if we're generating OR if we have current story tags OR if we're loading
   if (!results && !isGenerating && currentStoryTags.length === 0 && !isLoading) {
@@ -75,7 +77,11 @@ const ComprehensiveTagResults = ({
   }
 
   const isTagSelected = (tag) => {
-    return selectedTags.some(t => t.id === tag.id);
+    // Only generated tags can be selected, not current story tags
+    if (currentStoryTags.some(t => t.id === tag.id)) {
+      return false;
+    }
+    return localSelectedTags.has(tag.id);
   };
 
   const isTagProcessing = (tag) => {
@@ -83,7 +89,20 @@ const ComprehensiveTagResults = ({
   };
 
   const handleTagToggle = (tag) => {
-    onTagSelection(tag);
+    // Only allow selection of generated tags, not current story tags
+    if (currentStoryTags.some(t => t.id === tag.id)) {
+      return;
+    }
+    
+    setLocalSelectedTags(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(tag.id)) {
+        newSet.delete(tag.id);
+      } else {
+        newSet.add(tag.id);
+      }
+      return newSet;
+    });
   };
 
   const handleTagAccept = async (tag) => {
@@ -129,6 +148,32 @@ const ComprehensiveTagResults = ({
       }
     } catch (error) {
       console.error('Error rejecting tag suggestion:', error);
+    } finally {
+      setProcessingTags(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(tag.id);
+        return newSet;
+      });
+    }
+  };
+
+  const handleTagReset = async (tag) => {
+    if (!tag.suggestionId) return;
+
+    try {
+      setProcessingTags(prev => new Set([...prev, tag.id]));
+      
+      await comprehensiveTagApi.resetTagSuggestion(tag.suggestionId);
+      
+      // Update the tag status in the results
+      if (results?.relevantTags) {
+        const updatedTag = results.relevantTags.find(t => t.id === tag.id);
+        if (updatedTag) {
+          updatedTag.suggestionStatus = 'pending';
+        }
+      }
+    } catch (error) {
+      console.error('Error resetting tag suggestion:', error);
     } finally {
       setProcessingTags(prev => {
         const newSet = new Set(prev);
@@ -261,6 +306,7 @@ const ComprehensiveTagResults = ({
                 onTagToggle={handleTagToggle}
                 onTagAccept={handleTagAccept}
                 onTagReject={handleTagReject}
+                onTagReset={handleTagReset}
                 onTagExpand={handleTagExpand}
                 results={results}
                 isGenerating={isGenerating}
@@ -287,21 +333,22 @@ const ComprehensiveTagResults = ({
           {results?.relevantTags?.length > 0 && (
             <div className="relevant-tags-grid">
               {results.relevantTags.map((tag) => (
-                <RelevantTagCard
-                  key={tag.id}
-                  tag={tag}
-                  isCurrentTag={false}
-                  isSelected={isTagSelected(tag)}
-                  isExpanded={expandedTags.has(tag.id)}
-                  isProcessing={isTagProcessing(tag)}
-                  onTagToggle={handleTagToggle}
-                  onTagAccept={handleTagAccept}
-                  onTagReject={handleTagReject}
-                  onTagExpand={handleTagExpand}
-                  results={results}
-                  isGenerating={isGenerating}
-                  streamingData={streamingData}
-                />
+                              <RelevantTagCard
+                key={tag.id}
+                tag={tag}
+                isCurrentTag={false}
+                isSelected={isTagSelected(tag)}
+                isExpanded={expandedTags.has(tag.id)}
+                isProcessing={isTagProcessing(tag)}
+                onTagToggle={handleTagToggle}
+                onTagAccept={handleTagAccept}
+                onTagReject={handleTagReject}
+                onTagReset={handleTagReset}
+                onTagExpand={handleTagExpand}
+                results={results}
+                isGenerating={isGenerating}
+                streamingData={streamingData}
+              />
               ))}
             </div>
           )}
@@ -309,21 +356,27 @@ const ComprehensiveTagResults = ({
       )}
 
       {/* Selected Tags Summary */}
-      {selectedTags.length > 0 && (
+      {localSelectedTags.size > 0 && (
         <div className="selected-tags-summary">
-          <h3>Selected Tags ({selectedTags.length})</h3>
+          <h3>Selected Generated Tags ({localSelectedTags.size})</h3>
           <div className="selected-tags-list">
-            {selectedTags.map((tag) => (
-              <div key={tag.id} className="selected-tag">
-                <span className="tag-title">{tag.title}</span>
-                <button
-                  onClick={() => handleTagToggle(tag)}
-                  className="btn btn-sm btn-outline-danger"
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-            ))}
+            {Array.from(localSelectedTags).map((tagId) => {
+              const tag = results?.relevantTags?.find(t => t.id === tagId);
+              if (tag) {
+                return (
+                  <div key={tag.id} className="selected-tag">
+                    <span className="tag-title">{tag.title}</span>
+                    <button
+                      onClick={() => handleTagToggle(tag)}
+                      className="btn btn-sm btn-outline-danger"
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                );
+              }
+              return null;
+            })}
           </div>
         </div>
       )}

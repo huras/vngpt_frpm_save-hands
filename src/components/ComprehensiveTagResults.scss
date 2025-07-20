@@ -332,8 +332,14 @@
 
     .relevant-tags-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      grid-template-columns: 1fr;
       gap: 20px;
+      width: 100%;
+
+      // Responsive breakpoints
+      @media (max-width: 768px) {
+        gap: 16px;
+      }
     }
   }
 

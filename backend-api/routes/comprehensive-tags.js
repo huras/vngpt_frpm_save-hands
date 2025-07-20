@@ -534,4 +534,39 @@ router.post('/suggestions/:suggestionId/rate', async (req, res) => {
     }
 });
 
+// POST /comprehensive-tags/suggestions/:suggestionId/reset - Reset a tag suggestion to pending
+router.post('/suggestions/:suggestionId/reset', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+
+        const { TagSuggestion } = require('../models');
+        
+        const suggestion = await TagSuggestion.findByPk(suggestionId);
+        if (!suggestion) {
+            return res.status(404).json({ 
+                error: 'Tag suggestion not found.' 
+            });
+        }
+
+        // Reset the suggestion status to pending
+        await suggestion.update({
+            status: 'pending',
+            acceptedAt: null,
+            rejectedAt: null,
+            rejectionReason: null
+        });
+
+        res.json({ 
+            success: true, 
+            data: suggestion,
+            message: 'Tag suggestion reset to pending successfully'
+        });
+    } catch (error) {
+        console.error('Error resetting tag suggestion:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while resetting the tag suggestion.' 
+        });
+    }
+});
+
 module.exports = router; 

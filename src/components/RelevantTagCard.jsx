@@ -11,6 +11,7 @@ const RelevantTagCard = ({
   onTagToggle,
   onTagAccept,
   onTagReject,
+  onTagReset,
   onTagExpand,
   results = null,
   isGenerating = false,
@@ -88,26 +89,28 @@ const RelevantTagCard = ({
           </div>
         </div>
         <div className="tag-actions">
-          <button
-            onClick={() => onTagToggle(tag)}
-            className={`btn btn-sm ${isSelected ? 'btn-success' : 'btn-outline-success'}`}
-            disabled={isProcessing}
-          >
-            <i className={`fas ${isSelected ? 'fa-check' : 'fa-plus'}`}></i>
-            {isSelected ? 'Selected' : 'Select'}
-          </button>
-          
           {/* Show Accept/Reject buttons only for suggested tags (not current story tags) */}
           {!isCurrentTag && tag.suggestionId && (
             <>
-              <button
-                onClick={() => onTagAccept(tag)}
-                className={`btn btn-sm ${tag.suggestionStatus === 'accepted' ? 'btn-success' : 'btn-outline-success'}`}
-                disabled={isProcessing || tag.suggestionStatus === 'accepted'}
-              >
-                <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-check-circle'}`}></i>
-                {tag.suggestionStatus === 'accepted' ? 'Accepted' : 'Accept'}
-              </button>
+              {tag.suggestionStatus === 'accepted' ? (
+                <button
+                  onClick={() => onTagReset(tag)}
+                  className="btn btn-sm btn-warning"
+                  disabled={isProcessing}
+                >
+                  <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-undo'}`}></i>
+                  Reset to Pending
+                </button>
+              ) : (
+                <button
+                  onClick={() => onTagAccept(tag)}
+                  className="btn btn-sm btn-outline-success"
+                  disabled={isProcessing || tag.suggestionStatus === 'rejected'}
+                >
+                  <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-check-circle'}`}></i>
+                  Accept
+                </button>
+              )}
               <button
                 onClick={() => onTagReject(tag)}
                 className={`btn btn-sm ${tag.suggestionStatus === 'rejected' ? 'btn-danger' : 'btn-outline-danger'}`}

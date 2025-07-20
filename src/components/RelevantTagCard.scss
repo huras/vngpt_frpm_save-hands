@@ -5,6 +5,9 @@
   padding: 20px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -64,6 +67,7 @@
     display: flex;
     gap: 16px;
     align-items: flex-start;
+    width: 100%;
 
     .tag-thumb {
       width: 60px;
@@ -76,6 +80,7 @@
     .tag-info {
       flex: 1;
       min-width: 0;
+      width: 100%;
 
       .tag-title {
         font-size: 18px;
@@ -85,6 +90,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        flex-wrap: wrap;
 
         .current-tag-badge {
           background: #28a745;
@@ -127,12 +133,14 @@
         font-size: 14px;
         line-height: 1.4;
         margin: 0 0 12px 0;
+        word-wrap: break-word;
       }
 
       .tag-meta {
         display: flex;
         gap: 12px;
         align-items: center;
+        flex-wrap: wrap;
 
         .tag-category {
           background: #f8f9fa;
@@ -155,19 +163,51 @@
 
     .tag-actions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-shrink: 0;
+      flex-wrap: wrap;
+      align-items: flex-start;
 
       .btn {
-        font-size: 12px;
-        padding: 6px 12px;
-        border-radius: 6px;
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 4px;
         font-weight: 500;
         transition: all 0.2s ease;
+        white-space: nowrap;
 
         i {
-          margin-right: 4px;
+          margin-right: 3px;
         }
+      }
+
+      // Responsive adjustments
+      @media (max-width: 480px) {
+        gap: 4px;
+        
+        .btn {
+          font-size: 10px;
+          padding: 3px 6px;
+          
+          i {
+            margin-right: 2px;
+          }
+        }
+      }
+    }
+
+    // Responsive layout for smaller screens
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 12px;
+
+      .tag-thumb {
+        align-self: flex-start;
+      }
+
+      .tag-actions {
+        align-self: stretch;
+        justify-content: flex-start;
       }
     }
   }
@@ -176,6 +216,7 @@
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid #e9ecef;
+    width: 100%;
 
     .selection-reasoning {
       margin-bottom: 20px;
@@ -196,6 +237,7 @@
         padding: 12px;
         border-radius: 8px;
         border-left: 4px solid #007bff;
+        word-wrap: break-word;
       }
     }
 
@@ -222,11 +264,13 @@
           display: flex;
           align-items: center;
           gap: 12px;
+          flex-wrap: wrap;
 
           .related-tag-title {
             font-weight: 600;
             color: #333;
             flex: 1;
+            min-width: 0;
           }
 
           .relationship-type {
@@ -252,6 +296,20 @@
             font-size: 12px;
             flex: 2;
             font-style: italic;
+            min-width: 0;
+            word-wrap: break-word;
+          }
+
+          // Responsive layout for related tag items
+          @media (max-width: 768px) {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+
+            .relationship-reasoning {
+              flex: none;
+              width: 100%;
+            }
           }
         }
       }
@@ -301,12 +359,14 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 12px;
+            flex-wrap: wrap;
 
             .effect-icon {
               font-size: 16px;
               color: #007bff;
               width: 20px;
               text-align: center;
+              flex-shrink: 0;
             }
 
             .effect-title {
@@ -315,6 +375,7 @@
               color: #333;
               margin: 0;
               flex: 1;
+              min-width: 0;
             }
 
             .impact-level {
@@ -325,6 +386,7 @@
               font-weight: 600;
               text-transform: uppercase;
               letter-spacing: 0.5px;
+              flex-shrink: 0;
             }
           }
 
@@ -333,6 +395,7 @@
             font-size: 13px;
             line-height: 1.5;
             margin: 0 0 12px 0;
+            word-wrap: break-word;
           }
 
           .effect-details {
@@ -355,6 +418,7 @@
                 font-size: 12px;
                 line-height: 1.4;
                 margin-bottom: 2px;
+                word-wrap: break-word;
               }
             }
 
@@ -363,6 +427,16 @@
               font-size: 12px;
               line-height: 1.4;
               margin: 0;
+              word-wrap: break-word;
+            }
+          }
+
+          // Responsive layout for effect items
+          @media (max-width: 768px) {
+            .effect-header {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 8px;
             }
           }
         }
