@@ -10,7 +10,7 @@ class ComprehensiveTagGenerationService {
      * Generate comprehensive tag suggestions for a story with iterative streaming
      * This is the main method that orchestrates the three-stage process with real-time updates
      */
-    async *generateComprehensiveTagsIterative(storyTitle, storyBrainstorm, limit = 10) {
+    async *generateComprehensiveTagsIterative(storyTitle, storyBrainstorm, limit = 10, storyId = null) {
         try {
             console.log(`Starting iterative comprehensive tag generation for story: ${storyTitle}`);
             
@@ -137,12 +137,24 @@ class ComprehensiveTagGenerationService {
                 }
             };
 
+            // Automatically save results to database if storyId is provided
+            if (storyId) {
+                try {
+                    console.log(`Auto-saving comprehensive results for story: ${storyId}`);
+                    await this.saveComprehensiveResults(storyId, finalResult);
+                    console.log('Comprehensive results auto-saved successfully');
+                } catch (error) {
+                    console.error('Error auto-saving comprehensive results:', error);
+                    // Don't fail the generation if saving fails
+                }
+            }
+
             yield {
                 stage: 3,
                 stageName: 'Generating World-Building Effects',
                 progress: totalRelatedTags,
                 total: totalRelatedTags,
-                message: 'Comprehensive tag analysis completed!',
+                message: 'Comprehensive tag analysis completed and saved!',
                 data: finalResult,
                 completed: true
             };
@@ -214,7 +226,7 @@ class ComprehensiveTagGenerationService {
                 order: [['title', 'ASC']]
             });
 
-            const prompt = `Based on this story, select ${limit} most relevant anime/manga tags:
+            const prompt = `Based on this story, select ${limit} most relevant anime/manga tags with EXCELLENT category diversity:
 
 Story Title: ${storyTitle}
 Story Brainstorm: ${storyBrainstorm}
@@ -222,10 +234,22 @@ Story Brainstorm: ${storyBrainstorm}
 Available Tags:
 ${allTags.map(tag => `- ${tag.title}: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})`).join('\n')}
 
+IMPORTANT: Ensure your selection covers multiple categories for comprehensive story representation:
+
+CATEGORY GUIDELINES:
+- Include 2-3 genre tags (fantasy_magic, scifi_future, action_adventure, romance_relationships, etc.)
+- Include 1-2 mood/atmosphere tags (mood, drama_emotional, comedy_light)
+- Include 1-2 character focus tags (character_archetype, character_focus)
+- Include 1-2 setting tags (setting, historical_period, modern_contemporary)
+- Include 1-2 theme tags (theme, tropes)
+- Include 1 audience tag (audience) if appropriate
+- Include 1-2 other relevant categories
+
 Provide a JSON response with:
 1. "selectedTags": Array of ${limit} tag titles that are most relevant to this story
-2. "reasoning": Brief explanation for why each tag was selected
+2. "reasoning": Array of brief explanations for why each tag was selected
 3. "relevanceScore": Overall relevance score (1-10) for how well the tags match the story
+4. "categoryBreakdown": Object showing how many tags from each category were selected
 
 Consider:
 - Genre relevance to the story themes
@@ -234,6 +258,9 @@ Consider:
 - Tone and atmosphere
 - Target audience appropriateness
 - Story structure and pacing
+- Thematic depth and meaning
+- Emotional impact and mood
+- Cultural and social elements
 
 Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
 
@@ -241,7 +268,7 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
                 model: "gpt-3.5-turbo",
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.7,
-                max_tokens: 1500
+                max_tokens: 2000
             });
 
             const content = response.choices[0].message.content;
@@ -272,6 +299,11 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
                     relevanceScore: result.relevanceScore || 7
                 };
             });
+
+            // Log category breakdown for debugging
+            if (result.categoryBreakdown) {
+                console.log('Category breakdown:', result.categoryBreakdown);
+            }
 
             return tagsWithReasoning;
         } catch (error) {
@@ -434,10 +466,10 @@ Tag Keywords: ${tag.keywords}
 Story Title: ${storyTitle}
 Story Brainstorm: ${storyBrainstorm}
 
-Provide a JSON response with world-building effects:
+Provide a comprehensive JSON response with world-building effects:
 
-1. "effects": Array of 3-5 world-building effects, each with:
-   - "effectType": One of: setting, character, plot, atmosphere, theme, conflict, resolution
+1. "effects": Array of 4-6 world-building effects, each with:
+   - "effectType": One of: setting, character, plot, atmosphere, theme, conflict, resolution, pacing, audience_engagement, cultural_impact
    - "title": Short title for this effect
    - "description": Detailed description of how this tag affects world-building
    - "impactLevel": One of: minor, moderate, major, transformative
@@ -445,14 +477,24 @@ Provide a JSON response with world-building effects:
    - "examples": Array of 2-3 example scenarios or story moments
    - "conflicts": Array of potential conflicts or challenges this introduces
    - "synergies": Array of other tags that would work well with this one
+   - "developmentOpportunities": Array of character/plot development opportunities
+   - "audienceAppeal": How this affects different audience segments
 
-Consider:
+Consider these comprehensive aspects:
 - How this tag shapes the story's setting and atmosphere
-- Character development and relationships
-- Plot opportunities and conflicts
-- Thematic depth and meaning
+- Character development, relationships, and growth opportunities
+- Plot structure, pacing, and narrative flow
+- Thematic depth, symbolism, and meaning
+- Conflict generation and resolution possibilities
+- World-building consistency and believability
+- Audience engagement and emotional impact
+- Cultural and social implications
 - Story pacing and structure
-- Audience engagement and appeal
+- Character motivation and goals
+- Setting details and environmental factors
+- Tone and mood establishment
+- Genre expectations and conventions
+- Target audience preferences and expectations
 
 Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
 
@@ -460,7 +502,7 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
                 model: "gpt-3.5-turbo",
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.8,
-                max_tokens: 2000
+                max_tokens: 2500
             });
 
             const content = response.choices[0].message.content;

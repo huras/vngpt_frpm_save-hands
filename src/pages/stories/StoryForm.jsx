@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
 import { comprehensiveTagApi } from '../../services/comprehensiveTagApi';
-import StreamingTagSuggestions from '../../components/StreamingTagSuggestions';
 import ComprehensiveTagResults from '../../components/ComprehensiveTagResults';
 import './StoryForm.scss';
 
@@ -24,10 +23,13 @@ const StoryForm = () => {
   const [generatingTags, setGeneratingTags] = useState(false);
   const [showComprehensiveResults, setShowComprehensiveResults] = useState(false);
   const [streamingData, setStreamingData] = useState(null);
+  const [currentStoryTags, setCurrentStoryTags] = useState([]);
+  const [loadingComprehensiveResults, setLoadingComprehensiveResults] = useState(false);
 
   useEffect(() => {
     if (isEditing) {
       fetchStory();
+      fetchComprehensiveResults();
     }
   }, [id]);
 
@@ -42,11 +44,32 @@ const StoryForm = () => {
         brainstorm: story.brainstorm || ''
       });
       setSelectedTags(story.tags || []);
+      setCurrentStoryTags(story.tags || []);
     } catch (err) {
       setError('Failed to load story. Please try again.');
       console.error('Error fetching story:', err);
     } finally {
       setFetching(false);
+    }
+  };
+
+  const fetchComprehensiveResults = async () => {
+    try {
+      setLoadingComprehensiveResults(true);
+      setError(null);
+      
+      const response = await comprehensiveTagApi.getComprehensiveResults(id);
+      
+      if (response.data.success && response.data.data) {
+        setComprehensiveResults(response.data.data);
+        setShowComprehensiveResults(true);
+        console.log('Loaded existing comprehensive results:', response.data.data);
+      }
+    } catch (err) {
+      // Don't show error for this - it's optional data
+      console.log('No existing comprehensive results found for this story');
+    } finally {
+      setLoadingComprehensiveResults(false);
     }
   };
 
@@ -129,7 +152,7 @@ const StoryForm = () => {
       comprehensiveTagApi.generateComprehensiveTagsStreaming(
         formData.title.trim(),
         formData.brainstorm.trim(),
-        10,
+        15, // Increased limit for better category coverage
         // onUpdate callback - handle each streaming update
         (update) => {
           console.log('Received streaming update:', update);
@@ -160,7 +183,9 @@ const StoryForm = () => {
           setError('Failed to generate tags. Please try again.');
           setGeneratingTags(false);
           setStreamingData(null);
-        }
+        },
+        // storyId for auto-saving (only if editing)
+        isEditing ? id : null
       );
     } catch (err) {
       console.error('Error starting streaming tag generation:', err);
@@ -170,18 +195,12 @@ const StoryForm = () => {
     }
   };
 
-  const handleSaveComprehensiveResults = async (storyId, results) => {
-    try {
-      const response = await comprehensiveTagApi.saveComprehensiveResults(storyId, results);
-      if (response.data.success) {
-        console.log('Comprehensive results saved successfully');
-        // Optionally refresh the story data or show success message
-      } else {
-        throw new Error(response.data.error || 'Failed to save results');
-      }
-    } catch (error) {
-      console.error('Error saving comprehensive results:', error);
-      throw error;
+  const handleTagSelection = (tag) => {
+    const isSelected = selectedTags.some(t => t.id === tag.id);
+    if (isSelected) {
+      setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
     }
   };
 
@@ -259,7 +278,7 @@ const StoryForm = () => {
             )}
           </button>
           
-          {isEditing && formData.title.trim() && formData.brainstorm.trim() && (
+          {formData.title.trim() && formData.brainstorm.trim() && (
             <button 
               type="button"
               onClick={handleGenerateTags}
@@ -272,7 +291,7 @@ const StoryForm = () => {
                 </>
               ) : (
                 <>
-                  <i className="fas fa-magic"></i> Generate Tags
+                  <i className="fas fa-magic"></i> {comprehensiveResults ? 'Regenerate Tags' : 'Generate Comprehensive Tags'}
                 </>
               )}
             </button>
@@ -285,27 +304,18 @@ const StoryForm = () => {
       </form>
 
       {/* Comprehensive Tag Generation Results */}
-      {(showComprehensiveResults || generatingTags) && (
+      {(showComprehensiveResults || generatingTags || loadingComprehensiveResults || currentStoryTags.length > 0) && (
         <div className="comprehensive-tag-section">
           <ComprehensiveTagResults
             results={comprehensiveResults}
             isGenerating={generatingTags}
             streamingData={streamingData}
-            onSaveResults={isEditing ? handleSaveComprehensiveResults : null}
             storyId={isEditing ? id : null}
+            currentStoryTags={currentStoryTags}
+            selectedTags={selectedTags}
+            onTagSelection={handleTagSelection}
+            isLoading={loadingComprehensiveResults}
           />
-        </div>
-      )}
-
-      {isEditing && (
-        <div className="tag-management-section">
-          <h2>AI Tag Management</h2>
-          <p className="section-description">
-            Use the intelligent streaming tag system below to manage your story's tags. 
-            The AI will learn from your choices to provide better suggestions with real-time streaming updates.
-          </p>
-          
-          <StreamingTagSuggestions storyId={id} />
         </div>
       )}
     </div>

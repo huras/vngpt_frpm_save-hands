@@ -40,7 +40,7 @@ router.post('/generate', async (req, res) => {
 // POST /comprehensive-tags/generate-streaming - Generate comprehensive tags with streaming updates
 router.post('/generate-streaming', async (req, res) => {
     try {
-        const { storyTitle, storyBrainstorm, limit = 10 } = req.body;
+        const { storyTitle, storyBrainstorm, limit = 10, storyId } = req.body;
 
         if (!storyTitle || !storyBrainstorm) {
             return res.status(400).json({ 
@@ -48,7 +48,7 @@ router.post('/generate-streaming', async (req, res) => {
             });
         }
 
-        console.log(`Starting streaming comprehensive tag generation for story: ${storyTitle}`);
+        console.log(`Starting streaming comprehensive tag generation for story: ${storyTitle}${storyId ? ` (ID: ${storyId})` : ''}`);
 
         // Set headers for streaming
         res.writeHead(200, {
@@ -58,11 +58,12 @@ router.post('/generate-streaming', async (req, res) => {
             'Connection': 'keep-alive'
         });
 
-        // Get the iterative generator
+        // Get the iterative generator with storyId for auto-saving
         const generator = comprehensiveTagService.generateComprehensiveTagsIterative(
             storyTitle, 
             storyBrainstorm, 
-            limit
+            limit,
+            storyId // Pass storyId for auto-saving
         );
 
         // Stream the results
@@ -192,6 +193,141 @@ router.get('/world-building/:tagId', async (req, res) => {
     }
 });
 
+// GET /comprehensive-tags/story/:storyId - Get comprehensive results for a specific story
+router.get('/story/:storyId', async (req, res) => {
+    try {
+        const { storyId } = req.params;
+
+        const { TagSuggestion, TagRelationship, TagWorldBuildingEffect, Tag, Story } = require('../models');
+        
+        // Get tag suggestions for this story
+        const tagSuggestions = await TagSuggestion.findAll({
+            where: { 
+                storyId,
+                suggestionType: 'comprehensive_generation',
+                status: { [require('sequelize').Op.in]: ['accepted', 'pending'] } // Include both accepted and pending
+            },
+            include: [
+                {
+                    model: Tag,
+                    as: 'tag',
+                    attributes: ['id', 'title', 'short_description', 'category', 'keywords', 'thumb_url']
+                }
+            ],
+            order: [['confidence', 'DESC']]
+        });
+
+        // Get tag relationships for the suggested tags
+        const suggestedTagIds = tagSuggestions.map(s => s.tagId);
+        const tagRelationships = await TagRelationship.findAll({
+            where: { 
+                sourceTagId: suggestedTagIds,
+                isActive: true
+            },
+            include: [
+                {
+                    model: Tag,
+                    as: 'relatedTag',
+                    attributes: ['id', 'title', 'short_description', 'category', 'keywords', 'thumb_url']
+                }
+            ],
+            order: [['confidence', 'DESC']]
+        });
+
+        // Get world-building effects for the suggested tags
+        const worldBuildingEffects = await TagWorldBuildingEffect.findAll({
+            where: { 
+                tagId: suggestedTagIds,
+                isActive: true
+            },
+            order: [['impactLevel', 'DESC'], ['confidence', 'DESC']]
+        });
+
+        // Format the data to match the comprehensive results structure
+        const relevantTags = tagSuggestions.map(suggestion => ({
+            ...suggestion.tag.toJSON(),
+            selectionReasoning: suggestion.reasoning,
+            relevanceScore: Math.round(suggestion.confidence * 10),
+            suggestionId: suggestion.id,
+            suggestionStatus: suggestion.status,
+            acceptedAt: suggestion.acceptedAt,
+            rejectedAt: suggestion.rejectedAt,
+            userRating: suggestion.userRating,
+            ratingComment: suggestion.ratingComment
+        }));
+
+        // Group related tags by source tag
+        const relatedTagsMap = {};
+        tagRelationships.forEach(relationship => {
+            const sourceTagId = relationship.sourceTagId;
+            if (!relatedTagsMap[sourceTagId]) {
+                relatedTagsMap[sourceTagId] = [];
+            }
+            relatedTagsMap[sourceTagId].push({
+                ...relationship.relatedTag.toJSON(),
+                relationshipType: relationship.relationshipType,
+                relationshipReasoning: relationship.reasoning,
+                confidence: relationship.confidence
+            });
+        });
+
+        // Group world-building effects by tag
+        const worldBuildingEffectsByTag = {};
+        worldBuildingEffects.forEach(effect => {
+            const tagId = effect.tagId;
+            if (!worldBuildingEffectsByTag[tagId]) {
+                worldBuildingEffectsByTag[tagId] = [];
+            }
+            worldBuildingEffectsByTag[tagId].push({
+                effectType: effect.effectType,
+                title: effect.title,
+                description: effect.description,
+                impactLevel: effect.impactLevel,
+                storyElements: effect.storyElements ? JSON.parse(effect.storyElements) : [],
+                examples: effect.examples ? JSON.parse(effect.examples) : [],
+                conflicts: effect.conflicts ? JSON.parse(effect.conflicts) : [],
+                synergies: effect.synergies ? JSON.parse(effect.synergies) : [],
+                confidence: effect.confidence
+            });
+        });
+
+        // Get tag titles for world-building effects
+        const tagTitles = {};
+        relevantTags.forEach(tag => {
+            tagTitles[tag.id] = tag.title;
+        });
+
+        const formattedWorldBuildingEffects = Object.entries(worldBuildingEffectsByTag).map(([tagId, effects]) => ({
+            tagId: parseInt(tagId),
+            tagTitle: tagTitles[tagId] || 'Unknown Tag',
+            effects
+        }));
+
+        const results = {
+            relevantTags,
+            relatedTagsMap,
+            worldBuildingEffects: formattedWorldBuildingEffects,
+            summary: {
+                totalRelevantTags: relevantTags.length,
+                totalRelatedTags: Object.values(relatedTagsMap).flat().length,
+                totalWorldBuildingEffects: formattedWorldBuildingEffects.length
+            }
+        };
+
+        res.json({ 
+            success: true, 
+            data: results,
+            message: 'Comprehensive results retrieved successfully'
+        });
+    } catch (error) {
+        console.error('Error fetching comprehensive results for story:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while fetching comprehensive results.',
+            details: error.message
+        });
+    }
+});
+
 // POST /comprehensive-tags/relationships - Create a new tag relationship
 router.post('/relationships', async (req, res) => {
     try {
@@ -278,6 +414,122 @@ router.post('/world-building', async (req, res) => {
         console.error('Error creating world-building effect:', error);
         res.status(500).json({ 
             error: 'An error occurred while creating the world-building effect.' 
+        });
+    }
+});
+
+// POST /comprehensive-tags/suggestions/:suggestionId/accept - Accept a tag suggestion
+router.post('/suggestions/:suggestionId/accept', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const { userRating, ratingComment } = req.body;
+
+        const { TagSuggestion } = require('../models');
+        
+        const suggestion = await TagSuggestion.findByPk(suggestionId);
+        if (!suggestion) {
+            return res.status(404).json({ 
+                error: 'Tag suggestion not found.' 
+            });
+        }
+
+        // Update the suggestion status to accepted
+        await suggestion.update({
+            status: 'accepted',
+            acceptedAt: new Date(),
+            userRating: userRating || null,
+            ratingComment: ratingComment || null,
+            ratedAt: userRating ? new Date() : null
+        });
+
+        res.json({ 
+            success: true, 
+            data: suggestion,
+            message: 'Tag suggestion accepted successfully'
+        });
+    } catch (error) {
+        console.error('Error accepting tag suggestion:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while accepting the tag suggestion.' 
+        });
+    }
+});
+
+// POST /comprehensive-tags/suggestions/:suggestionId/reject - Reject a tag suggestion
+router.post('/suggestions/:suggestionId/reject', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const { rejectionReason, userRating, ratingComment } = req.body;
+
+        const { TagSuggestion } = require('../models');
+        
+        const suggestion = await TagSuggestion.findByPk(suggestionId);
+        if (!suggestion) {
+            return res.status(404).json({ 
+                error: 'Tag suggestion not found.' 
+            });
+        }
+
+        // Update the suggestion status to rejected
+        await suggestion.update({
+            status: 'rejected',
+            rejectedAt: new Date(),
+            rejectionReason: rejectionReason || null,
+            userRating: userRating || null,
+            ratingComment: ratingComment || null,
+            ratedAt: userRating ? new Date() : null
+        });
+
+        res.json({ 
+            success: true, 
+            data: suggestion,
+            message: 'Tag suggestion rejected successfully'
+        });
+    } catch (error) {
+        console.error('Error rejecting tag suggestion:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while rejecting the tag suggestion.' 
+        });
+    }
+});
+
+// POST /comprehensive-tags/suggestions/:suggestionId/rate - Rate a tag suggestion
+router.post('/suggestions/:suggestionId/rate', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const { userRating, ratingComment } = req.body;
+
+        if (!userRating || userRating < 1 || userRating > 5) {
+            return res.status(400).json({ 
+                error: 'User rating must be between 1 and 5.' 
+            });
+        }
+
+        const { TagSuggestion } = require('../models');
+        
+        const suggestion = await TagSuggestion.findByPk(suggestionId);
+        if (!suggestion) {
+            return res.status(404).json({ 
+                error: 'Tag suggestion not found.' 
+            });
+        }
+
+        // Update the suggestion with rating
+        await suggestion.update({
+            userRating,
+            ratingComment: ratingComment || null,
+            ratedAt: new Date()
+        });
+
+        res.json({ 
+            success: true, 
+            data: suggestion,
+            message: 'Tag suggestion rated successfully'
+        });
+    } catch (error) {
+        console.error('Error rating tag suggestion:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while rating the tag suggestion.' 
         });
     }
 });

@@ -13,13 +13,13 @@ export const comprehensiveTagApi = {
     }),
 
   // Generate comprehensive tags with streaming updates
-  generateComprehensiveTagsStreaming: (storyTitle, storyBrainstorm, limit = 10, onUpdate, onComplete, onError) => {
+  generateComprehensiveTagsStreaming: (storyTitle, storyBrainstorm, limit = 10, onUpdate, onComplete, onError, storyId = null) => {
     fetch(`${API_BASE_URL}/comprehensive-tags/generate-streaming`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ storyTitle, storyBrainstorm, limit })
+      body: JSON.stringify({ storyTitle, storyBrainstorm, limit, storyId })
     })
     .then(response => {
       if (!response.ok) {
@@ -64,6 +64,10 @@ export const comprehensiveTagApi = {
   saveComprehensiveResults: (storyId, results) => 
     api.post(`/comprehensive-tags/save/${storyId}`, { results }),
 
+  // Get comprehensive results for a specific story
+  getComprehensiveResults: (storyId) => 
+    api.get(`/comprehensive-tags/story/${storyId}`),
+
   // Get related tags for a specific tag
   getTagRelationships: (tagId, limit = 10) => 
     api.get(`/comprehensive-tags/relationships/${tagId}?limit=${limit}`),
@@ -95,5 +99,27 @@ export const comprehensiveTagApi = {
       conflicts,
       synergies,
       confidence
+    }),
+
+  // Accept a tag suggestion
+  acceptTagSuggestion: (suggestionId, userRating = null, ratingComment = null) => 
+    api.post(`/comprehensive-tags/suggestions/${suggestionId}/accept`, {
+      userRating,
+      ratingComment
+    }),
+
+  // Reject a tag suggestion
+  rejectTagSuggestion: (suggestionId, rejectionReason = null, userRating = null, ratingComment = null) => 
+    api.post(`/comprehensive-tags/suggestions/${suggestionId}/reject`, {
+      rejectionReason,
+      userRating,
+      ratingComment
+    }),
+
+  // Rate a tag suggestion
+  rateTagSuggestion: (suggestionId, userRating, ratingComment = null) => 
+    api.post(`/comprehensive-tags/suggestions/${suggestionId}/rate`, {
+      userRating,
+      ratingComment
     })
 }; 

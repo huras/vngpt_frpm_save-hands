@@ -1,0 +1,388 @@
+.relevant-tag-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  // Special styling for current story tags
+  &.current-story-tag {
+    border: 2px solid #28a745;
+    background: linear-gradient(135deg, #f8fff9 0%, #f0fff4 100%);
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #28a745, #20c997);
+      border-radius: 12px 12px 0 0;
+    }
+
+    .tag-title {
+      .current-tag-badge {
+        background: #28a745;
+        color: white;
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-left: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+
+    .tag-actions {
+      .btn-outline-success {
+        border-color: #28a745;
+        color: #28a745;
+
+        &:hover {
+          background: #28a745;
+          color: white;
+        }
+      }
+
+      .btn-success {
+        background: #28a745;
+        border-color: #28a745;
+      }
+    }
+  }
+
+  .tag-header {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+
+    .tag-thumb {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .tag-info {
+      flex: 1;
+      min-width: 0;
+
+      .tag-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .current-tag-badge {
+          background: #28a745;
+          color: white;
+          font-size: 10px;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .status-badge {
+          font-size: 10px;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+
+          &.pending {
+            background: #ffc107;
+            color: #333;
+          }
+
+          &.accepted {
+            background: #28a745;
+            color: white;
+          }
+
+          &.rejected {
+            background: #dc3545;
+            color: white;
+          }
+        }
+      }
+
+      .tag-description {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 0 0 12px 0;
+      }
+
+      .tag-meta {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+
+        .tag-category {
+          background: #f8f9fa;
+          color: #495057;
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .relevance-score {
+          color: #007bff;
+          font-size: 12px;
+          font-weight: 600;
+        }
+      }
+    }
+
+    .tag-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+
+      .btn {
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+
+        i {
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+
+  .tag-details {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+
+    .selection-reasoning {
+      margin-bottom: 20px;
+
+      strong {
+        color: #333;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      p {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+      }
+    }
+
+    .related-tags {
+      margin-bottom: 20px;
+
+      h5 {
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 12px 0;
+      }
+
+      .related-tags-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .related-tag-item {
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 12px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          .related-tag-title {
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+          }
+
+          .relationship-type {
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+
+            &.complementary { background: #28a745; }
+            &.synergistic { background: #fd7e14; }
+            &.thematic { background: #6f42c1; }
+            &.genre_related { background: #e83e8c; }
+            &.setting_related { background: #20c997; }
+          }
+
+          .relationship-reasoning {
+            color: #666;
+            font-size: 12px;
+            flex: 2;
+            font-style: italic;
+          }
+        }
+      }
+
+      .generating-related-tags {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+        font-size: 14px;
+
+        i {
+          color: #007bff;
+        }
+      }
+    }
+
+    .world-building-effects {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e9ecef;
+
+      h5 {
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 12px 0;
+      }
+
+      .effects-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .effect-item {
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 16px;
+
+          .effect-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+
+            .effect-icon {
+              font-size: 16px;
+              color: #007bff;
+              width: 20px;
+              text-align: center;
+            }
+
+            .effect-title {
+              font-size: 14px;
+              font-weight: 600;
+              color: #333;
+              margin: 0;
+              flex: 1;
+            }
+
+            .impact-level {
+              color: white;
+              padding: 2px 8px;
+              border-radius: 12px;
+              font-size: 10px;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+          }
+
+          .effect-description {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0 0 12px 0;
+          }
+
+          .effect-details {
+            margin-top: 12px;
+
+            strong {
+              color: #333;
+              font-size: 12px;
+              font-weight: 600;
+              display: block;
+              margin-bottom: 4px;
+            }
+
+            ul {
+              margin: 0;
+              padding-left: 16px;
+
+              li {
+                color: #666;
+                font-size: 12px;
+                line-height: 1.4;
+                margin-bottom: 2px;
+              }
+            }
+
+            p {
+              color: #666;
+              font-size: 12px;
+              line-height: 1.4;
+              margin: 0;
+            }
+          }
+        }
+
+        .generating-effects {
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #666;
+          font-size: 14px;
+
+          i {
+            color: #007bff;
+          }
+        }
+      }
+    }
+  }
+} 
