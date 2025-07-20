@@ -65,23 +65,43 @@ module.exports = {
       }
     });
 
-    // Create indexes
-    await queryInterface.addIndex('TagRelationships', ['sourceTagId', 'relatedTagId'], {
-      unique: true,
-      name: 'unique_tag_relationship'
-    });
-    await queryInterface.addIndex('TagRelationships', ['sourceTagId'], {
-      name: 'idx_tag_relationship_source'
-    });
-    await queryInterface.addIndex('TagRelationships', ['relatedTagId'], {
-      name: 'idx_tag_relationship_related'
-    });
-    await queryInterface.addIndex('TagRelationships', ['relationshipType'], {
-      name: 'idx_tag_relationship_type'
-    });
-    await queryInterface.addIndex('TagRelationships', ['isActive'], {
-      name: 'idx_tag_relationship_active'
-    });
+    // Create indexes with error handling
+    try {
+      await queryInterface.addIndex('TagRelationships', ['sourceTagId', 'relatedTagId'], {
+        unique: true,
+        name: 'unique_tag_relationship'
+      });
+    } catch (error) {
+      console.log('Index unique_tag_relationship already exists, skipping...');
+    }
+    try {
+      await queryInterface.addIndex('TagRelationships', ['sourceTagId'], {
+        name: 'idx_tag_relationship_source'
+      });
+    } catch (error) {
+      console.log('Index idx_tag_relationship_source already exists, skipping...');
+    }
+    try {
+      await queryInterface.addIndex('TagRelationships', ['relatedTagId'], {
+        name: 'idx_tag_relationship_related'
+      });
+    } catch (error) {
+      console.log('Index idx_tag_relationship_related already exists, skipping...');
+    }
+    try {
+      await queryInterface.addIndex('TagRelationships', ['relationshipType'], {
+        name: 'idx_tag_relationship_type'
+      });
+    } catch (error) {
+      console.log('Index idx_tag_relationship_type already exists, skipping...');
+    }
+    try {
+      await queryInterface.addIndex('TagRelationships', ['isActive'], {
+        name: 'idx_tag_relationship_active'
+      });
+    } catch (error) {
+      console.log('Index idx_tag_relationship_active already exists, skipping...');
+    }
   },
 
   down: async (queryInterface, Sequelize) => {

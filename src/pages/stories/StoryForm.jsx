@@ -231,9 +231,63 @@ const StoryForm = () => {
     }
   };
 
-  const handleClearGeneratedTags = () => {
-    setComprehensiveResults(null);
-    setShowComprehensiveResults(false);
+  const handleClearGeneratedTags = async () => {
+    // Show confirmation dialog
+    const confirmed = await showClearConfirmation();
+    if (!confirmed) return;
+
+    try {
+      // Only call API if we're editing (have a story ID)
+      if (isEditing && id) {
+        const response = await comprehensiveTagApi.clearComprehensiveSuggestions(id);
+        if (response.data?.success) {
+          console.log(`Cleared ${response.data.clearedCount} comprehensive tag suggestions`);
+          alert(`Successfully cleared ${response.data.clearedCount} comprehensive tag suggestions from the database.`);
+        } else {
+          console.error('Failed to clear suggestions:', response.data);
+          alert('Failed to clear suggestions from database. Please try again.');
+          return;
+        }
+      }
+
+      // Clear frontend state
+      setComprehensiveResults(null);
+      setShowComprehensiveResults(false);
+      setStreamingData(null);
+    } catch (error) {
+      console.error('Error clearing comprehensive tag suggestions:', error);
+      alert('Error clearing suggestions. Please try again.');
+    }
+  };
+
+  const showClearConfirmation = () => {
+    return new Promise((resolve) => {
+      // Check if SweetAlert is available
+      if (typeof window !== 'undefined' && window.Swal) {
+        window.Swal.fire({
+          title: 'Clear All Generated Tags?',
+          text: isEditing && id 
+            ? 'This will permanently delete all comprehensive tag suggestions from the database. This action cannot be undone.'
+            : 'This will clear all generated tags from the current session.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc3545',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Yes, clear them!',
+          cancelButtonText: 'Cancel',
+          reverseButtons: true
+        }).then((result) => {
+          resolve(result.isConfirmed);
+        });
+      } else {
+        // Fallback to browser confirm if SweetAlert is not available
+        const message = isEditing && id 
+          ? 'This will permanently delete all comprehensive tag suggestions from the database. This action cannot be undone. Are you sure?'
+          : 'This will clear all generated tags from the current session. Are you sure?';
+        const confirmed = window.confirm(message);
+        resolve(confirmed);
+      }
+    });
   };
 
   if (fetching) {
@@ -335,7 +389,7 @@ const StoryForm = () => {
               onClick={handleClearGeneratedTags}
               className="btn btn-outline-danger"
             >
-              <i className="fas fa-trash"></i> Clear All Generated Tags
+              <i className="fas fa-trash"></i> {isEditing && id ? 'Clear All Generated Tags (DB)' : 'Clear All Generated Tags'}
             </button>
           )}
           

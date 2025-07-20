@@ -57,7 +57,7 @@
 
     .tag-info-section {
       .info-block {
-        background: white;
+        background: #ffffffd9;
         border-radius: 8px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
@@ -80,7 +80,7 @@
         }
 
         .info-content {
-          color: #6c757d;
+          color: #282a2d;
           line-height: 1.6;
           margin: 0;
           font-size: 0.95rem;
@@ -175,3 +175,42 @@
     }
   }
 } 
+
+.tag-modal {
+  p {
+    font-weight: 500;
+  }
+
+  .modal-body {
+    min-height: 80vh;
+  }
+}
+
+.animated-background-tag-image {
+  background-position-x: 0%;
+  background-position-y: 20%;
+  animation: panXbackBackandForth 35s ease infinite;
+}
+
+@keyframes panXbackBackandForth {
+  0% {
+    background-position-x: 0%;
+    background-position-y: 20%;
+  }
+  25% {
+    background-position-x: 100%;
+    background-position-y: 0%;
+  }
+  50% {
+    background-position-x: 0%;
+    background-position-y: 100%;
+  }
+  75% {
+    background-position-x: 50%;
+    background-position-y: 50%;
+  }
+  100% {
+    background-position-x: 0%;
+    background-position-y: 20%;
+  }
+}

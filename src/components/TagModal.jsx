@@ -9,12 +9,13 @@ const TagModal = ({
   onHide 
 }) => {
   if (!tag) return null;
+  console.log(tag)
 
   return (
     <Modal
       show={show}
       onHide={onHide}
-      size="lg"
+      size="xl"
       centered
       className="tag-modal"
     >
@@ -25,7 +26,10 @@ const TagModal = ({
         </Modal.Title>
       </Modal.Header>
       
-      <Modal.Body className="modal-body">
+      <Modal.Body className="modal-body animated-background-tag-image" style={{
+        backgroundSize: 'cover', 
+        backgroundImage: tag.thumb_url ? `url(${BACKEND_CONFIG.getImageUrl(tag.thumb_url)})` : 'none',
+      }}>
         <div className="tag-modal-content">
           {/* Tag Image */}
           {tag.thumb_url && (
@@ -33,6 +37,7 @@ const TagModal = ({
               <img 
                 src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
                 alt={tag.title}
+                style={{visibility: 'hidden', transform: 'scaleX(1)', border: '5px solid #ffffff'}}
                 className="tag-modal-image"
                 onError={(e) => {
                   e.target.style.display = 'none';
@@ -54,8 +59,19 @@ const TagModal = ({
               </div>
             )}
             
-            {/* Full Description */}
-            {tag.description && tag.description !== tag.short_description && (
+            {/* Broader Description */}
+            {tag.broader_description && (
+              <div className="info-block">
+                <h5 className="info-title">
+                  <i className="fas fa-book-open me-2"></i>
+                  Broader Description
+                </h5>
+                <p className="info-content">{tag.broader_description}</p>
+              </div>
+            )}
+            
+            {/* Full Description (legacy support) */}
+            {tag.description && tag.description !== tag.short_description && !tag.broader_description && (
               <div className="info-block">
                 <h5 className="info-title">
                   <i className="fas fa-book-open me-2"></i>
@@ -66,7 +82,7 @@ const TagModal = ({
             )}
             
             {/* Category */}
-            {tag.category && (
+            {/* {tag.category && (
               <div className="info-block">
                 <h5 className="info-title">
                   <i className="fas fa-folder me-2"></i>
@@ -74,10 +90,10 @@ const TagModal = ({
                 </h5>
                 <span className="category-badge">{tag.category}</span>
               </div>
-            )}
+            )} */}
             
             {/* Relevance Score */}
-            {tag.relevanceScore && (
+            {/* {tag.relevanceScore && (
               <div className="info-block">
                 <h5 className="info-title">
                   <i className="fas fa-star me-2"></i>
@@ -93,7 +109,7 @@ const TagModal = ({
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </Modal.Body>

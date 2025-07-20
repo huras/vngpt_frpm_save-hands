@@ -33,6 +33,11 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.TEXT,
             allowNull: true
         },
+        broader_description: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+            comment: 'Comprehensive description providing broader context and detailed explanation of the tag'
+        },
         // AI-related fields
         category: {
             type: Sequelize.STRING,

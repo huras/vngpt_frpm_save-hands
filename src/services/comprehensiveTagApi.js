@@ -123,6 +123,10 @@ export const comprehensiveTagApi = {
       ratingComment
     }),
 
+  // Clear all comprehensive tag suggestions for a story
+  clearComprehensiveSuggestions: (storyId) => 
+    api.delete(`/comprehensive-tags/suggestions/${storyId}/clear`),
+
   // Reset a tag suggestion back to pending status
   resetTagSuggestion: (suggestionId) => 
     api.post(`/comprehensive-tags/suggestions/${suggestionId}/reset`)

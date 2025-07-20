@@ -25,7 +25,7 @@ class ComprehensiveTagGenerationService {
                 data: null
             };
 
-            const relevantTags = await this.selectRelevantTags(storyTitle, storyBrainstorm, limit);
+            const relevantTags = await this.selectRelevantTags(storyTitle, storyBrainstorm, limit, storyId);
             console.log(`Selected ${relevantTags.length} relevant tags`);
 
             yield {
@@ -60,7 +60,7 @@ class ComprehensiveTagGenerationService {
                 };
 
                 try {
-                    const relatedTags = await this.generateRelatedTagsForTag(tag, 3);
+                    const relatedTags = await this.generateRelatedTagsForTag(tag, 3, storyId);
                     relatedTagsMap[tag.id] = relatedTags;
                     console.log(`Generated ${relatedTags.length} related tags for ${tag.title}`);
                 } catch (error) {
@@ -183,12 +183,12 @@ class ComprehensiveTagGenerationService {
             
             // Stage 1: Select relevant tags based on story content
             console.log('Stage 1: Selecting relevant tags...');
-            const relevantTags = await this.selectRelevantTags(storyTitle, storyBrainstorm, limit);
+            const relevantTags = await this.selectRelevantTags(storyTitle, storyBrainstorm, limit, null);
             console.log(`Selected ${relevantTags.length} relevant tags`);
 
             // Stage 2: Generate related tags for each selected tag
             console.log('Stage 2: Generating related tags...');
-            const relatedTagsMap = await this.generateRelatedTags(relevantTags);
+            const relatedTagsMap = await this.generateRelatedTags(relevantTags, 3, null);
             console.log(`Generated related tags for ${Object.keys(relatedTagsMap).length} tags`);
 
             // Stage 3: Generate world-building effects for each tag
@@ -219,12 +219,27 @@ class ComprehensiveTagGenerationService {
     /**
      * Stage 1: Select relevant tags based on story content
      */
-    async selectRelevantTags(storyTitle, storyBrainstorm, limit = false) {
+    async selectRelevantTags(storyTitle, storyBrainstorm, limit = false, storyId = null) {
         try {
             // Get all available tags
-            const allTags = await Tag.findAll({
+            let allTags = await Tag.findAll({
                 order: [['title', 'ASC']]
             });
+
+            // If storyId is provided, filter out tags that have already been suggested to this story
+            if (storyId) {
+                const existingSuggestions = await TagSuggestion.findAll({
+                    where: { 
+                        storyId,
+                        status: ['pending', 'accepted']
+                    }
+                });
+
+                const existingTagIds = new Set(existingSuggestions.map(suggestion => suggestion.tagId));
+                allTags = allTags.filter(tag => !existingTagIds.has(tag.id));
+                
+                console.log(`Filtered out ${existingSuggestions.length} already suggested tags. ${allTags.length} tags remaining.`);
+            }
 
             const prompt = `Based on this story, select ${limit ? limit : 'all'} most relevant anime/manga tags with EXCELLENT category diversity:
 
@@ -316,7 +331,7 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
     /**
      * Stage 2: Generate related tags for each selected tag
      */
-    async generateRelatedTags(relevantTags, relatedTagsPerTag = 3) {
+    async generateRelatedTags(relevantTags, relatedTagsPerTag = 3, storyId = null) {
         try {
             const relatedTagsMap = {};
 
@@ -324,7 +339,7 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
                 console.log(`Generating related tags for: ${tag.title}`);
                 
                 try {
-                    const relatedTags = await this.generateRelatedTagsForTag(tag, relatedTagsPerTag);
+                    const relatedTags = await this.generateRelatedTagsForTag(tag, relatedTagsPerTag, storyId);
                     relatedTagsMap[tag.id] = relatedTags;
                 } catch (error) {
                     console.error(`Error generating related tags for ${tag.title}:`, error);
@@ -342,15 +357,30 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
     /**
      * Generate related tags for a specific tag
      */
-    async generateRelatedTagsForTag(tag, limit = 3) {
+    async generateRelatedTagsForTag(tag, limit = 3, storyId = null) {
         try {
             // Get all available tags except the current one
-            const allTags = await Tag.findAll({
+            let allTags = await Tag.findAll({
                 where: {
                     id: { [require('sequelize').Op.ne]: tag.id }
                 },
                 order: [['title', 'ASC']]
             });
+
+            // If storyId is provided, filter out tags that have already been suggested to this story
+            if (storyId) {
+                const existingSuggestions = await TagSuggestion.findAll({
+                    where: { 
+                        storyId,
+                        status: ['pending', 'accepted']
+                    }
+                });
+
+                const existingTagIds = new Set(existingSuggestions.map(suggestion => suggestion.tagId));
+                allTags = allTags.filter(tag => !existingTagIds.has(tag.id));
+                
+                console.log(`Filtered out ${existingSuggestions.length} already suggested tags from related tags. ${allTags.length} tags remaining.`);
+            }
 
             const prompt = `Based on this anime/manga tag, suggest ${limit} related tags that would complement it well:
 

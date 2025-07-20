@@ -211,7 +211,7 @@ router.get('/story/:storyId', async (req, res) => {
                 {
                     model: Tag,
                     as: 'tag',
-                    attributes: ['id', 'title', 'short_description', 'category', 'keywords', 'thumb_url']
+                    attributes: ['id', 'title', 'short_description', 'broader_description', 'category', 'keywords', 'thumb_url', 'media_url', 'media_type']
                 }
             ],
             order: [['confidence', 'DESC']]
@@ -228,7 +228,7 @@ router.get('/story/:storyId', async (req, res) => {
                 {
                     model: Tag,
                     as: 'relatedTag',
-                    attributes: ['id', 'title', 'short_description', 'category', 'keywords', 'thumb_url']
+                    attributes: ['id', 'title', 'short_description', 'broader_description', 'category', 'keywords', 'thumb_url', 'media_url', 'media_type']
                 }
             ],
             order: [['confidence', 'DESC']]
@@ -565,6 +565,72 @@ router.post('/suggestions/:suggestionId/reset', async (req, res) => {
         console.error('Error resetting tag suggestion:', error);
         res.status(500).json({ 
             error: 'An error occurred while resetting the tag suggestion.' 
+        });
+    }
+});
+
+// DELETE /comprehensive-tags/suggestions/:storyId/clear - Clear all comprehensive tag suggestions for a story
+router.delete('/suggestions/:storyId/clear', async (req, res) => {
+    try {
+        const { storyId } = req.params;
+
+        const { TagSuggestion, TagRelationship, TagWorldBuildingEffect } = require('../models');
+        
+        // Find all comprehensive tag suggestions for the story
+        const suggestions = await TagSuggestion.findAll({
+            where: {
+                storyId,
+                suggestionType: 'comprehensive_generation'
+            }
+        });
+
+        if (suggestions.length === 0) {
+            return res.json({ 
+                success: true, 
+                message: 'No comprehensive tag suggestions found to clear',
+                clearedCount: 0
+            });
+        }
+
+        // Get the tag IDs from the suggestions
+        const tagIds = suggestions.map(s => s.tagId);
+
+        // Delete tag relationships for these tags
+        const deletedRelationships = await TagRelationship.destroy({
+            where: {
+                sourceTagId: tagIds
+            }
+        });
+
+        // Delete world-building effects for these tags
+        const deletedEffects = await TagWorldBuildingEffect.destroy({
+            where: {
+                tagId: tagIds
+            }
+        });
+
+        // Delete the tag suggestions
+        const deletedSuggestions = await TagSuggestion.destroy({
+            where: {
+                storyId,
+                suggestionType: 'comprehensive_generation'
+            }
+        });
+
+        console.log(`Cleared comprehensive tag suggestions for story ${storyId}: ${deletedSuggestions} suggestions, ${deletedRelationships} relationships, ${deletedEffects} effects`);
+
+        res.json({ 
+            success: true, 
+            message: `Cleared ${deletedSuggestions} comprehensive tag suggestions and related data`,
+            clearedCount: deletedSuggestions,
+            deletedRelationships,
+            deletedEffects
+        });
+    } catch (error) {
+        console.error('Error clearing comprehensive tag suggestions:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while clearing comprehensive tag suggestions.',
+            details: error.message
         });
     }
 });

@@ -75,19 +75,35 @@ module.exports = {
       }
     });
 
-    // Create indexes
-    await queryInterface.addIndex('TagWorldBuildingEffects', ['tagId'], {
-      name: 'idx_tag_world_building_tag'
-    });
-    await queryInterface.addIndex('TagWorldBuildingEffects', ['effectType'], {
-      name: 'idx_tag_world_building_type'
-    });
-    await queryInterface.addIndex('TagWorldBuildingEffects', ['impactLevel'], {
-      name: 'idx_tag_world_building_impact'
-    });
-    await queryInterface.addIndex('TagWorldBuildingEffects', ['isActive'], {
-      name: 'idx_tag_world_building_active'
-    });
+    // Create indexes with error handling
+    try {
+      await queryInterface.addIndex('TagWorldBuildingEffects', ['tagId'], {
+        name: 'idx_tag_world_building_tag'
+      });
+    } catch (error) {
+      console.log('Index idx_tag_world_building_tag already exists, skipping...');
+    }
+    try {
+      await queryInterface.addIndex('TagWorldBuildingEffects', ['effectType'], {
+        name: 'idx_tag_world_building_type'
+      });
+    } catch (error) {
+      console.log('Index idx_tag_world_building_type already exists, skipping...');
+    }
+    try {
+      await queryInterface.addIndex('TagWorldBuildingEffects', ['impactLevel'], {
+        name: 'idx_tag_world_building_impact'
+      });
+    } catch (error) {
+      console.log('Index idx_tag_world_building_impact already exists, skipping...');
+    }
+    try {
+      await queryInterface.addIndex('TagWorldBuildingEffects', ['isActive'], {
+        name: 'idx_tag_world_building_active'
+      });
+    } catch (error) {
+      console.log('Index idx_tag_world_building_active already exists, skipping...');
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
