@@ -174,6 +174,24 @@ module.exports = (sequelize, Sequelize) => {
             foreignKey: 'tagId',
             as: 'reasonings'
         });
+
+        // One-to-Many relationship with TagRelationship (as source tag)
+        Tag.hasMany(models.TagRelationship, {
+            foreignKey: 'sourceTagId',
+            as: 'relatedTags'
+        });
+
+        // One-to-Many relationship with TagRelationship (as related tag)
+        Tag.hasMany(models.TagRelationship, {
+            foreignKey: 'relatedTagId',
+            as: 'sourceTags'
+        });
+
+        // One-to-Many relationship with TagWorldBuildingEffect
+        Tag.hasMany(models.TagWorldBuildingEffect, {
+            foreignKey: 'tagId',
+            as: 'worldBuildingEffects'
+        });
     };
 
     return Tag;
