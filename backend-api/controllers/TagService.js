@@ -20,6 +20,7 @@ class TagService extends BaseService {
             offset,
             limit,
             include: this.includes,
+            distinct: true, // This ensures we count distinct tags, not joined rows
             order: [
                 ['title', 'ASC']
             ]
@@ -69,6 +70,7 @@ class TagService extends BaseService {
             offset,
             limit,
             include: this.includes,
+            distinct: true, // This ensures we count distinct tags, not joined rows
             order: [
                 ['title', 'ASC']
             ]

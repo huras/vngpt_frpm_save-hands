@@ -17,6 +17,7 @@ class StoryService extends BaseService {
             offset,
             limit,
             include: this.includes,
+            distinct: true, // This ensures we count distinct stories, not joined rows
             order: [
                 ['createdAt', 'DESC']
             ]
@@ -28,7 +29,7 @@ class StoryService extends BaseService {
         return {
             data: paginatedStories.rows,
             pagination: {
-                currentPage: page,
+                currentPage: parseInt(page),
                 totalPages,
                 totalItems,
             },
@@ -76,7 +77,7 @@ class StoryService extends BaseService {
         return {
             data: paginatedStories.rows,
             pagination: {
-                currentPage: page,
+                currentPage: parseInt(page),
                 totalPages,
                 totalItems,
             },

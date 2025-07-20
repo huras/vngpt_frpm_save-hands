@@ -8,12 +8,16 @@ const router = express.Router();
 router.get('/', async(req, res) => {
     try {
         const { page = 1, perPage = 10, search } = req.query;
+        
+        // Convert query parameters to numbers
+        const pageNum = parseInt(page) || 1;
+        const perPageNum = parseInt(perPage) || 10;
 
         if (search) {
-            const result = await storyService.searchStories(search, { page, perPage });
+            const result = await storyService.searchStories(search, { page: pageNum, perPage: perPageNum });
             res.json(result);
         } else {
-            const result = await storyService.findAllPaginated({}, { page, perPage });
+            const result = await storyService.findAllPaginated({}, { page: pageNum, perPage: perPageNum });
             res.json(result);
         }
     } catch (error) {
@@ -117,7 +121,12 @@ router.post('/:id/duplicate', async(req, res) => {
 router.get('/search/:term', async(req, res) => {
     try {
         const { page = 1, perPage = 10 } = req.query;
-        const result = await storyService.searchStories(req.params.term, { page, perPage });
+        
+        // Convert query parameters to numbers
+        const pageNum = parseInt(page) || 1;
+        const perPageNum = parseInt(perPage) || 10;
+        
+        const result = await storyService.searchStories(req.params.term, { page: pageNum, perPage: perPageNum });
         res.json(result);
     } catch (error) {
         console.error('Error searching stories:', error);
