@@ -491,8 +491,8 @@ const tagData = [
         broader_description: "Yuri focuses on romantic and emotional relationships between female characters. These stories range from light-hearted and sweet to dramatic and intense, exploring themes of identity, acceptance, and love within a sapphic or LGBTQ+ context.",
         category: "romance_relationships",
         keywords: "yuri, girls love, romance, lgbt, sapphic",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/yuri.png",
+        media_type: "image"
     },
     {
         title: "Yaoi",
@@ -509,8 +509,8 @@ const tagData = [
         broader_description: "Redemption stories follow characters on a journey to atone for past mistakes or wrongdoings. These narratives often focus on personal growth, self-reflection, and the pursuit of forgiveness, offering powerful arcs of transformation and healing.",
         category: "tropes",
         keywords: "redemption, forgiveness, change, growth, atonement",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/redemption.png",
+        media_type: "image"
     },
     {
         title: "Coming of Age",
@@ -527,8 +527,8 @@ const tagData = [
         broader_description: "Found Family stories highlight the formation of deep, familial bonds among individuals who are not related by blood. These narratives emphasize belonging, support, and the emotional strength of chosen connections.",
         category: "tropes",
         keywords: "found family, friendship, support, belonging, home",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/found-family.png",
+        media_type: "image"
     },
     {
         title: "Betrayal",
@@ -608,7 +608,7 @@ const tagData = [
         broader_description: "Forbidden Love stories explore romantic relationships that face societal, cultural, or personal obstacles. These narratives often involve secrecy, emotional tension, and the conflict between desire and duty.",
         category: "tropes",
         keywords: "forbidden love, romance, taboo, conflict",
-        media_url: "/media/tags/forbidden-love.png",
+        media_url: "/media/tags/forbidden-love-2.png",
         media_type: "image"
     },
     {
@@ -774,8 +774,8 @@ const tagData = [
         "broader_description": "Virtual Reality settings involve characters interacting within simulated digital environments, such as online games or alternate digital realities. These stories explore themes of identity, escapism, and the blending of real and virtual experiences.",
         "category": "setting",
         "keywords": "virtual reality, digital, online, game, simulation",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/virtual-reality.png",
+        "media_type": "image"
     },
     {
         "title": "Parallel World",
@@ -801,8 +801,8 @@ const tagData = [
         "broader_description": "Space Colony settings focus on human settlements beyond Earth, exploring challenges of survival, adaptation, and society-building on other planets or in space habitats. These stories highlight futuristic technology and the human spirit of exploration.",
         "category": "setting",
         "keywords": "space colony, planet, space, future, sci-fi",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/space-colony.png",
+        "media_type": "image"
     },
     {
         "title": "Small Town",
@@ -810,8 +810,8 @@ const tagData = [
         "broader_description": "Small Town settings take place in close-knit rural or local communities where interpersonal relationships, traditions, and daily life are central. These stories often explore themes of belonging, change, and community dynamics.",
         "category": "setting",
         "keywords": "small town, community, rural, local, village",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/small-town.png",
+        "media_type": "image"
     },
     {
         "title": "Big City",
@@ -837,8 +837,8 @@ const tagData = [
         "broader_description": "Haunted House settings revolve around eerie, often abandoned houses filled with ghosts or supernatural phenomena. These stories explore fear, mystery, and the paranormal, often blending horror with suspense.",
         "category": "setting",
         "keywords": "haunted house, ghost, supernatural, scary, horror",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/haunted-house.png",
+        "media_type": "image"
     },
     {
         "title": "Island",
@@ -846,8 +846,8 @@ const tagData = [
         "broader_description": "Island settings place characters in isolated or remote island locations. These stories often explore themes of survival, adventure, escape, and the unique ecosystem and cultures of island life.",
         "category": "setting",
         "keywords": "island, sea, ocean, isolated, adventure",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/island.png",
+        "media_type": "image"
     },
     {
         "title": "Desert",
@@ -864,8 +864,8 @@ const tagData = [
         "broader_description": "Forest settings immerse characters in natural, wooded environments, often emphasizing mystery, adventure, and the wild. These stories may explore themes of nature, isolation, survival, or magical elements tied to the wilderness.",
         "category": "setting",
         "keywords": "forest, woods, wilderness, nature, trees",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/forest.png",
+        "media_type": "image"
     },
     {
         "title": "Underwater",
@@ -873,8 +873,8 @@ const tagData = [
         "broader_description": "Underwater settings take place beneath the ocean's surface, exploring aquatic life, submerged civilizations, or marine adventures. These stories highlight the mystery and beauty of the underwater world, as well as its dangers.",
         "category": "setting",
         "keywords": "underwater, sea, ocean, aquatic, marine",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/underwater.png",
+        "media_type": "image"
     },
     {
         "title": "Outer Space",
@@ -974,8 +974,8 @@ const tagData = [
         "broader_description": "Family-themed stories focus on the bonds, conflicts, and dynamics within families, exploring themes of love, loyalty, responsibility, and interpersonal relationships.",
         "category": "theme",
         "keywords": "family, bonds, relationship, parents, siblings",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/family.png",
+        "media_type": "image"
     },
     {
         "title": "Friendship",
@@ -983,8 +983,8 @@ const tagData = [
         "broader_description": "Friendship-themed stories focus on the strength of bonds between friends, highlighting loyalty, support, and companionship that help characters overcome challenges together.",
         "category": "theme",
         "keywords": "friendship, friends, bond, support, loyalty",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/friendship.png",
+        "media_type": "image"
     },
     {
         "title": "Love",
@@ -992,8 +992,8 @@ const tagData = [
         "broader_description": "Love themes explore both romantic and platonic relationships, emphasizing affection, care, and the emotional connections that define human relationships.",
         "category": "theme",
         "keywords": "love, romance, affection, care, relationship",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/love.png",
+        "media_type": "image"
     },
     {
         "title": "War",
