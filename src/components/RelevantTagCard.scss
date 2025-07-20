@@ -579,6 +579,107 @@
           }
         }
       }
+
+      // Tag Directive Section
+      .tag-directive {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+
+        h5 {
+          color: #333;
+          font-size: 16px;
+          font-weight: 600;
+          margin: 0 0 16px 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          &::before {
+            content: '🎯';
+            font-size: 18px;
+          }
+        }
+
+        .loading-directive {
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #666;
+          font-size: 14px;
+
+          i {
+            color: #007bff;
+          }
+        }
+
+        .directive-error {
+          background: #fff5f5;
+          border: 1px solid #fed7d7;
+          border-radius: 8px;
+          padding: 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #c53030;
+          font-size: 14px;
+
+          i {
+            color: #e53e3e;
+          }
+
+          button {
+            margin-left: auto;
+            padding: 4px 8px;
+            font-size: 12px;
+          }
+        }
+
+        .generate-directive {
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 16px;
+          text-align: center;
+
+          button {
+            margin-bottom: 8px;
+          }
+
+          .generate-hint {
+            color: #666;
+            font-size: 12px;
+            margin: 0;
+            line-height: 1.4;
+          }
+        }
+
+        .no-directive {
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #666;
+          font-size: 14px;
+
+          i {
+            color: #6c757d;
+          }
+        }
+
+        // DirectiveCard component styling integration
+        .directive-card {
+          margin-top: 0;
+          margin-bottom: 0;
+        }
+      }
     }
   }
 } 

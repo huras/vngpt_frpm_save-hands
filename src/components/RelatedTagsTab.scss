@@ -1,0 +1,118 @@
+.related-tags {
+  .related-tags-list {
+    .related-tag-item {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .related-tag-title {
+        font-weight: 600;
+        color: #495057;
+        min-width: 120px;
+      }
+
+      .relationship-type {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: white;
+        background: #6c757d;
+
+        &.complementary {
+          background: #28a745;
+        }
+
+        &.conflicting {
+          background: #dc3545;
+        }
+
+        &.enhancing {
+          background: #17a2b8;
+        }
+
+        &.thematic {
+          background: #6f42c1;
+        }
+      }
+
+      .relationship-reasoning {
+        color: #6c757d;
+        font-size: 0.9rem;
+        flex-grow: 1;
+        line-height: 1.4;
+      }
+    }
+  }
+
+  .related-tags-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #dc3545;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+
+  .generating-related-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    background: #e9ecef;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+
+  .suggest-related-tags {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+
+    .btn {
+      margin-bottom: 0.5rem;
+    }
+
+    .suggest-hint {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+  }
+
+  .no-related-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    background: #e9ecef;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+} 

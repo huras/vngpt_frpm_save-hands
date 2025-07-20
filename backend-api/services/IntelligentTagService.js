@@ -3,6 +3,7 @@ const AIService = require('./AIService');
 const AICommentaryService = require('./AICommentaryService');
 const IntelligentTagSuggestionService = require('./IntelligentTagSuggestionService');
 const PitchService = require('./PitchService');
+const TagSuggestionDirectiveService = require('./TagSuggestionDirectiveService');
 
 class IntelligentTagService {
     constructor() {
@@ -10,6 +11,7 @@ class IntelligentTagService {
         this.commentaryService = new AICommentaryService(this.aiService);
         this.suggestionService = new IntelligentTagSuggestionService();
         this.pitchService = new PitchService();
+        this.directiveService = new TagSuggestionDirectiveService();
     }
 
     /**
@@ -315,10 +317,21 @@ class IntelligentTagService {
                 currentCommentaryId: commentary.id
             });
 
+            // Generate and store directive for this accepted suggestion
+            let directive = null;
+            try {
+                directive = await this.directiveService.generateAndStoreDirective(suggestion.id);
+                console.log(`Generated directive for accepted suggestion ${suggestion.id}`);
+            } catch (directiveError) {
+                console.error('Error generating directive:', directiveError);
+                // Don't fail the entire acceptance process if directive generation fails
+            }
+
             return {
                 success: true,
                 suggestion: suggestion.toJSON(),
-                reasoning: reasoning.toJSON()
+                reasoning: reasoning.toJSON(),
+                directive: directive ? directive.toJSON() : null
             };
         } catch (error) {
             console.error('Error accepting suggestion:', error);

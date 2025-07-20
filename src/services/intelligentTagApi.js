@@ -227,5 +227,24 @@ export const intelligentTagApi = {
     api.get(`/pitches/top-rated?limit=${limit}`),
 
   getFavoritePitches: (limit = 10) => 
-    api.get(`/pitches/favorites?limit=${limit}`)
+    api.get(`/pitches/favorites?limit=${limit}`),
+
+  // TagSuggestionDirective endpoints
+  getDirectives: (suggestionId) => 
+    api.get(`/intelligent-tags/directives/${suggestionId}`),
+
+  getDirective: (suggestionId, directiveId) => 
+    api.get(`/intelligent-tags/directives/${suggestionId}/${directiveId}`),
+
+  generateDirective: (suggestionId) => 
+    api.post(`/intelligent-tags/directives/${suggestionId}/generate`),
+
+  regenerateDirective: (suggestionId, directiveId) => 
+    api.post(`/intelligent-tags/directives/${suggestionId}/${directiveId}/regenerate`),
+
+  updateDirective: (suggestionId, directiveId, directive, directive_aim) => 
+    api.put(`/intelligent-tags/directives/${suggestionId}/${directiveId}`, { directive, directive_aim }),
+
+  deleteDirective: (suggestionId, directiveId) => 
+    api.delete(`/intelligent-tags/directives/${suggestionId}/${directiveId}`)
 }; 

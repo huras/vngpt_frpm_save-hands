@@ -1,0 +1,135 @@
+.world-building-effects {
+  .effects-list {
+    .effect-item {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+
+      .effect-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+
+        .effect-icon {
+          color: #6c757d;
+          font-size: 1.1rem;
+        }
+
+        .effect-title {
+          margin: 0;
+          font-weight: 600;
+          color: #495057;
+          flex-grow: 1;
+        }
+
+        .impact-level {
+          padding: 0.25rem 0.5rem;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          color: white;
+        }
+      }
+
+      .effect-description {
+        color: #6c757d;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+      }
+
+      .effect-details {
+        margin-bottom: 0.75rem;
+
+        strong {
+          color: #495057;
+          display: block;
+          margin-bottom: 0.25rem;
+        }
+
+        ul {
+          margin: 0;
+          padding-left: 1.25rem;
+
+          li {
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+          }
+        }
+
+        p {
+          margin: 0;
+          color: #6c757d;
+        }
+      }
+    }
+  }
+
+  .world-building-effects-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #dc3545;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+
+  .generating-effects {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    background: #e9ecef;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+
+  .generate-world-building-effects {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+
+    .btn {
+      margin-bottom: 0.5rem;
+    }
+
+    .generate-hint {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+  }
+
+  .no-world-building-effects {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    background: #e9ecef;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+} 

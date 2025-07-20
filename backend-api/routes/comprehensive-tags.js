@@ -1,5 +1,6 @@
 const express = require('express');
 const ComprehensiveTagGenerationService = require('../services/ComprehensiveTagGenerationService');
+const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
 
 const router = express.Router();
 const comprehensiveTagService = new ComprehensiveTagGenerationService();
@@ -425,6 +426,7 @@ router.post('/suggestions/:suggestionId/accept', async (req, res) => {
         const { userRating, ratingComment } = req.body;
 
         const { TagSuggestion } = require('../models');
+        const directiveService = new TagSuggestionDirectiveService();
         
         const suggestion = await TagSuggestion.findByPk(suggestionId);
         if (!suggestion) {
@@ -442,9 +444,22 @@ router.post('/suggestions/:suggestionId/accept', async (req, res) => {
             ratedAt: userRating ? new Date() : null
         });
 
+        // Generate and store directive for this accepted suggestion
+        let directive = null;
+        try {
+            directive = await directiveService.generateAndStoreDirective(suggestion.id);
+            console.log(`Generated directive for accepted comprehensive suggestion ${suggestion.id}`);
+        } catch (directiveError) {
+            console.error('Error generating directive:', directiveError);
+            // Don't fail the entire acceptance process if directive generation fails
+        }
+
         res.json({ 
             success: true, 
-            data: suggestion,
+            data: {
+                suggestion: suggestion,
+                directive: directive
+            },
             message: 'Tag suggestion accepted successfully'
         });
     } catch (error) {

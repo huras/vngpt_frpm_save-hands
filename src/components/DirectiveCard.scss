@@ -1,0 +1,223 @@
+.directive-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &.editing {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  .directive-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+
+    h4 {
+      margin: 0;
+      color: #333;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .directive-actions {
+      display: flex;
+      gap: 8px;
+
+      .btn {
+        padding: 4px 8px;
+        font-size: 12px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+        }
+
+        &.btn-outline-primary {
+          color: #007bff;
+          border-color: #007bff;
+
+          &:hover {
+            background-color: #007bff;
+            color: white;
+          }
+        }
+
+        &.btn-outline-secondary {
+          color: #6c757d;
+          border-color: #6c757d;
+
+          &:hover {
+            background-color: #6c757d;
+            color: white;
+          }
+        }
+
+        &.btn-outline-danger {
+          color: #dc3545;
+          border-color: #dc3545;
+
+          &:hover {
+            background-color: #dc3545;
+            color: white;
+          }
+        }
+      }
+    }
+  }
+
+  .directive-content {
+    .directive-aim {
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      border-left: 3px solid #007bff;
+
+      strong {
+        color: #007bff;
+      }
+    }
+
+    .directive-text {
+      line-height: 1.6;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+
+      label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+      }
+
+      input, textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.2s ease;
+
+        &:focus {
+          outline: none;
+          border-color: #007bff;
+          box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+    }
+  }
+
+  .directive-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+
+    .btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+      }
+
+      &.btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+
+        &:hover {
+          background-color: #0056b3;
+          border-color: #0056b3;
+        }
+
+        &:disabled {
+          background-color: #6c757d;
+          border-color: #6c757d;
+          cursor: not-allowed;
+        }
+      }
+
+      &.btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+
+        &:hover {
+          background-color: #545b62;
+          border-color: #545b62;
+        }
+
+        &:disabled {
+          background-color: #adb5bd;
+          border-color: #adb5bd;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  .directive-footer {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+
+    small {
+      font-size: 12px;
+      color: #6c757d;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .directive-card {
+    padding: 12px;
+
+    .directive-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+
+      .directive-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+
+    .directive-actions {
+      flex-direction: column;
+
+      .btn {
+        width: 100%;
+      }
+    }
+  }
+} 

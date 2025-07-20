@@ -515,6 +515,129 @@ router.get('/commentaries/:storyId/stats', async (req, res) => {
     }
 });
 
+// TagSuggestionDirective routes
 
+// GET /intelligent-tags/directives/:suggestionId - Get all directives for a tag suggestion
+router.get('/directives/:suggestionId', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        const directives = await directiveService.getDirectives(suggestionId);
+        
+        res.json({ success: true, data: directives });
+    } catch (error) {
+        console.error('Error fetching directives:', error);
+        res.status(500).json({ error: 'An error occurred while fetching the directives.' });
+    }
+});
+
+// GET /intelligent-tags/directives/:suggestionId/:directiveId - Get a specific directive
+router.get('/directives/:suggestionId/:directiveId', async (req, res) => {
+    try {
+        const { directiveId } = req.params;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        const directive = await directiveService.getDirectiveById(directiveId);
+        
+        if (!directive) {
+            return res.status(404).json({ error: 'Directive not found.' });
+        }
+
+        res.json({ success: true, data: directive });
+    } catch (error) {
+        console.error('Error fetching directive:', error);
+        res.status(500).json({ error: 'An error occurred while fetching the directive.' });
+    }
+});
+
+// POST /intelligent-tags/directives/:suggestionId/generate - Manually generate directive for a suggestion
+router.post('/directives/:suggestionId/generate', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        const directive = await directiveService.generateAndStoreDirective(suggestionId);
+        
+        res.json({ success: true, data: directive });
+    } catch (error) {
+        console.error('Error generating directive:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Tag suggestion not found.' });
+        } else if (error.message.includes('not accepted')) {
+            res.status(400).json({ error: 'Can only generate directives for accepted tag suggestions.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while generating the directive.' });
+        }
+    }
+});
+
+// POST /intelligent-tags/directives/:suggestionId/:directiveId/regenerate - Regenerate a specific directive
+router.post('/directives/:suggestionId/:directiveId/regenerate', async (req, res) => {
+    try {
+        const { directiveId } = req.params;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        const directive = await directiveService.regenerateDirective(directiveId);
+        
+        res.json({ success: true, data: directive });
+    } catch (error) {
+        console.error('Error regenerating directive:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Directive not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while regenerating the directive.' });
+        }
+    }
+});
+
+// PUT /intelligent-tags/directives/:suggestionId/:directiveId - Update a specific directive
+router.put('/directives/:suggestionId/:directiveId', async (req, res) => {
+    try {
+        const { directiveId } = req.params;
+        const { directive, directive_aim } = req.body;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        if (!directive || !directive_aim) {
+            return res.status(400).json({ error: 'directive and directive_aim are required.' });
+        }
+
+        const updatedDirective = await directiveService.updateDirective(directiveId, directive, directive_aim);
+        
+        res.json({ success: true, data: updatedDirective });
+    } catch (error) {
+        console.error('Error updating directive:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Directive not found.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while updating the directive.' });
+        }
+    }
+});
+
+// DELETE /intelligent-tags/directives/:suggestionId/:directiveId - Delete a specific directive
+router.delete('/directives/:suggestionId/:directiveId', async (req, res) => {
+    try {
+        const { directiveId } = req.params;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        const deleted = await directiveService.deleteDirective(directiveId);
+        
+        if (!deleted) {
+            return res.status(404).json({ error: 'Directive not found.' });
+        }
+
+        res.json({ success: true, message: 'Directive deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting directive:', error);
+        res.status(500).json({ error: 'An error occurred while deleting the directive.' });
+    }
+});
 
 module.exports = router; 
