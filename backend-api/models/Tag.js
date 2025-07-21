@@ -162,19 +162,13 @@ module.exports = (sequelize, Sequelize) => {
 
     // Associations for Tag
     Tag.associate = function(models) {
-        // Many-to-Many relationship with Story
-        Tag.belongsToMany(models.Story, {
-            through: 'story_tags', // Link table for the many-to-many relationship
-            as: 'stories'
-        });
-
-        // One-to-Many relationship with TagSuggestion
+        // One-to-Many relationship with TagSuggestion (primary way to relate to Stories)
         Tag.hasMany(models.TagSuggestion, {
             foreignKey: 'tagId',
             as: 'suggestions'
         });
 
-        // One-to-Many relationship with StoryTagReasoning
+        // One-to-Many relationship with StoryTagReasoning (reasoning for accepted story relationships)
         Tag.hasMany(models.StoryTagReasoning, {
             foreignKey: 'tagId',
             as: 'reasonings'

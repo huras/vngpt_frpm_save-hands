@@ -1,10 +1,9 @@
 const BaseService = require('./BaseService');
-const { Story, Tag, TagSuggestion } = require('../models');
+const { Story, Tag, TagSuggestion, StoryTagReasoning } = require('../models');
 
 class StoryService extends BaseService {
     constructor() {
         super(Story, [
-            { model: Tag, as: 'tags' },
             { 
                 model: TagSuggestion, 
                 as: 'tagSuggestions',
@@ -12,6 +11,14 @@ class StoryService extends BaseService {
                     { model: Tag, as: 'tag' }
                 ],
                 where: { status: 'pending' },
+                required: false
+            },
+            {
+                model: StoryTagReasoning,
+                as: 'tagReasonings',
+                include: [
+                    { model: Tag, as: 'tag' }
+                ],
                 required: false
             }
         ]);
@@ -106,6 +113,52 @@ class StoryService extends BaseService {
         });
 
         return duplicatedStory;
+    }
+
+    /**
+     * Get all tags associated with a story through accepted suggestions and reasonings
+     */
+    async getStoryTags(storyId) {
+        try {
+            // Get accepted tag suggestions
+            const acceptedSuggestions = await TagSuggestion.findAll({
+                where: { 
+                    storyId, 
+                    status: 'accepted' 
+                },
+                include: [
+                    { model: Tag, as: 'tag' }
+                ]
+            });
+
+            // Get tags from story tag reasonings
+            const tagReasonings = await StoryTagReasoning.findAll({
+                where: { storyId },
+                include: [
+                    { model: Tag, as: 'tag' }
+                ]
+            });
+
+            // Combine and deduplicate tags
+            const tagMap = new Map();
+            
+            acceptedSuggestions.forEach(suggestion => {
+                if (suggestion.tag) {
+                    tagMap.set(suggestion.tag.id, suggestion.tag);
+                }
+            });
+
+            tagReasonings.forEach(reasoning => {
+                if (reasoning.tag) {
+                    tagMap.set(reasoning.tag.id, reasoning.tag);
+                }
+            });
+
+            return Array.from(tagMap.values());
+        } catch (error) {
+            console.error('Error getting story tags:', error);
+            throw error;
+        }
     }
 }
 

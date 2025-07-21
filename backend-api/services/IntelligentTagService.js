@@ -191,10 +191,19 @@ class IntelligentTagService {
                 try {
                     console.log(`Saving suggestion to database with reasoning: ${aiSuggestion.reasoning.substring(0, 100)}...`);
                     
-                    // Get current story tags for context (since story data is refreshed each iteration)
-                    const currentStory = await Story.findByPk(storyId, {
-                        include: [{ model: Tag, as: 'tags' }]
+                    // Get current story tags for context through accepted suggestions and reasonings
+                    const acceptedSuggestions = await TagSuggestion.findAll({
+                        where: { storyId, status: 'accepted' }
                     });
+                    
+                    const tagReasonings = await StoryTagReasoning.findAll({
+                        where: { storyId }
+                    });
+                    
+                    const currentTagIds = [
+                        ...acceptedSuggestions.map(s => s.tagId),
+                        ...tagReasonings.map(r => r.tagId)
+                    ];
                     
                     const suggestion = await TagSuggestion.create({
                         storyId,
@@ -203,7 +212,7 @@ class IntelligentTagService {
                         confidence: aiSuggestion.confidence,
                         status: 'pending',
                         suggestionType: 'ai_generated',
-                        contextTags: JSON.stringify(currentStory.tags.map(tag => tag.id))
+                        contextTags: JSON.stringify(currentTagIds)
                     });
 
                     const suggestionWithTag = {
@@ -289,8 +298,7 @@ class IntelligentTagService {
                 acceptedAt: new Date()
             });
 
-            // Add tag to story
-            await suggestion.story.addTag(suggestion.tag);
+            // Note: Tag is now associated through TagSuggestion and StoryTagReasoning, not direct relationship
 
             // Create AI commentary for this tag-story relationship
             const commentary = await this.commentaryService.createCommentary(
@@ -603,14 +611,18 @@ class IntelligentTagService {
                 throw new Error('Story or tag not found');
             }
 
-            // Check if tag is already associated
-            const existingAssociation = await story.hasTag(tag);
-            if (existingAssociation) {
+            // Check if tag is already associated through accepted suggestions or reasonings
+            const existingSuggestion = await TagSuggestion.findOne({
+                where: { storyId, tagId, status: 'accepted' }
+            });
+            
+            const existingReasoning = await StoryTagReasoning.findOne({
+                where: { storyId, tagId }
+            });
+            
+            if (existingSuggestion || existingReasoning) {
                 throw new Error('Tag is already associated with this story');
             }
-
-            // Add tag to story
-            await story.addTag(tag);
 
             // Create AI commentary for this manual tag addition
             const commentary = await this.commentaryService.createCommentary(
@@ -1256,8 +1268,7 @@ Return only the explanation text, no JSON formatting or additional text.`;
                 throw new Error('Reasoning not found');
             }
 
-            // Remove tag from story
-            await reasoning.story.removeTag(reasoning.tag);
+            // Note: Tag association is managed through TagSuggestion and StoryTagReasoning, not direct relationship
 
             // Update the original suggestion status to rejected if it exists
             if (reasoning.suggestionId) {

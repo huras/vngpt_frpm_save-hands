@@ -35,23 +35,53 @@ module.exports = (sequelize, Sequelize) => {
 
     // Associations for Story
     Story.associate = function(models) {
-        // Many-to-Many relationship with Tag
-        Story.belongsToMany(models.Tag, {
-            through: 'story_tags', // Link table for the many-to-many relationship
-            as: 'tags'
-        });
-
-        // One-to-Many relationship with TagSuggestion
+        // One-to-Many relationship with TagSuggestion (primary way to relate to Tags)
         Story.hasMany(models.TagSuggestion, {
             foreignKey: 'storyId',
             as: 'tagSuggestions'
         });
 
-        // One-to-Many relationship with StoryTagReasoning
+        // One-to-Many relationship with StoryTagReasoning (reasoning for accepted tag relationships)
         Story.hasMany(models.StoryTagReasoning, {
             foreignKey: 'storyId',
             as: 'tagReasonings'
         });
+
+        // Story expansion associations
+        if (models.ArcSuggestion) {
+            Story.hasMany(models.ArcSuggestion, {
+                foreignKey: 'storyId',
+                as: 'arcSuggestions'
+            });
+        }
+
+        if (models.CharacterSuggestion) {
+            Story.hasMany(models.CharacterSuggestion, {
+                foreignKey: 'storyId',
+                as: 'characterSuggestions'
+            });
+        }
+
+        if (models.PlaceSuggestion) {
+            Story.hasMany(models.PlaceSuggestion, {
+                foreignKey: 'storyId',
+                as: 'placeSuggestions'
+            });
+        }
+
+        if (models.CharacterOrganizationSuggestion) {
+            Story.hasMany(models.CharacterOrganizationSuggestion, {
+                foreignKey: 'storyId',
+                as: 'organizationSuggestions'
+            });
+        }
+
+        if (models.NotableObjectSuggestion) {
+            Story.hasMany(models.NotableObjectSuggestion, {
+                foreignKey: 'storyId',
+                as: 'objectSuggestions'
+            });
+        }
     };
 
     return Story;

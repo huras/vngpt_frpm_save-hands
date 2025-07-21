@@ -90,41 +90,79 @@ class TagService extends BaseService {
     }
 
     async addTagToStory(tagId, storyId) {
-        const tag = await this.findById(tagId);
-        if (!tag) throw new Error('Tag not found.');
-
-        const story = await Story.findByPk(storyId);
-        if (!story) throw new Error('Story not found.');
-
-        await tag.addStory(story);
-
-        return tag;
+        // Note: Tags are now associated through TagSuggestions and StoryTagReasonings, not direct relationships
+        // This method is deprecated - use IntelligentTagService.addTagManually instead
+        throw new Error('Direct tag-story associations are deprecated. Use IntelligentTagService.addTagManually instead.');
     }
 
     async removeTagFromStory(tagId, storyId) {
-        const tag = await this.findById(tagId);
-        if (!tag) throw new Error('Tag not found.');
-
-        const story = await Story.findByPk(storyId);
-        if (!story) throw new Error('Story not found.');
-
-        await tag.removeStory(story);
-
-        return tag;
+        // Note: Tags are now associated through TagSuggestions and StoryTagReasonings, not direct relationships
+        // This method is deprecated - use IntelligentTagService.rejectAcceptedSuggestion instead
+        throw new Error('Direct tag-story associations are deprecated. Use IntelligentTagService.rejectAcceptedSuggestion instead.');
     }
 
     async getTagsByStory(storyId) {
-        const story = await Story.findByPk(storyId, {
-            include: [{ model: Tag, as: 'tags' }]
+        // Get tags through accepted suggestions and reasonings
+        const { TagSuggestion, StoryTagReasoning, Tag } = require('../models');
+        
+        const acceptedSuggestions = await TagSuggestion.findAll({
+            where: { storyId, status: 'accepted' },
+            include: [{ model: Tag, as: 'tag' }]
         });
-        if (!story) throw new Error('Story not found.');
-        return story.tags;
+        
+        const tagReasonings = await StoryTagReasoning.findAll({
+            where: { storyId },
+            include: [{ model: Tag, as: 'tag' }]
+        });
+        
+        // Combine and deduplicate tags
+        const tagMap = new Map();
+        
+        acceptedSuggestions.forEach(suggestion => {
+            if (suggestion.tag) {
+                tagMap.set(suggestion.tag.id, suggestion.tag);
+            }
+        });
+        
+        tagReasonings.forEach(reasoning => {
+            if (reasoning.tag) {
+                tagMap.set(reasoning.tag.id, reasoning.tag);
+            }
+        });
+        
+        return Array.from(tagMap.values());
     }
 
     async getStoriesByTag(tagId) {
-        const tag = await this.findById(tagId, [{ model: Story, as: 'stories' }]);
-        if (!tag) throw new Error('Tag not found.');
-        return tag.stories;
+        // Get stories through accepted suggestions and reasonings
+        const { TagSuggestion, StoryTagReasoning, Story } = require('../models');
+        
+        const acceptedSuggestions = await TagSuggestion.findAll({
+            where: { tagId, status: 'accepted' },
+            include: [{ model: Story, as: 'story' }]
+        });
+        
+        const tagReasonings = await StoryTagReasoning.findAll({
+            where: { tagId },
+            include: [{ model: Story, as: 'story' }]
+        });
+        
+        // Combine and deduplicate stories
+        const storyMap = new Map();
+        
+        acceptedSuggestions.forEach(suggestion => {
+            if (suggestion.story) {
+                storyMap.set(suggestion.story.id, suggestion.story);
+            }
+        });
+        
+        tagReasonings.forEach(reasoning => {
+            if (reasoning.story) {
+                storyMap.set(reasoning.story.id, reasoning.story);
+            }
+        });
+        
+        return Array.from(storyMap.values());
     }
 
     async getTagRecommendations(tagId, limit = 8) {

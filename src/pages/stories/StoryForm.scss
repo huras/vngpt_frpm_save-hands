@@ -169,10 +169,119 @@
         font-size: 1.1rem;
     }
     
+    // Bootstrap Tabs Styling
+    .story-analysis-tabs {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 2px solid #e9ecef;
+        
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 0;
+            
+            .nav-item {
+                margin-bottom: -2px;
+                
+                .nav-link {
+                    border: none;
+                    border-bottom: 2px solid transparent;
+                    color: #6c757d;
+                    font-weight: 500;
+                    padding: 12px 20px;
+                    transition: all 0.2s ease-in-out;
+                    background: none;
+                    
+                    i {
+                        margin-right: 8px;
+                        font-size: 0.9em;
+                    }
+                    
+                    &:hover {
+                        border-color: #adb5bd;
+                        color: #495057;
+                        background-color: #f8f9fa;
+                    }
+                    
+                    &.active {
+                        color: #007bff;
+                        background-color: #fff;
+                        border-bottom-color: #007bff;
+                        font-weight: 600;
+                    }
+                }
+            }
+        }
+        
+        .tab-content {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            
+            .tab-pane {
+                padding: 0;
+                
+                .tab-content-wrapper {
+                    padding: 30px;
+                    
+                    .tab-header {
+                        margin-bottom: 25px;
+                        padding-bottom: 20px;
+                        border-bottom: 1px solid #e9ecef;
+                        
+                        h2 {
+                            color: #2c3e50;
+                            font-weight: 600;
+                            margin: 0 0 10px 0;
+                            font-size: 1.5rem;
+                        }
+                        
+                        .tab-description {
+                            color: #6c757d;
+                            margin: 0;
+                            line-height: 1.6;
+                            font-size: 1rem;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     .comprehensive-tag-section {
         margin-top: 40px;
         padding-top: 30px;
         border-top: 2px solid #e9ecef;
+    }
+
+    .story-expansion-section {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 2px solid #e9ecef;
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            
+            h2 {
+                color: #2c3e50;
+                font-weight: 600;
+                margin: 0;
+                font-size: 1.5rem;
+            }
+        }
+        
+        .section-description {
+            color: #6c757d;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .story-expansion-content {
+            // Content styles will be handled by the StoryExpansionViewer component
+        }
     }
 
     .tag-management-section {
@@ -247,6 +356,51 @@
                 flex-direction: column;
                 .btn {
                     width: 100%;
+                }
+            }
+        }
+        
+        .story-analysis-tabs {
+            .nav-tabs {
+                .nav-item {
+                    .nav-link {
+                        padding: 10px 15px;
+                        font-size: 0.9rem;
+                        
+                        i {
+                            margin-right: 5px;
+                        }
+                    }
+                }
+            }
+            
+            .tab-content {
+                .tab-pane {
+                    .tab-content-wrapper {
+                        padding: 20px;
+                        
+                        .tab-header {
+                            h2 {
+                                font-size: 1.3rem;
+                            }
+                            
+                            .tab-description {
+                                font-size: 0.9rem;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        .story-expansion-section {
+            .section-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+                
+                h2 {
+                    text-align: center;
                 }
             }
         }

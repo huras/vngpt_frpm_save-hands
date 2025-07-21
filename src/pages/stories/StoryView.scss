@@ -2,168 +2,202 @@
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-    .story-view-header {
+    
+    .story-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         margin-bottom: 30px;
         padding-bottom: 20px;
         border-bottom: 2px solid #e9ecef;
-        .story-navigation {
-            .btn-outline-secondary {
-                color: #6c757d;
-                border-color: #6c757d;
-                &:hover {
-                    background-color: #6c757d;
-                    border-color: #6c757d;
-                }
-            }
-        }
-        .story-actions {
-            display: flex;
-            gap: 10px;
-        }
-    }
-    .story-content {
-        .story-header {
-            margin-bottom: 30px;
-            .story-title {
+        
+        .story-title-section {
+            flex: 1;
+            
+            h1 {
                 font-size: 2.5rem;
                 font-weight: 700;
                 color: #2c3e50;
                 margin-bottom: 15px;
                 line-height: 1.2;
             }
+            
             .story-meta {
-                .story-dates {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                font-size: 0.9rem;
+                color: #6c757d;
+                
+                .created-date,
+                .updated-date {
                     display: flex;
-                    flex-direction: column;
+                    align-items: center;
                     gap: 8px;
-                    font-size: 0.9rem;
-                    color: #6c757d;
-                    .story-created,
-                    .story-updated {
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                        i {
-                            font-size: 0.8rem;
-                        }
-                    }
                 }
             }
         }
-        .story-body {
-            .story-brainstorm {
-                h3 {
-                    color: #2c3e50;
-                    font-weight: 600;
+        
+        .story-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+    }
+    
+    .story-content {
+        margin-bottom: 30px;
+        
+        .story-section {
+            margin-bottom: 30px;
+            
+            h2 {
+                color: #2c3e50;
+                font-weight: 600;
+                margin-bottom: 15px;
+                font-size: 1.5rem;
+            }
+            
+            .story-info {
+                .story-field {
                     margin-bottom: 15px;
-                    font-size: 1.3rem;
-                }
-                .brainstorm-content {
-                    background-color: #f8f9fa;
-                    border: 1px solid #e9ecef;
-                    border-radius: 8px;
-                    padding: 20px;
-                    p {
-                        margin-bottom: 15px;
-                        line-height: 1.6;
+                    
+                    label {
+                        font-weight: 600;
                         color: #495057;
-                        font-size: 1rem;
-                        &:last-child {
-                            margin-bottom: 0;
-                        }
+                        display: block;
+                        margin-bottom: 5px;
                     }
-                }
-            }
-            .no-brainstorm {
-                text-align: center;
-                padding: 40px 20px;
-                background-color: #f8f9fa;
-                border: 1px solid #e9ecef;
-                border-radius: 8px;
-                p {
-                    color: #6c757d;
-                    font-style: italic;
-                    margin: 0;
-                }
-            }
-            .story-tags-section {
-                margin-top: 30px;
-                h3 {
-                    color: #2c3e50;
-                    font-weight: 600;
-                    margin-bottom: 15px;
-                    font-size: 1.3rem;
-                }
-                .story-tags {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 12px;
-                    .story-tag {
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                        padding: 8px 12px;
+                    
+                    span {
+                        color: #2c3e50;
+                    }
+                    
+                    .brainstorm-content {
                         background-color: #f8f9fa;
                         border: 1px solid #e9ecef;
                         border-radius: 8px;
-                        min-width: 120px;
-                        .tag-thumb {
-                            width: 24px;
-                            height: 24px;
-                            border-radius: 50%;
-                            object-fit: cover;
-                            flex-shrink: 0;
-                        }
-                        .tag-info {
-                            flex: 1;
-                            min-width: 0;
-                            .tag-title {
-                                display: block;
-                                font-weight: 600;
-                                color: #2c3e50;
-                                font-size: 0.9rem;
-                            }
-                            .tag-description {
-                                display: block;
-                                color: #6c757d;
-                                font-size: 0.75rem;
-                                margin-top: 2px;
-                                white-space: nowrap;
-                                overflow: hidden;
-                                text-overflow: ellipsis;
+                        padding: 15px;
+                        
+                        p {
+                            margin-bottom: 10px;
+                            line-height: 1.6;
+                            color: #495057;
+                            
+                            &:last-child {
+                                margin-bottom: 0;
                             }
                         }
                     }
                 }
             }
         }
-    }
-    .story-footer {
-        margin-top: 40px;
-        padding-top: 20px;
-        border-top: 1px solid #e9ecef;
-        .story-actions-bottom {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
+        
+        .tags-section {
+            margin-bottom: 30px;
+            
+            h2 {
+                color: #2c3e50;
+                font-weight: 600;
+                margin-bottom: 15px;
+                font-size: 1.5rem;
+            }
+            
+            .tags-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                
+                .tag-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 12px;
+                    background-color: #f8f9fa;
+                    border: 1px solid #e9ecef;
+                    border-radius: 8px;
+                    min-width: 120px;
+                    
+                    .tag-thumb {
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        object-fit: cover;
+                        flex-shrink: 0;
+                        
+                        &.no-image {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background-color: #6c757d;
+                            color: white;
+                            font-weight: 600;
+                            font-size: 0.8rem;
+                        }
+                    }
+                    
+                    .tag-title {
+                        font-weight: 600;
+                        color: #2c3e50;
+                        font-size: 0.9rem;
+                    }
+                }
+            }
         }
     }
+    
+    .tag-management-section,
+    .reasonings-section,
+    .story-expansion-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            
+            h2 {
+                color: #2c3e50;
+                font-weight: 600;
+                margin: 0;
+                font-size: 1.5rem;
+            }
+        }
+        
+        .section-description {
+            color: #6c757d;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .tag-management-content,
+        .reasonings-content,
+        .story-expansion-content {
+            // Content styles will be handled by individual components
+        }
+    }
+    
     .loading-spinner {
         text-align: center;
         padding: 60px 20px;
         color: #6c757d;
         font-size: 1.1rem;
     }
+    
     .error-message {
         text-align: center;
         padding: 60px 20px;
+        
         h2 {
             color: #dc3545;
             margin-bottom: 15px;
         }
+        
         p {
             color: #6c757d;
             margin-bottom: 20px;
@@ -175,25 +209,35 @@
 @media (max-width: 768px) {
     .story-view-container {
         padding: 15px;
-        .story-view-header {
+        
+        .story-header {
             flex-direction: column;
             gap: 15px;
             align-items: stretch;
-            .story-actions {
-                justify-content: center;
-            }
-        }
-        .story-content {
-            .story-header {
-                .story-title {
+            
+            .story-title-section {
+                h1 {
                     font-size: 2rem;
                 }
             }
+            
+            .story-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
         }
-        .story-footer {
-            .story-actions-bottom {
+        
+        .tag-management-section,
+        .reasonings-section,
+        .story-expansion-section {
+            .section-header {
                 flex-direction: column;
-                align-items: center;
+                gap: 10px;
+                align-items: stretch;
+                
+                h2 {
+                    text-align: center;
+                }
             }
         }
     }

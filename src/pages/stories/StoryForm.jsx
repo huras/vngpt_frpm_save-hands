@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { storyApi } from '../../services/storyApi';
 import { comprehensiveTagApi } from '../../services/comprehensiveTagApi';
 import ComprehensiveTagResults from '../../components/ComprehensiveTagResults';
+import StoryExpansionViewer from '../../components/StoryExpansionViewer';
 import './StoryForm.scss';
 
 const StoryForm = () => {
@@ -25,6 +26,7 @@ const StoryForm = () => {
   const [streamingData, setStreamingData] = useState(null);
   const [currentStoryTags, setCurrentStoryTags] = useState([]);
   const [loadingComprehensiveResults, setLoadingComprehensiveResults] = useState(false);
+  const [activeTab, setActiveTab] = useState('comprehensive-tags'); // Default to comprehensive tags tab
 
   useEffect(() => {
     if (isEditing) {
@@ -425,21 +427,99 @@ const StoryForm = () => {
         </div>
       </form>
 
-      {/* Comprehensive Tag Generation Results */}
-      {(showComprehensiveResults || generatingTags || loadingComprehensiveResults || currentStoryTags.length > 0) && (
-        <div className="comprehensive-tag-section">
-          <ComprehensiveTagResults
-            results={comprehensiveResults}
-            isGenerating={generatingTags}
-            streamingData={streamingData}
-            storyId={isEditing ? id : null}
-            currentStoryTags={currentStoryTags}
-            selectedTags={selectedTags}
-            onTagSelection={handleTagSelection}
-            isLoading={loadingComprehensiveResults}
-            storyTitle={formData.title}
-            storyBrainstorm={formData.brainstorm}
-          />
+      {/* Bootstrap Tabs */}
+      {(showComprehensiveResults || generatingTags || loadingComprehensiveResults || currentStoryTags.length > 0 || isEditing) && (
+        <div className="story-analysis-tabs">
+          <ul className="nav nav-tabs" id="storyAnalysisTabs" role="tablist">
+            <li className="nav-item" role="presentation">
+              <button
+                className={`nav-link ${activeTab === 'comprehensive-tags' ? 'active' : ''}`}
+                id="comprehensive-tags-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#comprehensive-tags"
+                type="button"
+                role="tab"
+                aria-controls="comprehensive-tags"
+                aria-selected={activeTab === 'comprehensive-tags'}
+                onClick={() => setActiveTab('comprehensive-tags')}
+              >
+                <i className="fas fa-tags"></i> Comprehensive Tag Analysis
+              </button>
+            </li>
+            {isEditing && (
+              <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link ${activeTab === 'story-expansion' ? 'active' : ''}`}
+                  id="story-expansion-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#story-expansion"
+                  type="button"
+                  role="tab"
+                  aria-controls="story-expansion"
+                  aria-selected={activeTab === 'story-expansion'}
+                  onClick={() => setActiveTab('story-expansion')}
+                >
+                  <i className="fas fa-expand-arrows-alt"></i> Story Expansion
+                </button>
+              </li>
+            )}
+          </ul>
+          
+          <div className="tab-content" id="storyAnalysisTabContent">
+            {/* Comprehensive Tag Analysis Tab */}
+            <div
+              className={`tab-pane fade ${activeTab === 'comprehensive-tags' ? 'show active' : ''}`}
+              id="comprehensive-tags"
+              role="tabpanel"
+              aria-labelledby="comprehensive-tags-tab"
+            >
+              <div className="tab-content-wrapper">
+                <div className="tab-header">
+                  <h2>Comprehensive Tag Analysis</h2>
+                  <p className="tab-description">
+                    AI-powered tag suggestions based on your story's content, themes, and genre. 
+                    Select tags that best represent your story to help with discovery and categorization.
+                  </p>
+                </div>
+                
+                <ComprehensiveTagResults
+                  results={comprehensiveResults}
+                  isGenerating={generatingTags}
+                  streamingData={streamingData}
+                  storyId={isEditing ? id : null}
+                  currentStoryTags={currentStoryTags}
+                  selectedTags={selectedTags}
+                  onTagSelection={handleTagSelection}
+                  isLoading={loadingComprehensiveResults}
+                  storyTitle={formData.title}
+                  storyBrainstorm={formData.brainstorm}
+                />
+              </div>
+            </div>
+
+            {/* Story Expansion Tab - Only show when editing */}
+            {isEditing && (
+              <div
+                className={`tab-pane fade ${activeTab === 'story-expansion' ? 'show active' : ''}`}
+                id="story-expansion"
+                role="tabpanel"
+                aria-labelledby="story-expansion-tab"
+              >
+                <div className="tab-content-wrapper">
+                  <div className="tab-header">
+                    <h2>Story Expansion</h2>
+                    <p className="tab-description">
+                      Generate story expansion suggestions based on your accepted tag directives. 
+                      This will create arcs, characters, places, organizations, and objects that 
+                      build upon your story's established themes and directions.
+                    </p>
+                  </div>
+                  
+                  <StoryExpansionViewer storyId={id} />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

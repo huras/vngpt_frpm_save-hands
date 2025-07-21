@@ -117,33 +117,29 @@ router.get('/search/:term', async(req, res) => {
     }
 });
 
-// POST /tags/:id/stories/:storyId - Add tag to story
+// POST /tags/:id/stories/:storyId - Add tag to story (deprecated - use intelligent tag suggestions instead)
 router.post('/:id/stories/:storyId', async(req, res) => {
     try {
-        const tag = await tagService.addTagToStory(req.params.id, req.params.storyId);
-        res.json({ message: 'Tag added to story successfully.', tag });
+        res.status(410).json({ 
+            error: 'This endpoint is deprecated. Use intelligent tag suggestions instead.',
+            message: 'Tags are now managed through TagSuggestions and StoryTagReasonings. Use the intelligent tag system for better tag management.'
+        });
     } catch (error) {
-        console.error('Error adding tag to story:', error);
-        if (error.message.includes('not found')) {
-            res.status(404).json({ error: 'Tag or story not found.' });
-        } else {
-            res.status(500).json({ error: 'An error occurred while adding tag to story.' });
-        }
+        console.error('Error with deprecated endpoint:', error);
+        res.status(500).json({ error: 'An error occurred.' });
     }
 });
 
-// DELETE /tags/:id/stories/:storyId - Remove tag from story
+// DELETE /tags/:id/stories/:storyId - Remove tag from story (deprecated - use intelligent tag system instead)
 router.delete('/:id/stories/:storyId', async(req, res) => {
     try {
-        await tagService.removeTagFromStory(req.params.id, req.params.storyId);
-        res.json({ message: 'Tag removed from story successfully.' });
+        res.status(410).json({ 
+            error: 'This endpoint is deprecated. Use intelligent tag system instead.',
+            message: 'Tags are now managed through TagSuggestions and StoryTagReasonings. Use the intelligent tag system for better tag management.'
+        });
     } catch (error) {
-        console.error('Error removing tag from story:', error);
-        if (error.message.includes('not found')) {
-            res.status(404).json({ error: 'Tag or story not found.' });
-        } else {
-            res.status(500).json({ error: 'An error occurred while removing tag from story.' });
-        }
+        console.error('Error with deprecated endpoint:', error);
+        res.status(500).json({ error: 'An error occurred.' });
     }
 });
 
