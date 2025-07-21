@@ -134,6 +134,16 @@ const CharacterSuggestionCard = ({ suggestion, onAccept, onDelete }) => {
                             <p>{suggestion.background}</p>
                         </div>
                     )}
+                    {suggestion.relationships && (
+                        <div className="field-section">
+                            <strong>Relationships:</strong>
+                            <div className="badge-row">
+                                {parseArrayField(suggestion.relationships).map((relationship, index) => (
+                                    <p key={index} className="">{relationship}</p>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     {suggestion.motivations && (
                         <div className="field-section">
                             <strong>Motivations:</strong>

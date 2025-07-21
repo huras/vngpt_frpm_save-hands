@@ -465,21 +465,51 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
 
         const characterCount = count !== null ? count : '4-6';
 
+        // Build existing character context
+        let existingCharactersContext = '';
+        if (story.characterSuggestions && story.characterSuggestions.length > 0) {
+            const existingCharacters = story.characterSuggestions
+                .filter(cs => cs.isActive !== false) // Only include active suggestions
+                .map(cs => {
+                    const traits = cs.personalityTraits ? JSON.parse(cs.personalityTraits) : [];
+                    const motivations = cs.motivations ? JSON.parse(cs.motivations) : [];
+                    const relationships = cs.relationships ? JSON.parse(cs.relationships) : [];
+                    
+                    return `- ${cs.name} (${cs.characterType}): ${cs.high_level_description} (directives used ids: ${cs.sourceDirectives})
+  
+`;
+// Personality: ${traits.join(', ') || 'Not specified'}
+//   Background: ${cs.background || 'Not specified'}
+//   Motivations: ${motivations.join(', ') || 'Not specified'}
+                });
+            
+            existingCharactersContext = `\nEXISTING CHARACTER SUGGESTIONS:\n${existingCharacters.join('\n')}`;
+        }
+
         return `Based on the following story and its accepted tag directives, generate ${characterCount} compelling character suggestions that could enrich the narrative:
 
 STORY CONTEXT:
 Title: ${story.title}
 Brainstorm: ${story.brainstorm || 'No brainstorm provided'}
 
+CURRENT TAGS:
+${this.getStoryTags(story).map(tag => `- ${tag.title}: ${tag.short_description}`).join('\n')}
+
 ACCEPTED DIRECTIVES:
 ${directiveContext}
 
+ALREADY SUGGESTED CHARACTERS:
+${existingCharactersContext}
+
 Generate characters that:
-1. Serve different story functions (protagonist, antagonist, supporting, etc.)
+1. Serve different story functions (protagonist, antagonist, supporting, etc.) - avoid duplicating existing character types
 2. Have clear motivations and personality traits
-3. Create interesting dynamics with existing story elements
+3. Create interesting dynamics with existing story elements and characters
 4. Feel authentic to the story's genre and setting
 5. Offer opportunities for character development and conflict
+6. Complement and enhance the existing character roster rather than replace it
+
+IMPORTANT: Consider the existing character suggestions when generating new ones. Ensure new characters fill gaps in the story's character ecosystem and create interesting interactions with existing characters.
 
 Provide a JSON response with:
 {
@@ -489,11 +519,11 @@ Provide a JSON response with:
       "high_level_description": "Brief description of the character concept",
       "characterType": "protagonist|antagonist|supporting|mentor|love_interest|comic_relief|foil|deuteragonist",
       "archetype": "Hero|Mentor|Trickster|etc.",
-      "personalityTraits": ["Trait 1", "Trait 2", "Trait 3"],
+      "personalityTraits": ["Trait 1", "Trait 2", "Trait 3", ALL_FITTING_TRAITS],
       "background": "Character background and history",
       "motivations": ["Motivation 1", "Motivation 2"],
       "relationships": ["Relationship with Character A", "Relationship with Character B"],
-      "sourceDirectives": [directiveId1, directiveId2],
+      "sourceDirectives": [directiveId1, directiveId2, directiveId3, ALL_MATCHING_DIRECTIVE_IDs],
       "confidence": 0.8
     }
   ]
