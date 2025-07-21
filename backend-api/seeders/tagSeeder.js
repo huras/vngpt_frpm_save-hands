@@ -116,7 +116,7 @@ const tagData = [
         broader_description: "Historical fiction immerses readers in past eras, portraying life, culture, and events from different time periods with rich detail and authenticity. These stories may focus on fictional characters or real historical figures, exploring how individuals navigate the social, political, and cultural landscapes of their times.",
         category: "historical_period",
         keywords: "historical, past, old, traditional, classical, heritage",
-        media_url: null,
+        media_url: "/media/tags/historical.jpeg",
         media_type: "image"
     },
     {
@@ -410,7 +410,7 @@ const tagData = [
         broader_description: "Cyberpunk stories are set in dystopian futures where advanced technology and cybernetics coexist with societal collapse and gritty urban life. These narratives explore themes of identity, rebellion, surveillance, and the consequences of unchecked technological growth, often featuring hackers, corporations, and neon-soaked cityscapes.",
         category: "scifi_future",
         keywords: "cyberpunk, dystopian, future, technology, neon, hacker",
-        media_url: "/media/tags/cyberpunk.jpeg",
+        media_url: "/media/tags/cyberpunk.png",
         media_type: "image"
     },
     {
@@ -419,8 +419,8 @@ const tagData = [
         broader_description: "Steampunk reimagines history through the lens of steam-powered technology and Victorian aesthetics. These stories often blend retrofuturism, adventure, and alternative inventions in a world driven by gears, brass, and steam, creating a unique and stylish blend of fantasy and historical fiction.",
         category: "historical_period",
         keywords: "steampunk, steam, alternate history, gears, Victorian, retrofuturism",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/steampunk.png",
+        media_type: "image"
     },
     {
         title: "Space Opera",
@@ -428,8 +428,8 @@ const tagData = [
         broader_description: "Space Opera is a subgenre of science fiction known for its grand scale, interstellar adventures, and dramatic conflicts. These stories feature heroes, empires, alien civilizations, and space battles, often centered on personal and political drama played out across the galaxy.",
         category: "scifi_future",
         keywords: "space opera, epic, space, adventure, galaxy, starship",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/space-opera.png",
+        media_type: "image"
     },
     {
         title: "Urban Fantasy",
@@ -437,8 +437,8 @@ const tagData = [
         broader_description: "Urban Fantasy blends magical or supernatural elements with modern-day settings, often taking place in cities where hidden worlds exist alongside everyday life. These stories explore themes like secrecy, duality, and the coexistence of magic and technology in contemporary society.",
         category: "fantasy_magic",
         keywords: "urban fantasy, magic, city, modern, supernatural",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/urban-fantasy.png",
+        media_type: "image"
     },
     {
         title: "High Fantasy",
@@ -446,8 +446,8 @@ const tagData = [
         broader_description: "High Fantasy features expansive, original worlds filled with magic, mythical creatures, and grand quests. These stories often include chosen heroes, powerful wizards, ancient prophecies, and epic battles between good and evil in richly developed settings.",
         category: "fantasy_magic",
         keywords: "high fantasy, epic, world, magic, mythical, adventure",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/high-fantasy.png",
+        media_type: "image"
     },
     {
         title: "Magical Girl",
@@ -545,8 +545,8 @@ const tagData = [
         broader_description: "Secret Identity stories feature characters who conceal their true identity, often to protect themselves or others. These narratives explore dual lives, hidden truths, and the tension between who we are and what the world sees.",
         category: "tropes",
         keywords: "secret identity, disguise, hidden, alter ego",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/secret-identity.png",
+        media_type: "image"
     },
     {
         title: "Amnesia",
@@ -563,8 +563,8 @@ const tagData = [
         broader_description: "Tournament Arc stories feature structured competitions that test characters' skills, strength, or growth. These narratives often serve as exciting set pieces filled with battles, rivalries, and personal development through challenge and conflict.",
         category: "tropes",
         keywords: "tournament, competition, arc, battle, challenge",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/tournament-arc.png",
+        media_type: "image"
     },
     {
         title: "Power of Friendship",
@@ -572,8 +572,8 @@ const tagData = [
         broader_description: "Power of Friendship stories emphasize the strength and importance of bonds between friends. These narratives show how support, trust, and teamwork can overcome even the greatest obstacles, highlighting emotional resilience and unity.",
         category: "tropes",
         keywords: "friendship, power, support, teamwork, bond",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/power-of-friendship.png",
+        media_type: "image"
     },
     {
         title: "Prophecy",
@@ -882,8 +882,8 @@ const tagData = [
         "broader_description": "Outer Space settings explore locations beyond our planet, including spaceships, space stations, and alien worlds. These stories often focus on exploration, survival, interstellar conflict, and the vast unknown of the cosmos.",
         "category": "setting",
         "keywords": "outer space, space, stars, planets, sci-fi",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/outer-space.png",
+        "media_type": "image"
     },
 
     // --- Themes ---
@@ -956,8 +956,8 @@ const tagData = [
         "broader_description": "Stories about Technology vs Nature explore conflicts between human innovation and the natural world, examining themes of environmental impact, balance, and the consequences of technological advancement.",
         "category": "theme",
         "keywords": "technology, nature, progress, environment, clash",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/technology-vs-nature.png",
+        "media_type": "image"
     },
     {
         "title": "Tradition vs Progress",
@@ -965,8 +965,8 @@ const tagData = [
         "broader_description": "Tradition vs Progress themes explore tensions between established customs and emerging ideas, highlighting conflicts over change, modernization, and cultural identity.",
         "category": "theme",
         "keywords": "tradition, progress, old, new, change",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/tradition-vs-progress.png",
+        "media_type": "image"
     },
     {
         "title": "Family",
@@ -1001,8 +1001,8 @@ const tagData = [
         "broader_description": "War-themed narratives revolve around conflicts, battles, and struggles often set against a backdrop of larger social or political turmoil, exploring the cost and consequences of fighting.",
         "category": "theme",
         "keywords": "war, conflict, battle, fight, struggle",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/war.png",
+        "media_type": "image"
     },
     {
         "title": "Peace",
@@ -1010,8 +1010,8 @@ const tagData = [
         "broader_description": "Peace stories focus on the pursuit or restoration of harmony, calm, and resolution, often highlighting nonviolent solutions and reconciliation.",
         "category": "theme",
         "keywords": "peace, harmony, calm, resolution, nonviolence",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/peace.png",
+        "media_type": "image"
     },
     {
         "title": "Isolation",
@@ -1019,8 +1019,8 @@ const tagData = [
         "broader_description": "Isolation themes explore experiences of solitude, loneliness, or separation, often delving into emotional struggles or self-discovery in solitude.",
         "category": "theme",
         "keywords": "isolation, alone, solitude, separation",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/isolation.png",
+        "media_type": "image"
     },
     {
         "title": "Discovery",
