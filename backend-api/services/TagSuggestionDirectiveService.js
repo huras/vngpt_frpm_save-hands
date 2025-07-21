@@ -192,6 +192,39 @@ DIRECTIVE_AIM: [your aim statement here]`;
     }
 
     /**
+     * Get directives by array of IDs
+     * @param {Array<number>} directiveIds - Array of directive IDs
+     * @returns {Promise<Array>} Array of directives
+     */
+    async getDirectivesByIds(directiveIds) {
+        try {
+            const { Op } = require('sequelize');
+            
+            const directives = await TagSuggestionDirective.findAll({
+                where: { 
+                    id: { [Op.in]: directiveIds }
+                },
+                include: [
+                    {
+                        model: TagSuggestion,
+                        as: 'tagSuggestion',
+                        include: [
+                            { model: Story, as: 'story' },
+                            { model: Tag, as: 'tag' }
+                        ]
+                    }
+                ],
+                order: [['createdAt', 'DESC']]
+            });
+
+            return directives;
+        } catch (error) {
+            console.error('Error getting directives by IDs:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Update an existing directive
      * @param {number} directiveId - The ID of the directive
      * @param {string} directive - The new directive text

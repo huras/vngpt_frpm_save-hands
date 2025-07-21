@@ -1,8 +1,20 @@
 import React from 'react';
 import StarRating from './StarRating';
+import CharacterSuggestionCard from './CharacterSuggestionCard';
 import './StoryExpansionSuggestionCard.scss';
 
 const StoryExpansionSuggestionCard = ({ suggestion, type, onAccept, onDelete }) => {
+    // If it's a character suggestion, use the dedicated component
+    if (type === 'characters') {
+        return (
+            <CharacterSuggestionCard 
+                suggestion={suggestion}
+                onAccept={onAccept}
+                onDelete={onDelete}
+            />
+        );
+    }
+
     const isAccepted = suggestion.isAccepted;
     
     const handleAccept = () => {
@@ -21,16 +33,6 @@ const StoryExpansionSuggestionCard = ({ suggestion, type, onAccept, onDelete }) 
                         <span className="badge badge-info">{suggestion.arcType}</span>
                         <span className="badge badge-secondary">{suggestion.complexity}</span>
                         <span className="badge badge-warning">{suggestion.estimatedDuration}</span>
-                    </div>
-                );
-            
-            case 'characters':
-                return (
-                    <div className="character-details">
-                        <span className="badge badge-info">{suggestion.characterType}</span>
-                        {suggestion.archetype && (
-                            <span className="badge badge-secondary">{suggestion.archetype}</span>
-                        )}
                     </div>
                 );
             

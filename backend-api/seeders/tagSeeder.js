@@ -206,7 +206,7 @@ const tagData = [
         broader_description: "Isekai stories involve characters who are transported or reincarnated into another world, often one filled with fantasy, magic, or game-like elements. These narratives explore adaptation, growth, and adventure as the protagonist navigates unfamiliar realms, often discovering hidden potential and shaping their new world.",
         category: "isekai_fantasy_worlds",
         keywords: "isekai, another world, transported, reincarnation, fantasy world, parallel",
-        media_url: "/media/tags/isekai-2.jpeg",
+        media_url: "/media/tags/isekai.png",
         media_type: "image"
     },
     {

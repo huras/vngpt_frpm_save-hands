@@ -236,6 +236,9 @@ export const intelligentTagApi = {
   getDirective: (suggestionId, directiveId) => 
     api.get(`/intelligent-tags/directives/${suggestionId}/${directiveId}`),
 
+  getDirectivesByIds: (directiveIds) => 
+    api.post('/intelligent-tags/directives/by-ids', { directiveIds }),
+
   generateDirective: (suggestionId) => 
     api.post(`/intelligent-tags/directives/${suggestionId}/generate`),
 

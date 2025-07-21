@@ -553,6 +553,27 @@ router.get('/directives/:suggestionId/:directiveId', async (req, res) => {
     }
 });
 
+// POST /intelligent-tags/directives/by-ids - Get directives by array of IDs
+router.post('/directives/by-ids', async (req, res) => {
+    try {
+        const { directiveIds } = req.body;
+        
+        if (!directiveIds || !Array.isArray(directiveIds) || directiveIds.length === 0) {
+            return res.status(400).json({ error: 'directiveIds array is required.' });
+        }
+
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        const directives = await directiveService.getDirectivesByIds(directiveIds);
+        
+        res.json({ success: true, data: directives });
+    } catch (error) {
+        console.error('Error fetching directives by IDs:', error);
+        res.status(500).json({ error: 'An error occurred while fetching the directives.' });
+    }
+});
+
 // POST /intelligent-tags/directives/:suggestionId/generate - Manually generate directive for a suggestion
 router.post('/directives/:suggestionId/generate', async (req, res) => {
     try {
