@@ -116,7 +116,7 @@ const tagData = [
         broader_description: "Historical fiction immerses readers in past eras, portraying life, culture, and events from different time periods with rich detail and authenticity. These stories may focus on fictional characters or real historical figures, exploring how individuals navigate the social, political, and cultural landscapes of their times.",
         category: "historical_period",
         keywords: "historical, past, old, traditional, classical, heritage",
-        media_url: "/media/tags/historical.jpeg",
+        media_url: "/media/tags/historical.png",
         media_type: "image"
     },
     {
@@ -298,8 +298,8 @@ const tagData = [
         broader_description: "Uplifting stories are designed to inspire and encourage, often focusing on personal growth, resilience, kindness, and overcoming adversity. These narratives highlight the good in people and situations, leaving the audience with a sense of hope and positivity.",
         category: "mood",
         keywords: "uplifting, inspiring, positive, motivational, heartwarming",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/uplifting.png",
+        media_type: "image"
     },
     {
         title: "Tragic",
@@ -307,8 +307,8 @@ const tagData = [
         broader_description: "Tragic stories focus on loss, heartbreak, and sorrow, often leading to emotional catharsis. These narratives explore human vulnerability, fate, and the impact of devastating events, aiming to evoke empathy and reflection through emotional depth.",
         category: "mood",
         keywords: "tragic, sad, heartbreaking, loss, sorrow, emotional",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/tragic.png",
+        media_type: "image"
     },
     {
         title: "Suspenseful",
@@ -316,8 +316,8 @@ const tagData = [
         broader_description: "Suspenseful stories are built around tension and anticipation, keeping audiences on edge through twists, mysteries, and high-stakes situations. These narratives often involve danger, secrets, or uncertain outcomes, making the experience thrilling and unpredictable.",
         category: "mood",
         keywords: "suspenseful, tension, thrilling, edge-of-seat, dramatic",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/suspenseful.png",
+        media_type: "image"
     },
     {
         title: "Wholesome",
@@ -343,8 +343,8 @@ const tagData = [
         broader_description: "Philosophical stories delve into existential questions, abstract concepts, and the search for meaning in life. These narratives encourage introspection and discussion, often exploring the nature of reality, morality, consciousness, and human existence.",
         category: "mood",
         keywords: "philosophical, deep, meaning, existential, thought-provoking",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/philosophical.png",
+        media_type: "image"
     },
 
     // --- Audience ---
@@ -381,8 +381,8 @@ const tagData = [
         broader_description: "Family content is crafted to be enjoyed by viewers of all ages, blending universal themes, humor, and values. These stories promote togetherness and entertainment that children, teens, and adults can watch and appreciate together.",
         category: "audience",
         keywords: "family, all ages, everyone, together",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/family.png",
+        media_type: "image"
     },
     {
         title: "Mature",
@@ -390,8 +390,8 @@ const tagData = [
         broader_description: "Mature content targets adult viewers with stories that often include explicit material, strong language, violence, or complex themes. These narratives are intended for those seeking more intense or realistic portrayals of life and human nature.",
         category: "audience",
         keywords: "mature, explicit, adult, 18+",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/mature.png",
+        media_type: "image"
     },
     {
         title: "All Ages",
@@ -399,8 +399,8 @@ const tagData = [
         broader_description: "All Ages content is designed to be inclusive and appropriate for viewers of any age. These stories avoid explicit material and aim to provide entertainment that is wholesome, accessible, and enjoyable for a broad audience.",
         category: "audience",
         keywords: "all ages, everyone, universal, family",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/all-ages.png",
+        media_type: "image"
     },
 
     // --- Subgenres & Specific Genres ---
@@ -464,8 +464,8 @@ const tagData = [
         broader_description: "Psychological Thriller stories weave intense suspense with mental manipulation, inner conflict, and unpredictable twists. These narratives explore the darker aspects of the mind, often blurring the line between reality and delusion, and keeping audiences guessing until the very end.",
         category: "drama_emotional",
         keywords: "psychological, thriller, suspense, mind games, tension",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/psychological-thriller.png",
+        media_type: "image"
     },
     {
         title: "Romantic Comedy",
@@ -473,8 +473,8 @@ const tagData = [
         broader_description: "Romantic Comedy combines humor with romance, telling light-hearted and charming stories about love, misunderstandings, and the joy of relationships. These narratives often follow quirky characters and comical situations that ultimately lead to heartfelt connections.",
         category: "romance_relationships",
         keywords: "romantic comedy, romance, humor, love, funny",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/romantic-comedy.png",
+        media_type: "image"
     },
     {
         title: "Reverse Harem",
@@ -482,8 +482,8 @@ const tagData = [
         broader_description: "Reverse Harem stories center around a female protagonist who is surrounded by multiple male characters with romantic interest in her. These narratives often explore themes of romance, emotional bonds, and comedic or dramatic dynamics among a varied group of suitors.",
         category: "romance_relationships",
         keywords: "reverse harem, romance, multiple boys, love triangle",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/reverse-harem.png",
+        media_type: "image"
     },
     {
         title: "Yuri",

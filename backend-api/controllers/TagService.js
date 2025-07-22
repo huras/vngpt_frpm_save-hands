@@ -1,13 +1,11 @@
 const BaseService = require('./BaseService');
-const { Tag, Story } = require('../models');
+const { Tag } = require('../models');
 const { getMediaUrl, deleteMedia, detectMediaType } = require('../utils/mediaUpload');
 const AIService = require('../services/AIService');
 
 class TagService extends BaseService {
     constructor() {
-        super(Tag, [
-            { model: Story, as: 'stories' }
-        ]);
+        super(Tag, []); // No direct associations needed - Tag and Story are connected through TagSuggestion/StoryTagReasoning
         this.aiService = new AIService();
     }
 

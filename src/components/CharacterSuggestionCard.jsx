@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StarRating from './StarRating';
+import SourceDirectiveItem from './SourceDirectiveItem';
 import { intelligentTagApi } from '../services/intelligentTagApi';
-import { BACKEND_CONFIG } from '../config/backend';
 import './CharacterSuggestionCard.scss';
 
 const CharacterSuggestionCard = ({ suggestion, onAccept, onDelete }) => {
@@ -165,35 +165,11 @@ const CharacterSuggestionCard = ({ suggestion, onAccept, onDelete }) => {
                             ) : sourceDirectives.length > 0 ? (
                                 <div className="directives-list">
                                     {sourceDirectives.map((directive, index) => (
-                                        <div key={directive.id || index} className="directive-item">
-                                            <div className="directive-header">
-                                                {directive.tagSuggestion?.tag?.thumb_url ? (
-                                                    <img 
-                                                        src={BACKEND_CONFIG.getImageUrl(directive.tagSuggestion.tag.thumb_url)} 
-                                                        alt={directive.tagSuggestion.tag.title}
-                                                        className="directive-tag-thumb"
-                                                        onError={(e) => {
-                                                            e.target.style.display = 'none';
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="directive-tag-thumb-placeholder">
-                                                        <span>{directive.tagSuggestion?.tag?.title?.charAt(0)?.toUpperCase() || 'T'}</span>
-                                                    </div>
-                                                )}
-                                                <div className="directive-info">
-                                                    <h5 className="directive-tag-title">
-                                                        {directive.tagSuggestion?.tag?.title || `Tag ${index + 1}`}
-                                                    </h5>
-                                                    <div className="directive-aim field-section" title={"Aim"}>
-                                                        <p>{directive.directive_aim}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="directive-content field-section" title={"Directive"}>
-                                                <p>{directive.directive}</p>
-                                            </div>
-                                        </div>
+                                        <SourceDirectiveItem 
+                                            key={directive.id || index} 
+                                            directive={directive} 
+                                            index={index} 
+                                        />
                                     ))}
                                 </div>
                             ) : (

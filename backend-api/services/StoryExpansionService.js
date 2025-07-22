@@ -469,13 +469,13 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
         let existingCharactersContext = '';
         if (story.characterSuggestions && story.characterSuggestions.length > 0) {
             const existingCharacters = story.characterSuggestions
-                .filter(cs => cs.isActive !== false) // Only include active suggestions
+                .filter(cs => cs.isAccepted !== false) // Only include active suggestions
                 .map(cs => {
                     const traits = cs.personalityTraits ? JSON.parse(cs.personalityTraits) : [];
                     const motivations = cs.motivations ? JSON.parse(cs.motivations) : [];
                     const relationships = cs.relationships ? JSON.parse(cs.relationships) : [];
                     
-                    return `- ${cs.name} (${cs.characterType}): ${cs.high_level_description} (directives used ids: ${cs.sourceDirectives})
+                    return `- ${cs.name} (${cs.characterType}): ${cs.high_level_description} (directives used ids: ${cs.sourceDirectives}) 
   
 `;
 // Personality: ${traits.join(', ') || 'Not specified'}
@@ -519,12 +519,12 @@ Provide a JSON response with:
       "high_level_description": "Brief description of the character concept",
       "characterType": "protagonist|antagonist|supporting|mentor|love_interest|comic_relief|foil|deuteragonist",
       "archetype": "Hero|Mentor|Trickster|etc.",
-      "personalityTraits": ["Trait 1", "Trait 2", "Trait 3", ALL_FITTING_TRAITS],
+      "personalityTraits": ["Trait 1", "Trait 2", "Trait 3", ... ALL_FITTING_TRAITS],
       "background": "Character background and history",
-      "motivations": ["Motivation 1", "Motivation 2"],
-      "relationships": ["Relationship with Character A", "Relationship with Character B"],
-      "sourceDirectives": [directiveId1, directiveId2, directiveId3, ALL_MATCHING_DIRECTIVE_IDs],
-      "confidence": 0.8
+      "motivations": ["Motivation 1", "Motivation 2", "Motivation 3", ... ALL_FITTING_MOTIVATIONS],
+      "relationships": ["Relationship with Character A", "Relationship with Character B", ... ALL_FITTING_RELATIONSHIPS],
+      "sourceDirectives": [directiveId1, directiveId2, directiveId3, ... ALL_MATCHING_DIRECTIVE_IDs],
+      "confidence": 0.8 (0 - 1)
     }
   ]
 }
