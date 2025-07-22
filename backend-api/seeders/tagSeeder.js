@@ -410,7 +410,7 @@ const tagData = [
         broader_description: "Cyberpunk stories are set in dystopian futures where advanced technology and cybernetics coexist with societal collapse and gritty urban life. These narratives explore themes of identity, rebellion, surveillance, and the consequences of unchecked technological growth, often featuring hackers, corporations, and neon-soaked cityscapes.",
         category: "scifi_future",
         keywords: "cyberpunk, dystopian, future, technology, neon, hacker",
-        media_url: "/media/tags/cyberpunk.png",
+        media_url: "/media/tags/cyberpunk.jpeg",
         media_type: "image"
     },
     {
