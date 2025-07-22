@@ -581,8 +581,8 @@ const tagData = [
         broader_description: "Prophecy stories revolve around characters whose destinies have been foretold, often by ancient predictions or omens. These narratives explore themes of fate, free will, and the burden or guidance of a grand, often mystical, destiny.",
         category: "tropes",
         keywords: "prophecy, destiny, fate, prediction, legend",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/prophecy.png",
+        media_type: "image"
     },
     {
         title: "Secret Society",
@@ -590,8 +590,8 @@ const tagData = [
         broader_description: "Secret Society stories delve into the intrigue of mysterious groups operating behind the scenes. These narratives often involve conspiracies, hidden knowledge, and shadowy influences that shape events from the background.",
         category: "tropes",
         keywords: "secret society, organization, hidden, conspiracy",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/secret-society.png",
+        media_type: "image"
     },
     {
         title: "Hidden Power",
@@ -599,8 +599,8 @@ const tagData = [
         broader_description: "Hidden Power stories focus on characters who possess untapped or unknown abilities. These narratives often explore personal growth, self-discovery, and the awakening of inner strength in the face of adversity.",
         category: "tropes",
         keywords: "hidden power, ability, secret, potential",
-        media_url: null,
-        media_type: "video"
+        media_url: "/media/tags/hidden-power.png",
+        media_type: "image"
     },
     {
         title: "Forbidden Love",
@@ -682,8 +682,8 @@ const tagData = [
         "broader_description": "A Strong Female Lead is a central character who is confident, capable, and independent. These characters often challenge gender norms and inspire audiences through resilience, leadership, and strength of character.",
         "category": "character_archetype",
         "keywords": "strong female lead, woman, heroine, independent, powerful",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/strong-female-lead.png",
+        "media_type": "image"
     },
     {
         "title": "Mentor",
@@ -691,8 +691,8 @@ const tagData = [
         "broader_description": "The Mentor archetype provides wisdom, guidance, and support to the protagonist. Often older and experienced, mentors help shape the hero’s journey by offering crucial advice or training at pivotal moments.",
         "category": "character_archetype",
         "keywords": "mentor, guide, teacher, wisdom, support",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/mentor.png",
+        "media_type": "image"
     },
     {
         "title": "Sidekick",
@@ -700,8 +700,8 @@ const tagData = [
         "broader_description": "Sidekicks are loyal companions who support the main character throughout their journey. Often providing encouragement, humor, or a grounded perspective, they help highlight the protagonist’s growth and human side.",
         "category": "character_archetype",
         "keywords": "sidekick, companion, friend, support, helper",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/sidekick.png",
+        "media_type": "image"
     },
     {
         "title": "Comic Relief",
@@ -747,8 +747,8 @@ const tagData = [
         "broader_description": "Post-Apocalyptic settings explore worlds devastated by catastrophic events like nuclear war, pandemics, or natural disasters. These stories focus on survival, rebuilding society, and the struggles faced by humanity amid ruins and desolation.",
         "category": "setting",
         "keywords": "post-apocalyptic, apocalypse, survival, ruins, future",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/post-apocalyptic.png",
+        "media_type": "image"
     },
     {
         "title": "Dystopian",
@@ -765,8 +765,8 @@ const tagData = [
         "broader_description": "Utopian settings present idealized societies characterized by harmony, peace, and perfection. These stories explore concepts of perfect social, political, or technological systems, often as a contrast or critique to dystopian themes.",
         "category": "setting",
         "keywords": "utopian, perfect, ideal, society, harmony",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/utopian.png",
+        "media_type": "image"
     },
     {
         "title": "Virtual Reality",
@@ -893,8 +893,8 @@ const tagData = [
         "broader_description": "Stories centered on Identity explore the journey of self-discovery, understanding one's place in the world, and the quest for belonging. These themes often delve into personal growth and acceptance.",
         "category": "theme",
         "keywords": "identity, self, belonging, discovery, personal",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/identity.png",
+        "media_type": "image"
     },
     {
         "title": "Justice",
@@ -902,8 +902,8 @@ const tagData = [
         "broader_description": "Justice-themed stories focus on the pursuit of fairness, law, and moral righteousness. They often depict struggles against injustice, corruption, or societal wrongs, highlighting ethical dilemmas and retribution.",
         "category": "theme",
         "keywords": "justice, right, wrong, law, fairness",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/justice.png",
+        "media_type": "image"
     },
     {
         "title": "Revenge",
@@ -911,8 +911,8 @@ const tagData = [
         "broader_description": "Revenge stories revolve around characters seeking to right personal wrongs through retaliation. These narratives explore themes of vengeance, justice, and the consequences of retaliation.",
         "category": "theme",
         "keywords": "revenge, payback, justice, conflict",
-        "media_url": null,
-        "media_type": "video"
+        "media_url": "/media/tags/revenge.png",
+        "media_type": "image"
     },
     {
         "title": "Sacrifice",
