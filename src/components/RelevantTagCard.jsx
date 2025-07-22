@@ -82,7 +82,7 @@ const RelevantTagCard = ({
           <div className="tag-meta">
             <span className="tag-category">{tag.category}</span>
             {tag.relevanceScore && (
-              <span className="relevance-score">Score: {tag.relevanceScore}/10</span>
+              <span className="relevance-score">Score: {tag.relevanceScore}/100</span>
             )}
           </div>
         </div>

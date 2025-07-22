@@ -33,18 +33,41 @@ class ComprehensiveTagGenerationService {
                 stage: 1,
                 stageName: 'Selecting Relevant Tags',
                 progress: 1,
-                total: 1,
-                message: `Found ${relevantTags.length} relevant tags for your story. Related tags and world-building effects can be generated individually per tag.`,
+                total: 2,
+                message: `Found ${relevantTags.length} relevant tags for your story. Generating detailed reasoning for high-scoring tags...`,
                 data: { relevantTags }
+            };
+
+            // Generate reasoning for high-scoring tags (75%+ relevance)
+            console.log('Generating reasoning for high-scoring tags...');
+            yield {
+                stage: 1,
+                stageName: 'Generating Tag Reasoning',
+                progress: 1,
+                total: 2,
+                message: 'Generating detailed reasoning for highly relevant tags...',
+                data: null
+            };
+
+            const relevantTagsWithReasoning = await this.generateReasoningForHighScoringTags(relevantTags, storyTitle, storyBrainstorm);
+            console.log(`Generated reasoning for ${relevantTagsWithReasoning.filter(tag => Number.parseInt(tag.relevanceScore) >= 75).length} high-scoring tags`);
+
+            yield {
+                stage: 1,
+                stageName: 'Generating Tag Reasoning',
+                progress: 2,
+                total: 2,
+                message: `Generated detailed reasoning for ${relevantTagsWithReasoning.filter(tag => tag.relevanceScore >= 75).length} high-scoring tags. Related tags and world-building effects can be generated individually per tag.`,
+                data: { relevantTags: relevantTagsWithReasoning }
             };
 
             // Final result
             const finalResult = {
-                relevantTags,
+                relevantTags: relevantTagsWithReasoning,
                 relatedTagsMap: {}, // Empty since related tags are generated separately
                 worldBuildingEffects: [], // Empty since world-building effects are generated separately
                 summary: {
-                    totalRelevantTags: relevantTags.length,
+                    totalRelevantTags: relevantTagsWithReasoning.length,
                     totalRelatedTags: 0, // Will be populated when users request related tags
                     totalWorldBuildingEffects: 0 // Will be populated when users request world-building effects
                 }
@@ -58,7 +81,7 @@ class ComprehensiveTagGenerationService {
                     console.log('Comprehensive results auto-saved successfully');
                     
                     // Update the tags with their suggestionId values
-                    const updatedRelevantTags = finalResult.relevantTags.map((tag, index) => ({
+                    const updatedRelevantTags = relevantTagsWithReasoning.map((tag, index) => ({
                         ...tag,
                         suggestionId: savedResults.tagSuggestions[index]?.id,
                         suggestionStatus: 'pending'
@@ -73,9 +96,9 @@ class ComprehensiveTagGenerationService {
 
             yield {
                 stage: 1,
-                stageName: 'Selecting Relevant Tags',
-                progress: 1,
-                total: 1,
+                stageName: 'Generating Tag Reasoning',
+                progress: 2,
+                total: 2,
                 message: 'Comprehensive tag analysis completed and saved! Related tags and world-building effects can be generated individually per tag.',
                 data: finalResult,
                 completed: true
@@ -150,32 +173,55 @@ class ComprehensiveTagGenerationService {
                 console.log(`Filtered out ${existingSuggestions.length} already suggested tags. ${allTags.length} tags remaining.`);
             }
 
-            const prompt = `Based on this story, select ${limit ? limit : 'all'} most relevant anime/manga tags with EXCELLENT category diversity:
+            // Process tags in batches of 20
+            const batchSize = 20;
+            const allScoredTags = [];
+            
+            for (let i = 0; i < allTags.length; i += batchSize) {
+                const batch = allTags.slice(i, i + batchSize);
+                console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(allTags.length / batchSize)} (${batch.length} tags)`);
+                
+                const batchScoredTags = await this.processTagBatch(batch, storyTitle, storyBrainstorm);
+                allScoredTags.push(...batchScoredTags);
+                
+                // Small delay between batches to avoid rate limiting
+                if (i + batchSize < allTags.length) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+
+            // Sort by relevance score (highest first)
+            allScoredTags.sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+            // Apply limit if specified
+            const finalTags = allScoredTags;
+
+            return finalTags;
+        } catch (error) {
+            console.error('Error selecting relevant tags:', error);
+            // Fallback to popular tags
+            return this.getFallbackRelevantTags(limit);
+        }
+    }
+
+    /**
+     * Process a batch of tags for relevance scoring
+     */
+    async processTagBatch(tagBatch, storyTitle, storyBrainstorm) {
+        try {
+            const prompt = `Based on this story, analyze and score these anime/manga tags for relevance:
 
 Story Title: ${storyTitle}
 Story Brainstorm: ${storyBrainstorm}
 
 Available Tags:
-${allTags.map(tag => `- ID: ${tag.id}, Title: ${tag.title}, Description: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords})`).join('\n')}
+${tagBatch.map(tag => `- ID: ${tag.id}, Title: ${tag.title}, Description: ${tag.short_description}`).join('\n')}
 
-IMPORTANT: Ensure your selection covers multiple categories for comprehensive story representation:
-
-CATEGORY GUIDELINES:
-- Include 2-3 genre tags (fantasy_magic, scifi_future, action_adventure, romance_relationships, etc.)
-- Include 1-2 mood/atmosphere tags (mood, drama_emotional, comedy_light)
-- Include 1-2 character focus tags (character_archetype, character_focus)
-- Include 1-2 setting tags (setting, historical_period, modern_contemporary)
-- Include 1-2 theme tags (theme, tropes)
-- Include 1 audience tag (audience) if appropriate
-- Include 1-2 other relevant categories
-
-Provide a JSON response with:
-1. "selectedTags": Array of ${limit} objects, each with:
+Provide a JSON response for ALL of these tags:
+1. "tagScores": Array of objects, each with:
    - "tagId": The exact ID number from the available tags list
    - "tagName": The exact title from the available tags list
-   - "reasoning": Array of 2-3 detailed explanations for why this tag was selected
-2. "relevanceScore": Overall relevance score (1-10) for how well the tags match the story
-3. "categoryBreakdown": Object showing how many tags from each category were selected
+   - "relevanceScore": Relevance score (0-100) for how well this tag matches the story
 
 Consider:
 - Genre relevance to the story themes
@@ -188,7 +234,11 @@ Consider:
 - Emotional impact and mood
 - Cultural and social elements
 
-CRITICAL: Use EXACT tagId and tagName values from the available tags list. Do not create new names or IDs.
+CRITICAL: 
+- Use EXACT tagId and tagName values from the available tags list
+- Score ALL tags in this batch (0-100 scale)
+- Higher scores (75+) indicate strong relevance
+- Lower scores (0-25) indicate poor relevance
 
 Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
 
@@ -196,57 +246,142 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
                 model: "gpt-3.5-turbo",
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.7,
-                max_tokens: 2000
+                max_tokens: 4000
             });
 
             const content = response.choices[0].message.content;
             const cleanedContent = this.aiService.cleanAIResponse(content);
             const result = JSON.parse(cleanedContent);
 
-            // Process the structured tag objects
-            const tagsWithReasoning = [];
+            // Process the tag scores and find the actual tag objects
+            const scoredTags = [];
             
-            for (const selectedTagData of result.selectedTags || []) {
+            for (const tagScore of result.tagScores || []) {
                 // Find the actual tag object by ID
-                const tag = allTags.find(t => t.id === selectedTagData.tagId);
+                const tag = tagBatch.find(t => t.id === tagScore.tagId);
                 
                 if (tag) {
                     // Validate that tagName matches
-                    if (tag.title !== selectedTagData.tagName) {
-                        console.warn(`Tag ID ${selectedTagData.tagId} name mismatch: expected "${tag.title}", got "${selectedTagData.tagName}"`);
+                    if (tag.title !== tagScore.tagName) {
+                        console.warn(`Tag ID ${tagScore.tagId} name mismatch: expected "${tag.title}", got "${tagScore.tagName}"`);
                     }
                     
-                    // Process reasoning array
-                    let reasoning = 'AI-selected based on story content';
-                    if (Array.isArray(selectedTagData.reasoning) && selectedTagData.reasoning.length > 0) {
-                        reasoning = selectedTagData.reasoning.join('; ');
-                    } else if (typeof selectedTagData.reasoning === 'string') {
-                        reasoning = selectedTagData.reasoning;
-                    }
-
-                    tagsWithReasoning.push({
+                    scoredTags.push({
                         ...tag.toJSON(),
-                        selectionReasoning: reasoning,
-                        relevanceScore: result.relevanceScore || 7
+                        relevanceScore: tagScore.relevanceScore || 0
                     });
                 } else {
-                    console.warn(`Tag with ID ${selectedTagData.tagId} not found in available tags`);
+                    console.warn(`Tag with ID ${tagScore.tagId} not found in current batch`);
                 }
             }
 
-            // Apply limit if specified
-            const finalTags = limit ? tagsWithReasoning.slice(0, limit) : tagsWithReasoning;
+            return scoredTags;
+        } catch (error) {
+            console.error('Error processing tag batch:', error);
+            // Return basic scoring for this batch if AI processing fails
+            return tagBatch.map(tag => ({
+                ...tag.toJSON(),
+                relevanceScore: 5 // Default low score
+            }));
+        }
+    }
 
-            // Log category breakdown for debugging
-            if (result.categoryBreakdown) {
-                console.log('Category breakdown:', result.categoryBreakdown);
+    /**
+     * Generate reasoning for tags with high relevance scores (75%+)
+     */
+    async generateReasoningForHighScoringTags(tags, storyTitle, storyBrainstorm) {
+        try {
+            // Filter tags with relevance score >= 75
+            const highScoringTags = tags.filter(tag => tag.relevanceScore >= 75);
+            
+            if (highScoringTags.length === 0) {
+                console.log('No tags with relevance score >= 75 found');
+                return tags;
             }
 
-            return finalTags;
+            console.log(`Generating reasoning for ${highScoringTags.length} high-scoring tags`);
+
+            const prompt = `Generate detailed reasoning for why these tags are highly relevant to this story:
+
+Story Title: ${storyTitle}
+Story Brainstorm: ${storyBrainstorm}
+
+High-Scoring Tags:
+${highScoringTags.map(tag => `- ID: ${tag.id}, Title: ${tag.title}, Description: ${tag.short_description} (Category: ${tag.category}, Keywords: ${tag.keywords}), Score: ${tag.relevanceScore}`).join('\n')}
+
+Provide a JSON response with:
+1. "tagReasonings": Array of objects, each with:
+   - "tagId": The exact ID number
+   - "tagName": The exact title
+   - "reasoning": Array of 2-3 detailed explanations for why this tag is highly relevant
+   - "specificConnections": Array of specific story elements this tag connects to
+   - "thematicRelevance": How this tag enhances the story's themes
+   - "characterImpact": How this tag affects character development
+   - "plotContribution": How this tag contributes to plot development
+
+Consider:
+- Direct connections to story elements
+- Thematic resonance
+- Character development opportunities
+- Plot enhancement potential
+- World-building contributions
+- Emotional and atmospheric impact
+- Genre conventions and expectations
+- Target audience appeal
+
+CRITICAL: Use EXACT tagId and tagName values. Provide specific, detailed reasoning.
+
+Format as valid JSON only. Do not use markdown formatting, code blocks, or backticks. Return pure JSON.`;
+
+            const response = await this.aiService.openai.chat.completions.create({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.8,
+                max_tokens: 3000
+            });
+
+            const content = response.choices[0].message.content;
+            const cleanedContent = this.aiService.cleanAIResponse(content);
+            const result = JSON.parse(cleanedContent);
+
+            // Update tags with reasoning
+            const updatedTags = tags.map(tag => {
+                const reasoningData = result.tagReasonings?.find(r => r.tagId === tag.id);
+                
+                if (reasoningData && tag.relevanceScore >= 75) {
+                    // Process reasoning array
+                    let reasoning = 'AI-selected based on story content';
+                    if (Array.isArray(reasoningData.reasoning) && reasoningData.reasoning.length > 0) {
+                        reasoning = reasoningData.reasoning.join('; ');
+                    } else if (typeof reasoningData.reasoning === 'string') {
+                        reasoning = reasoningData.reasoning;
+                    }
+
+                    return {
+                        ...tag,
+                        selectionReasoning: reasoning,
+                        specificConnections: reasoningData.specificConnections || [],
+                        thematicRelevance: reasoningData.thematicRelevance || '',
+                        characterImpact: reasoningData.characterImpact || '',
+                        plotContribution: reasoningData.plotContribution || ''
+                    };
+                } else {
+                    // For low-scoring tags, provide basic reasoning
+                    return {
+                        ...tag,
+                        selectionReasoning: `Relevance score: ${tag.relevanceScore}% - ${tag.relevanceScore >= 50 ? 'Moderately relevant' : 'Low relevance'}`
+                    };
+                }
+            });
+
+            return updatedTags;
         } catch (error) {
-            console.error('Error selecting relevant tags:', error);
-            // Fallback to popular tags
-            return this.getFallbackRelevantTags(limit);
+            console.error('Error generating reasoning for high-scoring tags:', error);
+            // Return tags with basic reasoning if generation fails
+            return tags.map(tag => ({
+                ...tag,
+                selectionReasoning: `Relevance score: ${tag.relevanceScore}% - ${tag.relevanceScore >= 75 ? 'High relevance' : tag.relevanceScore >= 50 ? 'Moderate relevance' : 'Low relevance'}`
+            }));
         }
     }
 

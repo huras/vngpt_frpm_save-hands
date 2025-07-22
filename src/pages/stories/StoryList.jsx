@@ -227,7 +227,7 @@ const StoryList = () => {
                 {/* Story Tags */}
                 {story.tags && story.tags.length > 0 && (
                   <div className="story-tags">
-                    <h6 className="tags-section-title">Applied Tags:</h6>
+                    <h6 className="tags-section-title">Tags:</h6>
                     {story.tags.map(tag => (
                       <span key={tag.id} className="story-tag">
                         {tag.thumb_url && (
@@ -248,32 +248,7 @@ const StoryList = () => {
                   </div>
                 )}
 
-                {/* Tag Suggestions */}
-                {story.tagSuggestions && story.tagSuggestions.length > 0 && (
-                  <div className="story-tag-suggestions">
-                    <h6 className="tags-section-title">Tag Suggestions:</h6>
-                    {story.tagSuggestions.map(suggestion => (
-                      <span key={suggestion.id} className="story-tag suggestion-tag">
-                        {suggestion.tag.thumb_url && (
-                          <TagImagePopup tag={suggestion.tag} position="top">
-                            <img 
-                              src={BACKEND_CONFIG.getImageUrl(suggestion.tag.thumb_url)} 
-                              alt={suggestion.tag.title} 
-                              className="tag-thumb"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          </TagImagePopup>
-                        )}
-                        <span className="tag-title">{suggestion.tag.title}</span>
-                        <span className="suggestion-confidence">
-                          ({Math.round(suggestion.confidence * 100)}%)
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-                )}
+
               </div>
               
               <div className="story-meta">

@@ -38,6 +38,12 @@
     padding: 2rem;
     background: #f8f9fa;
     margin-bottom: 0;
+
+    &:not(:hover) {
+      * {
+        opacity: 0.05;
+      }
+    }
   }
 
   .tag-modal-content {

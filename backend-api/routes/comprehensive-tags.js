@@ -205,7 +205,7 @@ router.get('/story/:storyId', async (req, res) => {
         const tagSuggestions = await TagSuggestion.findAll({
             where: { 
                 storyId,
-                suggestionType: 'comprehensive_generation',
+                // suggestionType: 'comprehensive_generation',
                 status: { [require('sequelize').Op.in]: ['accepted', 'pending'] } // Include both accepted and pending
             },
             include: [
@@ -595,7 +595,7 @@ router.delete('/suggestions/:storyId/clear', async (req, res) => {
         const suggestions = await TagSuggestion.findAll({
             where: {
                 storyId,
-                suggestionType: 'comprehensive_generation'
+                // suggestionType: 'comprehensive_generation'
             }
         });
 

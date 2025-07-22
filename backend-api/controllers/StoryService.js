@@ -4,15 +4,7 @@ const { Story, Tag, TagSuggestion, StoryTagReasoning } = require('../models');
 class StoryService extends BaseService {
     constructor() {
         super(Story, [
-            { 
-                model: TagSuggestion, 
-                as: 'tagSuggestions',
-                include: [
-                    { model: Tag, as: 'tag' }
-                ],
-                where: { status: 'pending' },
-                required: false
-            },
+            // Remove tagSuggestions from default includes since we don't want to show pending suggestions in stories list
             {
                 model: StoryTagReasoning,
                 as: 'tagReasonings',
@@ -39,11 +31,22 @@ class StoryService extends BaseService {
             ]
         });
 
+        // Add accepted tags to each story
+        const storiesWithTags = await Promise.all(
+            paginatedStories.rows.map(async (story) => {
+                const acceptedTags = await this.getStoryTags(story.id);
+                return {
+                    ...story.toJSON(),
+                    tags: acceptedTags
+                };
+            })
+        );
+
         const totalItems = paginatedStories.count;
         const totalPages = Math.ceil(totalItems / perPage);
 
         return {
-            data: paginatedStories.rows,
+            data: storiesWithTags,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,
@@ -87,11 +90,22 @@ class StoryService extends BaseService {
             ]
         });
 
+        // Add accepted tags to each story
+        const storiesWithTags = await Promise.all(
+            paginatedStories.rows.map(async (story) => {
+                const acceptedTags = await this.getStoryTags(story.id);
+                return {
+                    ...story.toJSON(),
+                    tags: acceptedTags
+                };
+            })
+        );
+
         const totalItems = paginatedStories.count;
         const totalPages = Math.ceil(totalItems / perPage);
 
         return {
-            data: paginatedStories.rows,
+            data: storiesWithTags,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,

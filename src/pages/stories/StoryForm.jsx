@@ -155,7 +155,6 @@ const StoryForm = () => {
       comprehensiveTagApi.generateComprehensiveTagsStreaming(
         formData.title.trim(),
         formData.brainstorm.trim(),
-        15, // Increased limit for better category coverage
         // onUpdate callback - handle each streaming update
         (update) => {
           console.log('Received streaming update:', update);

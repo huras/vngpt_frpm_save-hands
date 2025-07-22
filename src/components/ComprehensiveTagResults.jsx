@@ -223,7 +223,7 @@ const ComprehensiveTagResults = ({
     }));
   };
 
-  // Utility function to sort tags by status and then alphabetically
+  // Utility function to sort tags by status and then by relevance score DESC
   const sortTagsByStatusAndName = (tags) => {
     if (!tags) return tags;
     
@@ -238,7 +238,15 @@ const ComprehensiveTagResults = ({
         return statusA - statusB;
       }
       
-      // Then sort alphabetically by title
+      // Then sort by relevance score in descending order
+      const relevanceA = a.relevanceScore || a.score || 0;
+      const relevanceB = b.relevanceScore || b.score || 0;
+      
+      if (relevanceA !== relevanceB) {
+        return relevanceB - relevanceA; // DESC order
+      }
+      
+      // Finally sort alphabetically by title as tiebreaker
       return a.title.localeCompare(b.title);
     });
   };

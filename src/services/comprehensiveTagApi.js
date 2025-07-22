@@ -13,13 +13,13 @@ export const comprehensiveTagApi = {
     }),
 
   // Generate comprehensive tags with streaming updates
-  generateComprehensiveTagsStreaming: (storyTitle, storyBrainstorm, limit = 10, onUpdate, onComplete, onError, storyId = null) => {
+  generateComprehensiveTagsStreaming: (storyTitle, storyBrainstorm, onUpdate, onComplete, onError, storyId = null) => {
     fetch(`${API_BASE_URL}/comprehensive-tags/generate-streaming`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ storyTitle, storyBrainstorm, limit, storyId })
+      body: JSON.stringify({ storyTitle, storyBrainstorm, storyId })
     })
     .then(response => {
       if (!response.ok) {
