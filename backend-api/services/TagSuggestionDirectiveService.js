@@ -1,5 +1,6 @@
-const { TagSuggestion, TagSuggestionDirective, Story, Tag } = require('../models');
+const { TagSuggestion, TagSuggestionDirective, TagWorldBuildingDirectives, Story, Tag } = require('../models');
 const AIService = require('./AIService');
+const TagWorldBuildingDirectivesService = require('./TagWorldBuildingDirectivesService');
 
 class TagSuggestionDirectiveService {
     constructor() {
@@ -136,6 +137,47 @@ DIRECTIVE_AIM: [your aim statement here]`;
     }
 
     /**
+     * Generate world building directives for an accepted tag suggestion
+     * @param {number} tagSuggestionId - The ID of the accepted tag suggestion
+     * @returns {Promise<Object>} The generated world building directives
+     */
+    async generateWorldBuildingDirectives(tagSuggestionId) {
+        try {
+            const tagSuggestion = await TagSuggestion.findByPk(tagSuggestionId, {
+                include: [
+                    { model: Story, as: 'story' },
+                    { model: Tag, as: 'tag' }
+                ]
+            });
+
+            if (!tagSuggestion) {
+                throw new Error(`TagSuggestion with ID ${tagSuggestionId} not found`);
+            }
+
+            if (tagSuggestion.status !== 'accepted') {
+                throw new Error('World building directives can only be generated for accepted tag suggestions');
+            }
+
+            // Check if world building directives already exist
+            const existingDirectives = await TagWorldBuildingDirectives.findOne({
+                where: { tagSuggestionId }
+            });
+
+            if (existingDirectives) {
+                throw new Error('World building directives already exist for this tag suggestion');
+            }
+
+            // Generate world building directives
+            const worldBuildingDirectives = await TagWorldBuildingDirectivesService.generateWorldBuildingDirectives(tagSuggestion);
+
+            return worldBuildingDirectives;
+        } catch (error) {
+            console.error('Error generating world building directives:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get all directives for a tag suggestion
      * @param {number} tagSuggestionId - The ID of the tag suggestion
      * @returns {Promise<Array>} Array of directives
@@ -160,6 +202,35 @@ DIRECTIVE_AIM: [your aim statement here]`;
             return directives;
         } catch (error) {
             console.error('Error getting directives:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get world building directives for a tag suggestion
+     * @param {number} tagSuggestionId - The ID of the tag suggestion
+     * @returns {Promise<Object>} The world building directives with associated directives
+     */
+    async getWorldBuildingDirectives(tagSuggestionId) {
+        try {
+            return await TagWorldBuildingDirectivesService.getWorldBuildingDirectives(tagSuggestionId);
+        } catch (error) {
+            console.error('Error getting world building directives:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get directives by type for a tag suggestion
+     * @param {number} tagSuggestionId - The ID of the tag suggestion
+     * @param {string} directiveType - The type of directive to get
+     * @returns {Promise<Array>} Array of directives of the specified type
+     */
+    async getDirectivesByType(tagSuggestionId, directiveType) {
+        try {
+            return await TagWorldBuildingDirectivesService.getDirectivesByType(tagSuggestionId, directiveType);
+        } catch (error) {
+            console.error('Error getting directives by type:', error);
             throw error;
         }
     }

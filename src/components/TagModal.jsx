@@ -43,7 +43,7 @@ const TagModal = ({
               <img 
                 src={BACKEND_CONFIG.getImageUrl(tag.thumb_url)} 
                 alt={tag.title}
-                style={{visibility: 'hidden', transform: 'scaleX(1)', border: '5px solid #ffffff'}}
+                style={{visibility: 'visible', transform: 'scaleX(1)', border: '5px solid #ffffff'}}
                 className="tag-modal-image"
                 onError={(e) => {
                   e.target.style.display = 'none';

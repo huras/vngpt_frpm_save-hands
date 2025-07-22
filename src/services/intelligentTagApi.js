@@ -249,5 +249,15 @@ export const intelligentTagApi = {
     api.put(`/intelligent-tags/directives/${suggestionId}/${directiveId}`, { directive, directive_aim }),
 
   deleteDirective: (suggestionId, directiveId) => 
-    api.delete(`/intelligent-tags/directives/${suggestionId}/${directiveId}`)
+    api.delete(`/intelligent-tags/directives/${suggestionId}/${directiveId}`),
+
+  // World Building Directives endpoints
+  generateWorldBuildingDirectives: (suggestionId) => 
+    api.post(`/intelligent-tags/world-building-directives/${suggestionId}/generate`),
+
+  getWorldBuildingDirectives: (suggestionId) => 
+    api.get(`/intelligent-tags/world-building-directives/${suggestionId}`),
+
+  getDirectivesByType: (suggestionId, directiveType) => 
+    api.get(`/intelligent-tags/directives/${suggestionId}/by-type/${directiveType}`)
 }; 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BACKEND_CONFIG } from '../config/backend';
 import TagModal from './TagModal';
 import TagDirectivesTab from './TagDirectivesTab';
+import WorldBuildingDirectivesTab from './WorldBuildingDirectivesTab';
 import WorldBuildingEffectsTab from './WorldBuildingEffectsTab';
 import RelatedTagsTab from './RelatedTagsTab';
 import './RelevantTagCard.scss';
@@ -28,6 +29,12 @@ const RelevantTagCard = ({
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('directives');
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Function to trigger refresh of tab components
+  const handleRefreshTabs = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const handleImageClick = (e) => {
     e.stopPropagation();
@@ -150,6 +157,24 @@ const RelevantTagCard = ({
               </li>
             )}
             
+            {tag.suggestionId && tag.suggestionStatus === 'accepted' && (
+              <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link ${activeTab === 'world-building-directives' ? 'active' : ''}`}
+                  id={`world-building-directives-tab-${tag.id}`}
+                  data-bs-toggle="tab"
+                  data-bs-target={`#world-building-directives-content-${tag.id}`}
+                  type="button"
+                  role="tab"
+                  aria-controls={`world-building-directives-content-${tag.id}`}
+                  aria-selected={activeTab === 'world-building-directives'}
+                  onClick={() => setActiveTab('world-building-directives')}
+                >
+                  <i className="fas fa-globe"></i> World Building
+                </button>
+              </li>
+            )}
+            
             <li className="nav-item" role="presentation">
               <button
                 className={`nav-link ${activeTab === 'effects' ? 'active' : ''}`}
@@ -193,7 +218,25 @@ const RelevantTagCard = ({
               >
                 <TagDirectivesTab 
                   tag={tag} 
-                  isExpanded={isExpanded} 
+                  isExpanded={isExpanded}
+                  refreshKey={refreshKey}
+                  onRefresh={handleRefreshTabs}
+                />
+              </div>
+            )}
+            
+            {tag.suggestionId && tag.suggestionStatus === 'accepted' && (
+              <div
+                className={`tab-pane fade ${activeTab === 'world-building-directives' ? 'show active' : ''}`}
+                id={`world-building-directives-content-${tag.id}`}
+                role="tabpanel"
+                aria-labelledby={`world-building-directives-tab-${tag.id}`}
+              >
+                <WorldBuildingDirectivesTab 
+                  tag={tag} 
+                  isExpanded={isExpanded}
+                  refreshKey={refreshKey}
+                  onRefresh={handleRefreshTabs}
                 />
               </div>
             )}

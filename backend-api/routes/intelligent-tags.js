@@ -39,6 +39,19 @@ router.post('/suggestions/:suggestionId/accept', async (req, res) => {
         const { userExplanation } = req.body;
 
         const result = await intelligentTagService.acceptSuggestion(suggestionId, userExplanation);
+        
+        // Automatically generate world building directives for accepted suggestions
+        try {
+            const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+            const directiveService = new TagSuggestionDirectiveService();
+            const worldBuildingDirectives = await directiveService.generateWorldBuildingDirectives(suggestionId);
+            result.worldBuildingDirectives = worldBuildingDirectives;
+        } catch (directiveError) {
+            console.error('Error generating world building directives:', directiveError);
+            // Don't fail the acceptance if world building directives generation fails
+            result.worldBuildingDirectivesError = directiveError.message;
+        }
+        
         res.json({ success: true, ...result });
     } catch (error) {
         console.error('Error accepting suggestion:', error);
@@ -658,6 +671,68 @@ router.delete('/directives/:suggestionId/:directiveId', async (req, res) => {
     } catch (error) {
         console.error('Error deleting directive:', error);
         res.status(500).json({ error: 'An error occurred while deleting the directive.' });
+    }
+});
+
+// World Building Directives routes
+
+// POST /intelligent-tags/world-building-directives/:suggestionId/generate - Generate world building directives for a tag suggestion
+router.post('/world-building-directives/:suggestionId/generate', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        const worldBuildingDirectives = await directiveService.generateWorldBuildingDirectives(suggestionId);
+        
+        res.json({ success: true, data: worldBuildingDirectives });
+    } catch (error) {
+        console.error('Error generating world building directives:', error);
+        if (error.message.includes('not found')) {
+            res.status(404).json({ error: 'Tag suggestion not found.' });
+        } else if (error.message.includes('not accepted')) {
+            res.status(400).json({ error: 'Can only generate world building directives for accepted tag suggestions.' });
+        } else if (error.message.includes('already exist')) {
+            res.status(400).json({ error: 'World building directives already exist for this tag suggestion.' });
+        } else {
+            res.status(500).json({ error: 'An error occurred while generating world building directives.' });
+        }
+    }
+});
+
+// GET /intelligent-tags/world-building-directives/:suggestionId - Get world building directives for a tag suggestion
+router.get('/world-building-directives/:suggestionId', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        const worldBuildingDirectives = await directiveService.getWorldBuildingDirectives(suggestionId);
+        
+        if (!worldBuildingDirectives) {
+            return res.status(404).json({ error: 'World building directives not found.' });
+        }
+
+        res.json({ success: true, data: worldBuildingDirectives });
+    } catch (error) {
+        console.error('Error fetching world building directives:', error);
+        res.status(500).json({ error: 'An error occurred while fetching world building directives.' });
+    }
+});
+
+// GET /intelligent-tags/directives/:suggestionId/by-type/:directiveType - Get directives by type for a tag suggestion
+router.get('/directives/:suggestionId/by-type/:directiveType', async (req, res) => {
+    try {
+        const { suggestionId, directiveType } = req.params;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        const directives = await directiveService.getDirectivesByType(suggestionId, directiveType);
+        
+        res.json({ success: true, data: directives });
+    } catch (error) {
+        console.error('Error fetching directives by type:', error);
+        res.status(500).json({ error: 'An error occurred while fetching directives by type.' });
     }
 });
 

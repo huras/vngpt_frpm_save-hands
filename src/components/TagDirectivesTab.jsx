@@ -3,7 +3,7 @@ import DirectiveList from './DirectiveList';
 import { intelligentTagApi } from '../services/intelligentTagApi';
 import './TagDirectivesTab.scss';
 
-const TagDirectivesTab = ({ tag, isExpanded }) => {
+const TagDirectivesTab = ({ tag, isExpanded, refreshKey, onRefresh }) => {
   const [directives, setDirectives] = useState([]);
   const [directiveError, setDirectiveError] = useState(null);
   const [isLoadingDirectives, setIsLoadingDirectives] = useState(false);
@@ -14,6 +14,13 @@ const TagDirectivesTab = ({ tag, isExpanded }) => {
       loadDirectives();
     }
   }, [isExpanded, tag.suggestionId, tag.suggestionStatus]);
+
+  // Reload directives when refreshKey changes (triggered by world building directives generation)
+  useEffect(() => {
+    if (refreshKey > 0 && isExpanded && tag.suggestionId && tag.suggestionStatus === 'accepted') {
+      loadDirectives();
+    }
+  }, [refreshKey]);
 
   const loadDirectives = async () => {
     if (!tag.suggestionId) return;
@@ -45,6 +52,11 @@ const TagDirectivesTab = ({ tag, isExpanded }) => {
         setDirectives(prev => prev.map(d => 
           d.id === directiveId ? response.data.data : d
         ));
+        
+        // Trigger refresh of other tabs
+        if (onRefresh) {
+          onRefresh();
+        }
       } else {
         throw new Error('Failed to update directive');
       }
@@ -60,6 +72,11 @@ const TagDirectivesTab = ({ tag, isExpanded }) => {
       
       if (response.data?.success) {
         setDirectives(prev => prev.filter(d => d.id !== directiveId));
+        
+        // Trigger refresh of other tabs
+        if (onRefresh) {
+          onRefresh();
+        }
       } else {
         throw new Error('Failed to delete directive');
       }
@@ -77,6 +94,11 @@ const TagDirectivesTab = ({ tag, isExpanded }) => {
         setDirectives(prev => prev.map(d => 
           d.id === directiveId ? response.data.data : d
         ));
+        
+        // Trigger refresh of other tabs
+        if (onRefresh) {
+          onRefresh();
+        }
       } else {
         throw new Error('Failed to regenerate directive');
       }
@@ -92,6 +114,11 @@ const TagDirectivesTab = ({ tag, isExpanded }) => {
       
       if (response.data?.success) {
         setDirectives(prev => [response.data.data, ...prev]);
+        
+        // Trigger refresh of other tabs
+        if (onRefresh) {
+          onRefresh();
+        }
       } else {
         throw new Error('Failed to generate new directive');
       }

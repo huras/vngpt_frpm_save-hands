@@ -1,0 +1,143 @@
+.world-building-directives-tab {
+  .world-building-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+
+    h4 {
+      margin: 0;
+      color: #495057;
+      font-weight: 600;
+    }
+
+    .btn {
+      font-size: 0.875rem;
+      padding: 0.375rem 0.75rem;
+    }
+  }
+
+  .world-building-content {
+    .nav-tabs {
+      border-bottom: 2px solid #e9ecef;
+      margin-bottom: 1rem;
+
+      .nav-item {
+        .nav-link {
+          border: none;
+          border-bottom: 2px solid transparent;
+          background: none;
+          color: #6c757d;
+          font-weight: 500;
+          padding: 0.75rem 1rem;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          &:hover {
+            color: #495057;
+            border-bottom-color: #dee2e6;
+          }
+
+          &.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+            background: none;
+          }
+
+          .tab-icon {
+            font-size: 1.1rem;
+          }
+
+          .tab-label {
+            font-size: 0.9rem;
+          }
+        }
+      }
+    }
+
+    .tab-content {
+      .tab-pane {
+        .tab-pane-content {
+          padding: 1rem 0;
+
+          .no-directives {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+            background: #f8f9fa;
+            border-radius: 0.375rem;
+
+            p {
+              margin: 0;
+              font-style: italic;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    .world-building-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: stretch;
+
+      h4 {
+        text-align: center;
+      }
+    }
+
+    .nav-tabs {
+      .nav-item {
+        .nav-link {
+          padding: 0.5rem 0.75rem;
+          font-size: 0.8rem;
+
+          .tab-icon {
+            font-size: 1rem;
+          }
+
+          .tab-label {
+            font-size: 0.8rem;
+          }
+        }
+      }
+    }
+  }
+
+  // Animation for tab transitions
+  .tab-pane {
+    transition: opacity 0.15s linear;
+
+    &.fade {
+      opacity: 0;
+    }
+
+    &.show {
+      opacity: 1;
+    }
+  }
+
+  // Loading state
+  .spinner-border {
+    width: 2rem;
+    height: 2rem;
+    color: #007bff;
+  }
+
+  // Error state
+  .alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1rem;
+  }
+} 

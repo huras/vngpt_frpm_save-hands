@@ -39,8 +39,13 @@
     background: #f8f9fa;
     margin-bottom: 0;
 
+    div {
+      transition: opacity 0.3s ease;
+      opacity: 1;
+    }
+
     &:not(:hover) {
-      * {
+      div {
         opacity: 0.05;
       }
     }

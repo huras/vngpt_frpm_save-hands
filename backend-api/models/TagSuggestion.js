@@ -161,6 +161,12 @@ module.exports = (sequelize, Sequelize) => {
             foreignKey: 'tagSuggestionId',
             as: 'directives'
         });
+
+        // One-to-One relationship with TagWorldBuildingDirectives
+        TagSuggestion.hasOne(models.TagWorldBuildingDirectives, {
+            foreignKey: 'tagSuggestionId',
+            as: 'worldBuildingDirectives'
+        });
     };
 
     return TagSuggestion;
