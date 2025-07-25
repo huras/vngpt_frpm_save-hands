@@ -40,18 +40,6 @@ router.post('/suggestions/:suggestionId/accept', async (req, res) => {
 
         const result = await intelligentTagService.acceptSuggestion(suggestionId, userExplanation);
         
-        // Automatically generate world building directives for accepted suggestions
-        try {
-            const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
-            const directiveService = new TagSuggestionDirectiveService();
-            const worldBuildingDirectives = await directiveService.generateWorldBuildingDirectives(suggestionId);
-            result.worldBuildingDirectives = worldBuildingDirectives;
-        } catch (directiveError) {
-            console.error('Error generating world building directives:', directiveError);
-            // Don't fail the acceptance if world building directives generation fails
-            result.worldBuildingDirectivesError = directiveError.message;
-        }
-        
         res.json({ success: true, ...result });
     } catch (error) {
         console.error('Error accepting suggestion:', error);
@@ -700,6 +688,53 @@ router.post('/world-building-directives/:suggestionId/generate', async (req, res
     }
 });
 
+// GET /intelligent-tags/world-building-directives/:suggestionId/generate-streaming - Generate world building directives with streaming progress
+router.get('/world-building-directives/:suggestionId/generate-streaming', async (req, res) => {
+    try {
+        const { suggestionId } = req.params;
+        const TagSuggestionDirectiveService = require('../services/TagSuggestionDirectiveService');
+        const directiveService = new TagSuggestionDirectiveService();
+
+        // Set headers for streaming
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Cache-Control'
+        });
+
+        // Send initial connection message
+        res.write('data: {"type": "connected", "message": "World building directives streaming started"}\n\n');
+
+        const worldBuildingDirectives = await directiveService.generateWorldBuildingDirectivesStreaming(suggestionId, (progress) => {
+            // Send progress updates
+            res.write(`data: ${JSON.stringify(progress)}\n\n`);
+        });
+
+        // Send completion message
+        res.write(`data: ${JSON.stringify({
+            type: 'complete',
+            data: worldBuildingDirectives
+        })}\n\n`);
+
+        res.end();
+    } catch (error) {
+        console.error('Error generating streaming world building directives:', error);
+        
+        // Send error message if connection is still open
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'An error occurred while generating world building directives.' });
+        } else {
+            res.write(`data: ${JSON.stringify({
+                type: 'error',
+                error: error.message || 'An error occurred while generating world building directives.'
+            })}\n\n`);
+            res.end();
+        }
+    }
+});
+
 // GET /intelligent-tags/world-building-directives/:suggestionId - Get world building directives for a tag suggestion
 router.get('/world-building-directives/:suggestionId', async (req, res) => {
     try {
@@ -709,10 +744,7 @@ router.get('/world-building-directives/:suggestionId', async (req, res) => {
 
         const worldBuildingDirectives = await directiveService.getWorldBuildingDirectives(suggestionId);
         
-        if (!worldBuildingDirectives) {
-            return res.status(404).json({ error: 'World building directives not found.' });
-        }
-
+        // Return null data instead of 404 error to allow frontend to show generate button
         res.json({ success: true, data: worldBuildingDirectives });
     } catch (error) {
         console.error('Error fetching world building directives:', error);

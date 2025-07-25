@@ -66,5 +66,8 @@ export const tagApi = {
         }).then(res => res.data),
 
         // Get AI tag suggestions for adding/removing tags
-        getAITagSuggestions: (data) => api.post('/tags/ai-suggestions', data).then(res => res.data)
+        getAITagSuggestions: (data) => api.post('/tags/ai-suggestions', data).then(res => res.data),
+
+        // Delete world building directives and tag directives for a tag suggestion
+        deleteWorldBuildingDirectives: (tagSuggestionId) => api.delete(`/comprehensive-tags/delete-world-building-directives/${tagSuggestionId}`).then(res => res.data)
 };

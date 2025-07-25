@@ -140,11 +140,17 @@ const DirectiveCard = ({ directive, onUpdate, onDelete, onRegenerate }) => {
         </div>
       </div>
       <div className="directive-content">
-        <div className="directive-aim">
+        {/* <div className="directive-aim">
           <strong>Aim:</strong> {directive.directive_aim}
-        </div>
+        </div> */}
         <div className="directive-text">
-          {directive.directive}
+          {directive.directive.split('\n').map((line, index) => (
+            line.trim() && (
+              <div key={index} className="directive-aim">
+                {line.trim()}
+              </div>
+            )
+          ))}
         </div>
       </div>
       <div className="directive-footer">

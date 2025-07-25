@@ -255,6 +255,47 @@ export const intelligentTagApi = {
   generateWorldBuildingDirectives: (suggestionId) => 
     api.post(`/intelligent-tags/world-building-directives/${suggestionId}/generate`),
 
+  generateWorldBuildingDirectivesStreaming: (suggestionId, onProgress, onComplete, onError) => {
+    const eventSource = new EventSource(`${api.defaults.baseURL}/intelligent-tags/world-building-directives/${suggestionId}/generate-streaming`);
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        switch (data.type) {
+          case 'connected':
+            console.log('Streaming connected:', data.message);
+            break;
+          case 'progress':
+            if (onProgress) onProgress(data);
+            break;
+          case 'complete':
+            if (onComplete) onComplete(data.data);
+            eventSource.close();
+            break;
+          case 'error':
+            if (onError) onError(data.error);
+            eventSource.close();
+            break;
+          default:
+            console.log('Unknown streaming event:', data);
+        }
+      } catch (error) {
+        console.error('Error parsing streaming data:', error);
+        if (onError) onError('Error parsing streaming data');
+        eventSource.close();
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('Streaming error:', error);
+      if (onError) onError('Streaming connection error');
+      eventSource.close();
+    };
+
+    return eventSource;
+  },
+
   getWorldBuildingDirectives: (suggestionId) => 
     api.get(`/intelligent-tags/world-building-directives/${suggestionId}`),
 

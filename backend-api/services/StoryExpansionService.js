@@ -408,12 +408,28 @@ class StoryExpansionService {
     }
 
     /**
+     * Build directive context string for prompts
+     * @param {Array} directives - Array of directive objects
+     * @param {string} format - Format type: 'basic' (default) or 'detailed'
+     * @returns {string} Formatted directive context string
+     */
+    buildDirectiveContext(directives, format = 'basic') {
+        if (format === 'detailed') {
+            return directives.map(d => 
+                `* ${d.id} - "${d.directive}" (Aim: ${d.directive_aim})`
+            ).join('\n');
+        }
+        
+        return directives.map(d => 
+            `* ${d.directive.id} - "${d.directive}" (Tag: ${d.tag.title})`
+        ).join('\n');
+    }
+
+    /**
      * Build prompt for arc generation
      */
     buildArcGenerationPrompt(story, directives) {
-        const directiveContext = directives.map(d => 
-            `* ${d.directive.id} - "${d.directive}" (Tag: ${d.tag.title}) (Aim: ${d.directive_aim})`
-        ).join('\n');
+        const directiveContext = this.buildDirectiveContext(directives);
 
         return `Based on the following story and its accepted tag directives, generate 3-5 compelling story arcs that could expand the narrative:
 
@@ -459,9 +475,7 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
      * Build prompt for character generation
      */
     buildCharacterGenerationPrompt(story, directives, count = null) {
-        const directiveContext = directives.map(d => 
-            `* ${d.id} - "${d.directive}" (Aim: ${d.directive_aim})`
-        ).join('\n');
+        const directiveContext = this.buildDirectiveContext(directives, 'detailed');
 
         const characterCount = count !== null ? count : '4-6';
 
@@ -536,9 +550,7 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
      * Build prompt for place generation
      */
     buildPlaceGenerationPrompt(story, directives) {
-        const directiveContext = directives.map(d => 
-            `* ${d.directive.id} - "${d.directive}" (Tag: ${d.tag.title}) (Aim: ${d.directive_aim})`
-        ).join('\n');
+        const directiveContext = this.buildDirectiveContext(directives);
 
         return `Based on the following story and its accepted tag directives, generate 3-5 compelling location/place suggestions that could enrich the story's world:
 
@@ -586,9 +598,7 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
      * Build prompt for organization generation
      */
     buildOrganizationGenerationPrompt(story, directives) {
-        const directiveContext = directives.map(d => 
-            `* ${d.directive.id} - "${d.directive}" (Tag: ${d.tag.title}) (Aim: ${d.directive_aim})`
-        ).join('\n');
+        const directiveContext = this.buildDirectiveContext(directives);
 
         return `Based on the following story and its accepted tag directives, generate 2-4 compelling organization suggestions that could enrich the story's world:
 
@@ -638,9 +648,7 @@ Format as valid JSON only. Do not use markdown formatting, code blocks, or backt
      * Build prompt for object generation
      */
     buildObjectGenerationPrompt(story, directives) {
-        const directiveContext = directives.map(d => 
-            `* ${d.directive.id} - "${d.directive}" (Tag: ${d.tag.title}) (Aim: ${d.directive_aim})`
-        ).join('\n');
+        const directiveContext = this.buildDirectiveContext(directives);
 
         return `Based on the following story and its accepted tag directives, generate 3-5 compelling notable object suggestions that could enrich the story:
 

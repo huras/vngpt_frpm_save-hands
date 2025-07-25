@@ -16,6 +16,7 @@ const WorldBuildingDirectivesTab = ({ tag, isExpanded, refreshKey, onRefresh }) 
   }, [relevantDirectiveTypes, activeTab]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [streamingProgress, setStreamingProgress] = useState(null);
 
   const directiveTypes = [
     { key: 'character_generation', label: 'Character Generation', icon: '👤' },
@@ -30,19 +31,26 @@ const WorldBuildingDirectivesTab = ({ tag, isExpanded, refreshKey, onRefresh }) 
     { key: 'past_events_evolution', label: 'Past Events Evolution', icon: '📚' }
   ];
 
-  // Get relevant directive types from the world building directives
+  // Get relevant directive types from the world building directives or streaming progress
   const getRelevantDirectiveTypes = () => {
-    if (!worldBuildingDirectives || !worldBuildingDirectives.relevantAreas) {
-      return directiveTypes;
+    // First check if we have relevant areas from streaming progress
+    if (streamingProgress && streamingProgress.relevantAreas && streamingProgress.relevantAreas.length > 0) {
+      return directiveTypes.filter(type => streamingProgress.relevantAreas.includes(type.key));
     }
     
-    try {
-      const relevantAreas = JSON.parse(worldBuildingDirectives.relevantAreas);
-      return directiveTypes.filter(type => relevantAreas.includes(type.key));
-    } catch (error) {
-      console.error('Error parsing relevant areas:', error);
-      return directiveTypes;
+    // Then check if we have relevant areas from existing world building directives
+    if (worldBuildingDirectives && worldBuildingDirectives.relevantAreas) {
+      try {
+        const relevantAreas = JSON.parse(worldBuildingDirectives.relevantAreas);
+        return directiveTypes.filter(type => relevantAreas.includes(type.key));
+      } catch (error) {
+        console.error('Error parsing relevant areas:', error);
+        return directiveTypes;
+      }
     }
+    
+    // Default to all directive types if no relevant areas are available
+    return directiveTypes;
   };
 
   const relevantDirectiveTypes = getRelevantDirectiveTypes();
@@ -70,7 +78,7 @@ const WorldBuildingDirectivesTab = ({ tag, isExpanded, refreshKey, onRefresh }) 
       
       const response = await intelligentTagApi.getWorldBuildingDirectives(tag.suggestionId);
       
-      if (response.data?.success) {
+      if (response.data?.success && response.data.data) {
         setWorldBuildingDirectives(response.data.data);
         
         // Group directives by type
@@ -85,11 +93,16 @@ const WorldBuildingDirectivesTab = ({ tag, isExpanded, refreshKey, onRefresh }) 
         }
         setDirectivesByType(grouped);
       } else {
-        setError('Failed to load world building directives');
+        // If no data is returned, clear the state to show the generate button
+        setWorldBuildingDirectives(null);
+        setDirectivesByType({});
       }
     } catch (error) {
       console.error('Error loading world building directives:', error);
-      setError('Error loading world building directives. Please try again.');
+      // If there's an error (like 404), clear the state to show the generate button
+      setWorldBuildingDirectives(null);
+      setDirectivesByType({});
+      setError(null); // Don't show error for missing data
     } finally {
       setIsLoading(false);
     }
@@ -101,36 +114,57 @@ const WorldBuildingDirectivesTab = ({ tag, isExpanded, refreshKey, onRefresh }) 
     try {
       setIsLoading(true);
       setError(null);
+      setStreamingProgress(null);
       
-      const response = await intelligentTagApi.generateWorldBuildingDirectives(tag.suggestionId);
+      // Use streaming API for better UX
+      const eventSource = intelligentTagApi.generateWorldBuildingDirectivesStreaming(
+        tag.suggestionId,
+        // Progress callback
+        (progress) => {
+          setStreamingProgress(progress);
+        },
+        // Complete callback
+        (data) => {
+          setWorldBuildingDirectives(data);
+          
+          // Group directives by type
+          const grouped = {};
+          if (data.directives) {
+            data.directives.forEach(directive => {
+              if (!grouped[directive.directiveType]) {
+                grouped[directive.directiveType] = [];
+              }
+              grouped[directive.directiveType].push(directive);
+            });
+          }
+          setDirectivesByType(grouped);
+          
+          // Trigger refresh of other tabs (like Tag Directives tab)
+          if (onRefresh) {
+            onRefresh();
+          }
+          
+          setIsLoading(false);
+          setStreamingProgress(null);
+        },
+        // Error callback
+        (error) => {
+          console.error('Error generating world building directives:', error);
+          setError('Error generating world building directives. Please try again.');
+          setIsLoading(false);
+          setStreamingProgress(null);
+        }
+      );
       
-      if (response.data?.success) {
-        setWorldBuildingDirectives(response.data.data);
-        
-        // Group directives by type
-        const grouped = {};
-        if (response.data.data.directives) {
-          response.data.data.directives.forEach(directive => {
-            if (!grouped[directive.directiveType]) {
-              grouped[directive.directiveType] = [];
-            }
-            grouped[directive.directiveType].push(directive);
-          });
-        }
-        setDirectivesByType(grouped);
-        
-        // Trigger refresh of other tabs (like Tag Directives tab)
-        if (onRefresh) {
-          onRefresh();
-        }
-      } else {
-        setError('Failed to generate world building directives');
-      }
+      // Return cleanup function
+      return () => {
+        eventSource.close();
+      };
     } catch (error) {
-      console.error('Error generating world building directives:', error);
-      setError('Error generating world building directives. Please try again.');
-    } finally {
+      console.error('Error starting world building directives generation:', error);
+      setError('Error starting world building directives generation. Please try again.');
       setIsLoading(false);
+      setStreamingProgress(null);
     }
   };
 
@@ -242,15 +276,73 @@ const WorldBuildingDirectivesTab = ({ tag, isExpanded, refreshKey, onRefresh }) 
         </div>
       )}
 
-      {isLoading && !worldBuildingDirectives && (
-        <div className="text-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
+      {isLoading && (
+        <div className="streaming-overlay">
+          <div className="text-center">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            {streamingProgress && (
+              <div className="streaming-progress mt-3">
+                <div className="progress mb-2">
+                  <div 
+                    className="progress-bar" 
+                    role="progressbar" 
+                    style={{ width: `${streamingProgress.progress}%` }}
+                    aria-valuenow={streamingProgress.progress} 
+                    aria-valuemin="0" 
+                    aria-valuemax="100"
+                  >
+                    {streamingProgress.progress}%
+                  </div>
+                </div>
+                <div className="progress-message">
+                  <strong>{streamingProgress.stage}:</strong> {streamingProgress.message}
+                </div>
+                
+                {/* Enhanced progress display */}
+                {streamingProgress.phase && (
+                  <div className="progress-details mt-2">
+                    <div className="phase-indicator">
+                      <span className={`phase-badge phase-${streamingProgress.phase}`}>
+                        {streamingProgress.phase.toUpperCase()}
+                      </span>
+                    </div>
+                    
+                    {/* Show relevant areas when analysis is complete */}
+                    {streamingProgress.phase === 'analysis' && streamingProgress.relevantAreas && (
+                      <div className="relevant-areas mt-2">
+                        <small className="text-muted">Relevant areas found:</small>
+                        <div className="areas-list">
+                          {streamingProgress.relevantAreas.map((area, index) => (
+                            <span key={index} className="area-badge">
+                              {area.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Show current area being processed */}
+                    {streamingProgress.phase === 'generation' && streamingProgress.currentArea && (
+                      <div className="current-area mt-2">
+                        <small className="text-muted">
+                          Processing: {streamingProgress.currentAreaIndex} of {streamingProgress.totalAreas}
+                        </small>
+                        <div className="current-area-name">
+                          {streamingProgress.currentArea.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {worldBuildingDirectives && (
+      {(worldBuildingDirectives || (streamingProgress && streamingProgress.relevantAreas && streamingProgress.relevantAreas.length > 0)) && (
         <div className="world-building-content">
           {/* Tab Navigation */}
           <ul className="nav nav-tabs" role="tablist">

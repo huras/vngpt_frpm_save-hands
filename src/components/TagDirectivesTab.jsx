@@ -32,13 +32,15 @@ const TagDirectivesTab = ({ tag, isExpanded, refreshKey, onRefresh }) => {
       const response = await intelligentTagApi.getDirectives(tag.suggestionId);
       
       if (response.data?.success) {
-        setDirectives(response.data.data);
+        setDirectives(response.data.data || []);
       } else {
-        setDirectiveError('Failed to load directives');
+        setDirectives([]);
       }
     } catch (error) {
       console.error('Error loading directives:', error);
-      setDirectiveError('Error loading directives. Please try again.');
+      // If there's an error (like 404), clear the directives
+      setDirectives([]);
+      setDirectiveError(null); // Don't show error for missing data
     } finally {
       setIsLoadingDirectives(false);
     }

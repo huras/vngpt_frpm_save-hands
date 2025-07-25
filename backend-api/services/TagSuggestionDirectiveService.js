@@ -178,6 +178,48 @@ DIRECTIVE_AIM: [your aim statement here]`;
     }
 
     /**
+     * Generate world building directives with streaming progress updates
+     * @param {number} tagSuggestionId - The ID of the tag suggestion
+     * @param {Function} progressCallback - Callback function to send progress updates
+     * @returns {Promise<Object>} The generated world building directives
+     */
+    async generateWorldBuildingDirectivesStreaming(tagSuggestionId, progressCallback) {
+        try {
+            const tagSuggestion = await TagSuggestion.findByPk(tagSuggestionId, {
+                include: [
+                    { model: Story, as: 'story' },
+                    { model: Tag, as: 'tag' }
+                ]
+            });
+
+            if (!tagSuggestion) {
+                throw new Error(`TagSuggestion with ID ${tagSuggestionId} not found`);
+            }
+
+            if (tagSuggestion.status !== 'accepted') {
+                throw new Error('World building directives can only be generated for accepted tag suggestions');
+            }
+
+            // Check if world building directives already exist
+            const existingDirectives = await TagWorldBuildingDirectives.findOne({
+                where: { tagSuggestionId }
+            });
+
+            if (existingDirectives) {
+                throw new Error('World building directives already exist for this tag suggestion');
+            }
+
+            // Generate world building directives with streaming
+            const worldBuildingDirectives = await TagWorldBuildingDirectivesService.generateWorldBuildingDirectivesStreaming(tagSuggestion, progressCallback);
+
+            return worldBuildingDirectives;
+        } catch (error) {
+            console.error('Error generating world building directives:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get all directives for a tag suggestion
      * @param {number} tagSuggestionId - The ID of the tag suggestion
      * @returns {Promise<Array>} Array of directives

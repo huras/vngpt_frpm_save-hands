@@ -444,21 +444,21 @@ router.post('/suggestions/:suggestionId/accept', async (req, res) => {
             ratedAt: userRating ? new Date() : null
         });
 
-        // Generate and store directive for this accepted suggestion
-        let directive = null;
+        // Generate world building directives for this accepted suggestion
+        let worldBuildingDirectives = null;
         try {
-            directive = await directiveService.generateAndStoreDirective(suggestion.id);
-            console.log(`Generated directive for accepted comprehensive suggestion ${suggestion.id}`);
+            worldBuildingDirectives = await directiveService.generateWorldBuildingDirectives(suggestion.id);
+            console.log(`Generated world building directives for accepted comprehensive suggestion ${suggestion.id}`);
         } catch (directiveError) {
-            console.error('Error generating directive:', directiveError);
-            // Don't fail the entire acceptance process if directive generation fails
+            console.error('Error generating world building directives:', directiveError);
+            // Don't fail the entire acceptance process if world building directives generation fails
         }
 
         res.json({ 
             success: true, 
             data: {
                 suggestion: suggestion,
-                directive: directive
+                worldBuildingDirectives: worldBuildingDirectives
             },
             message: 'Tag suggestion accepted successfully'
         });
@@ -808,6 +808,60 @@ router.post('/generate-world-building/:tagId', async (req, res) => {
         console.error('Error generating world-building effects for tag:', error);
         res.status(500).json({ 
             error: 'An error occurred while generating world-building effects.',
+            details: error.message
+        });
+    }
+});
+
+// DELETE /comprehensive-tags/delete-world-building-directives/:tagSuggestionId - Delete world building directives and tag directives for a tag suggestion
+router.delete('/delete-world-building-directives/:tagSuggestionId', async (req, res) => {
+    try {
+        const { tagSuggestionId } = req.params;
+
+        if (!tagSuggestionId) {
+            return res.status(400).json({ 
+                error: 'tagSuggestionId is required.' 
+            });
+        }
+
+        console.log(`Deleting world building directives for tag suggestion ID: ${tagSuggestionId}`);
+
+        const { TagSuggestionDirective, TagWorldBuildingDirectives, TagSuggestion } = require('../models');
+
+        // First, check if the tag suggestion exists
+        const tagSuggestion = await TagSuggestion.findByPk(tagSuggestionId);
+        if (!tagSuggestion) {
+            return res.status(404).json({ 
+                error: 'Tag suggestion not found.' 
+            });
+        }
+
+        // Delete TagSuggestionDirective records associated with this tag suggestion
+        const deletedDirectives = await TagSuggestionDirective.destroy({
+            where: {
+                tagSuggestionId: tagSuggestionId
+            }
+        });
+
+        // Delete TagWorldBuildingDirectives record associated with this tag suggestion
+        const deletedWorldBuildingDirectives = await TagWorldBuildingDirectives.destroy({
+            where: {
+                tagSuggestionId: tagSuggestionId
+            }
+        });
+
+        console.log(`Deleted ${deletedDirectives} tag directives and ${deletedWorldBuildingDirectives} world building directives for tag suggestion ${tagSuggestionId}`);
+
+        res.json({ 
+            success: true, 
+            message: `Successfully deleted world building directives and tag directives for tag suggestion ${tagSuggestionId}`,
+            deletedDirectives,
+            deletedWorldBuildingDirectives
+        });
+    } catch (error) {
+        console.error('Error deleting world building directives:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while deleting world building directives.',
             details: error.message
         });
     }

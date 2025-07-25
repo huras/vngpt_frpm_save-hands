@@ -325,21 +325,21 @@ class IntelligentTagService {
                 currentCommentaryId: commentary.id
             });
 
-            // Generate and store directive for this accepted suggestion
-            let directive = null;
+            // Generate world building directives for this accepted suggestion
+            let worldBuildingDirectives = null;
             try {
-                directive = await this.directiveService.generateAndStoreDirective(suggestion.id);
-                console.log(`Generated directive for accepted suggestion ${suggestion.id}`);
+                worldBuildingDirectives = await this.directiveService.generateWorldBuildingDirectives(suggestion.id);
+                console.log(`Generated world building directives for accepted suggestion ${suggestion.id}`);
             } catch (directiveError) {
-                console.error('Error generating directive:', directiveError);
-                // Don't fail the entire acceptance process if directive generation fails
+                console.error('Error generating world building directives:', directiveError);
+                // Don't fail the entire acceptance process if world building directives generation fails
             }
 
             return {
                 success: true,
                 suggestion: suggestion.toJSON(),
                 reasoning: reasoning.toJSON(),
-                directive: directive ? directive.toJSON() : null
+                worldBuildingDirectives: worldBuildingDirectives
             };
         } catch (error) {
             console.error('Error accepting suggestion:', error);

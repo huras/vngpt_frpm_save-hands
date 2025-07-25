@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_CONFIG } from '../config/backend';
+import { tagApi } from '../services/tagApi';
 import TagModal from './TagModal';
 import TagDirectivesTab from './TagDirectivesTab';
 import WorldBuildingDirectivesTab from './WorldBuildingDirectivesTab';
@@ -25,11 +26,13 @@ const RelevantTagCard = ({
   onRelatedTagsGenerated = null,
   onWorldBuildingEffectsGenerated = null,
   storyTitle = null,
-  storyBrainstorm = null
+  storyBrainstorm = null,
+  onRefresh = null
 }) => {
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('directives');
+  const [activeTab, setActiveTab] = useState('world-building-directives');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isDeletingDirectives, setIsDeletingDirectives] = useState(false);
 
   // Function to trigger refresh of tab components
   const handleRefreshTabs = () => {
@@ -39,6 +42,57 @@ const RelevantTagCard = ({
   const handleImageClick = (e) => {
     e.stopPropagation();
     setShowModal(true);
+  };
+
+  // Function to delete world building directives and tag directives
+  const handleDeleteDirectives = async () => {
+    console.log('Starting delete directives for tag:', tag.title, 'suggestionId:', tag.suggestionId);
+    
+    if (!tag.suggestionId) {
+      alert('No directives to delete for this tag.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete all world building directives and tag directives for "${tag.title}"?\n\n` +
+      'This will remove:\n' +
+      '• All world building directives\n' +
+      '• All tag directives\n' +
+      '• All associated data\n\n' +
+      'This action cannot be undone.'
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingDirectives(true);
+    try {
+      await tagApi.deleteWorldBuildingDirectives(tag.suggestionId);
+      alert('Successfully deleted all directives for this tag.');
+      
+      // Force a complete refresh of all tabs by incrementing refreshKey multiple times
+      // This ensures both WorldBuildingDirectivesTab and TagDirectivesTab reload their data
+      setRefreshKey(prev => {
+        const newKey = prev + 10;
+        console.log('Refreshing tabs with new key:', newKey);
+        return newKey;
+      });
+      
+      // Also trigger the parent's refresh mechanism if available
+      if (typeof onRefresh === 'function') {
+        console.log('Calling parent onRefresh function');
+        onRefresh();
+      } else {
+        console.log('No parent onRefresh function available');
+      }
+    } catch (error) {
+      console.error('Error deleting directives:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred';
+      alert(`Error deleting directives: ${errorMessage}`);
+    } finally {
+      setIsDeletingDirectives(false);
+    }
   };
 
 
@@ -133,12 +187,43 @@ const RelevantTagCard = ({
           >
             <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'}`}></i>
           </button>
+          
+          {tag.suggestionId && tag.suggestionStatus === 'accepted' && (
+            <button
+              onClick={handleDeleteDirectives}
+              className="btn btn-sm btn-outline-danger"
+              disabled={isProcessing || isDeletingDirectives}
+              title="Delete all world building directives and tag directives for this tag"
+              style={{ borderWidth: '2px' }}
+            >
+              <i className={`fas ${isDeletingDirectives ? 'fa-spinner fa-spin' : 'fa-trash-alt'}`}></i>
+              {isDeletingDirectives ? 'Deleting...' : 'Delete Directives'}
+            </button>
+          )}
         </div>
       </div>
       
       {isExpanded && (
         <div className="tag-details">
           <ul className="nav nav-tabs" id={`tag-tabs-${tag.id}`} role="tablist">
+            {tag.suggestionId && tag.suggestionStatus === 'accepted' && (
+              <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link ${activeTab === 'world-building-directives' ? 'active' : ''}`}
+                  id={`world-building-directives-tab-${tag.id}`}
+                  data-bs-toggle="tab"
+                  data-bs-target={`#world-building-directives-content-${tag.id}`}
+                  type="button"
+                  role="tab"
+                  aria-controls={`world-building-directives-content-${tag.id}`}
+                  aria-selected={activeTab === 'world-building-directives'}
+                  onClick={() => setActiveTab('world-building-directives')}
+                >
+                  <i className="fas fa-globe"></i> World Building
+                </button>
+              </li>
+            )}
+
             {tag.suggestionId && tag.suggestionStatus === 'accepted' && (
               <li className="nav-item" role="presentation">
                 <button
@@ -157,23 +242,7 @@ const RelevantTagCard = ({
               </li>
             )}
             
-            {tag.suggestionId && tag.suggestionStatus === 'accepted' && (
-              <li className="nav-item" role="presentation">
-                <button
-                  className={`nav-link ${activeTab === 'world-building-directives' ? 'active' : ''}`}
-                  id={`world-building-directives-tab-${tag.id}`}
-                  data-bs-toggle="tab"
-                  data-bs-target={`#world-building-directives-content-${tag.id}`}
-                  type="button"
-                  role="tab"
-                  aria-controls={`world-building-directives-content-${tag.id}`}
-                  aria-selected={activeTab === 'world-building-directives'}
-                  onClick={() => setActiveTab('world-building-directives')}
-                >
-                  <i className="fas fa-globe"></i> World Building
-                </button>
-              </li>
-            )}
+            
             
             <li className="nav-item" role="presentation">
               <button
