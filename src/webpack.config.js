@@ -7,7 +7,7 @@ module.exports = {
         'huras_job_app': './index.jsx'
     },
     output: {
-        path: path.resolve(__dirname, '../public/js'),
+        path: path.resolve(__dirname, '../'),
         filename: "[name].js",
     },
     resolve: {
