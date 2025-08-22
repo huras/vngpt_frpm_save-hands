@@ -1,10 +1,10 @@
 // Backend configuration
 export const BACKEND_CONFIG = {
-    // Backend API URL
-    API_URL: 'http://localhost:3056',
+    // Backend API URL - use relative path for same domain
+    API_URL: '',
 
     // Image serving URL (same as API URL for now)
-    IMAGE_URL: 'http://localhost:3056',
+    IMAGE_URL: '',
 
     // Helper function to get full image URL
     getImageUrl: (path) => {
