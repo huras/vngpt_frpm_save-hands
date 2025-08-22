@@ -1,7 +1,8 @@
 import api from './api';
+import { BACKEND_CONFIG } from '../config/backend';
 
 // Base URL for API calls
-const API_BASE_URL = 'http://localhost:3056/api';
+const API_BASE_URL = `${BACKEND_CONFIG.API_URL}/api`;
 
 export const comprehensiveTagApi = {
   // Generate comprehensive tags for a story

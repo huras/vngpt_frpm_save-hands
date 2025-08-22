@@ -1,4 +1,5 @@
 import api from './api';
+import { BACKEND_CONFIG } from '../config/backend';
 
 export const intelligentTagApi = {
   // Get suggestions for a story
@@ -12,7 +13,7 @@ export const intelligentTagApi = {
   // Generate suggestions with streaming (iterative)
   generateSuggestionsStreaming: (storyId, limit = 10, onSuggestion, onComplete, onError) => {
     // Create a fetch request with streaming - use the correct API URL
-    fetch(`http://localhost:3056/api/intelligent-tags/suggestions/${storyId}/generate-streaming`, {
+    fetch(`${BACKEND_CONFIG.API_URL}/api/intelligent-tags/suggestions/${storyId}/generate-streaming`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
