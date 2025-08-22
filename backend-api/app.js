@@ -1,4 +1,7 @@
 // app.js
+// Add fetch polyfill for Node.js 16 compatibility
+global.fetch = require('node-fetch');
+
 require('dotenv').config();
 const express = require('express');
 const puppeteer = require('puppeteer');
