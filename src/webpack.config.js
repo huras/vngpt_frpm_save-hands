@@ -4,7 +4,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 module.exports = {
     devtool: 'source-map', // generate source map
     entry: {
-        'inquest_job_app': './index.jsx'
+        'huras_job_app': './index.jsx'
     },
     output: {
         path: path.resolve(__dirname, '../public/js'),
